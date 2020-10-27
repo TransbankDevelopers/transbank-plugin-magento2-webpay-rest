@@ -1,0 +1,28 @@
+version: '3.0'
+services:
+  p73-m23:
+    build:
+      context: .
+    ports:
+      - 80:80
+    links:
+      - db
+    depends_on:
+      - db
+    volumes:
+      - magento-data:/var/www/html
+      - ./plugin/Transbank/Webpay:/var/www/html/app/code/Transbank/Webpay
+    env_file:
+      - .env
+
+  db:
+    restart: always
+    image: mysql:5.6
+    volumes:
+      - data:/var/lib/mysql
+    env_file:
+      - .env
+
+volumes:
+  magento-data:
+  data:

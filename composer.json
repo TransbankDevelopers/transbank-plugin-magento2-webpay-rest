@@ -1,0 +1,29 @@
+{
+  "name": "transbank/webpay-magento2",
+  "description": "Plugin oficial de magento2 para Webpay",
+  "require": {
+    "ext-json": "*",
+    "transbank/transbank-sdk": ">=1.5.3",
+    "tecnickcom/tcpdf": "^6.3"
+  },
+  "type": "magento2-module",
+  "archive": {
+    "exclude": [
+      "/docs",
+      "/docker-magento2",
+      "/package.sh",
+      "/.travis.yml",
+      "/.gitignore",
+      "/.gitattributes"
+    ]
+  },
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Transbank\\Webpay\\": ""
+    }
+  },
+  "license": "BSD-3-Clause"
+}

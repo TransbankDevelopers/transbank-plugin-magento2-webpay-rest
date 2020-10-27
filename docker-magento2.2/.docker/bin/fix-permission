@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+chmod -R 777 /var/www/
+if [ -e "/var/www/html/bin/magento" ]; then
+  chmod u+x /var/www/html/bin/magento
+fi

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+su www-data <<EOSU
+
+/var/www/html/bin/magento module:enable Transbank_Webpay --clear-static-content
+/var/www/html/bin/magento setup:upgrade
+/var/www/html/bin/magento setup:di:compile
+
+EOSU

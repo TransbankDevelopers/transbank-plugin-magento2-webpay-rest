@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+mkdir -p /var/www/html/app/code
+cp -rf /var/www/plugin/Transbank/ /var/www/html/app/code
+rm -rf /var/www/html/pub/static/frontend/Magento/luma/en_US/Transbank_**
+cd /var/www/html
+php -f ./bin/magento setup:di:compile && php -f ./bin/magento setup:static-content:deploy
