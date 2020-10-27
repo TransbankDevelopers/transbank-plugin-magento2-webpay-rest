@@ -4,7 +4,6 @@ build .built:
 	docker-compose exec p73-m23 install-magento
 	docker-compose exec p73-m23 composer require transbank/transbank-sdk
 	docker-compose exec p73-m23 install-plugin
-	docker-compose exec p73-m23 install-sampledata
 	docker-compose stop
 	touch .built
 
