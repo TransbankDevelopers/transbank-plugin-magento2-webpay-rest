@@ -1,65 +1,70 @@
-<?xml version="1.0" ?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <section id="payment">
-            <group id="transbank_webpay" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
-
-                <label>Webpay</label>
-
-                <comment><![CDATA[Si no posee código de comercio en Transbank <a href="https://www.transbank.cl/web/solicitudes/webpay" target="_blank">Por favor registrese en aquí</a> ]]></comment>
+            <group id="transbank_webpay_plus_rest" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>Transbank Webpay Plus REST</label>
 
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enabled</label>
+                    <label>Habilitado</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
 
-                <group id="main_parameters" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Parámetros Principales</label>
+                <group id="general_parameters" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Parámetros Generales</label>
+                    <attribute type="expanded">0</attribute>
+
+                    <!-- Payment success -->
+                    <field id="payment_successful_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Estado de Pago Exitoso</label>
+                        <source_model>Transbank\Webpay\Model\Config\OrderStatus</source_model>
+                    </field>
+                    <!-- Payment error -->
+                    <field id="payment_error_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Estado de Pago Erroneo</label>
+                        <source_model>Transbank\Webpay\Model\Config\OrderStatus</source_model>
+                    </field>
+                    <!-- New order status -->
+                    <field id="new_order_status" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Estado de Nueva Orden</label>
+                        <source_model>Magento\Sales\Model\Config\Source\Order\Status\NewStatus</source_model>
+                    </field>
+                    <!-- Plugin sort order -->
+                    <field id="sort_order" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Posición del plugin</label>
+                        <frontend_class>validate-number</frontend_class>
+                        <comment>Posición en la que aparecerá la opción de pago, debe ser menor a otros medios de pago para que aparezca primero</comment>
+                    </field>
+                </group>
+                <group id="security" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Parámetros de seguridad</label>
+                    <attribute type="expanded">0</attribute>
+
+                    <!-- Environment -->
+                    <field id="environment" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Ambiente</label>
+                        <source_model>Transbank\Webpay\Model\Config\Environment</source_model>
+                    </field>
+
+                    <!-- Commerce Code -->
+                    <field id="commerce_code" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Código de Comercio</label>
+                        <comment>Identificador único del comercio, asegurate de que comience con 5970</comment>
+                    </field>
+
+                    <!-- Api Key -->
+                    <field id="api_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>API Key</label>
+                        <comment>Llave secreta utilizada para conectarse a la API, asegurate de no compartir su contenido!</comment>
+                    </field>
+                </group>
+                <group id="diagnostics" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Herramientas de diagnóstico</label>
                     <attribute type="expanded">0</attribute>
                     <field id="tbk_button" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="09" translate="label" type="button">
                         <label>Herramienta de diagnóstico</label>
                         <frontend_model>Transbank\Webpay\Block\System\Config\TbkButton</frontend_model>
                     </field>
                 </group>
-
-                <group id="security_parameters" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Parámetros de seguridad</label>
-                    <attribute type="expanded">0</attribute>
-                    <field id="environment" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Ambiente</label>
-                        <source_model>Transbank\Webpay\Model\Config\Environment</source_model>
-                    </field>
-                    <!-- Codigo de Comercio -->
-                    <field id="commerce_code" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Código de Comercio</label>
-                        <comment>Identificador único del comercio</comment>
-                    </field>
-                    <!-- Llave Privada -->
-                    <field id="private_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Llave Privada</label>
-                    </field>
-                    <!-- Llave de Plugin -->
-                    <field id="public_cert" translate="label" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Certificado Publico</label>
-                    </field>
-                    <field id="sucefully_pay" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Estado de Pago Exitoso</label>
-                        <source_model>Transbank\Webpay\Model\Config\OrderStatus</source_model>
-                    </field>
-                    <field id="error_pay" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Estado de Pago Erroneo</label>
-                        <source_model>Transbank\Webpay\Model\Config\OrderStatus</source_model>
-                    </field>
-                    <field id="order_status" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Estado de Nueva Orden</label>
-                        <source_model>Magento\Sales\Model\Config\Source\Order\Status\NewStatus</source_model>
-                    </field>
-                    <field id="sort_order" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Sort Order</label>
-                        <frontend_class>validate-number</frontend_class>
-                    </field>
-                </group>
-
             </group>
         </section>
     </system>

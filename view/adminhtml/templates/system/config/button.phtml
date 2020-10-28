@@ -40,66 +40,6 @@
 
                 <br>
 
-                <h3 class="tbk_title_h3">Validación certificados</h3>
-                <h4 class="tbk_table_title">Consistencias</h4>
-                <table class="tbk_table_info">
-                    <tr>
-                        <td><div title="Informa si las llaves ingresadas por el usuario corresponden al certificado entregado por Transbank" class="label label-info">?</div> <strong>Consistencias con llaves: </strong></td>
-                        <td class="tbk_table_td"><span class=<?php
-                        if($this->tbk_data['cert_vs_private'] == 'OK'){
-                            echo '"label label-success2">';}
-                        else{
-                            echo '"label label-danger2">';}
-                        echo $this->tbk_data['cert_vs_private'];
-                        ?>
-                        </span></td>
-                    </tr>
-                    <tr>
-                        <td><div title="Informa si el código de comercio ingresado por el usuario corresponde al certificado entregado por Transbank" class="label label-info">?</div> <strong>Validación Código de comercio: </strong></td>
-                        <td class="tbk_table_td"><span class= <?php
-                        if($this->tbk_data['commerce_code_validate'] == 'OK'){
-                            echo '"label label-success2">';}
-                        else{
-                            echo '"label label-danger2">';}
-                        echo $this->tbk_data['commerce_code_validate'];
-                        ?></span></td>
-                    </tr>
-                </table>
-
-                <hr>
-
-                <h4 class="tbk_table_title">Información del certificado</h4>
-                <table class="tbk_table_info">
-                    <tr>
-                        <td><div title="CN (common name) dentro del certificado, en este caso corresponde al código de comercio emitido por Transbank" class="label label-info">?</div> <strong>Código de Comercio Válido: </strong></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['subject_commerce_code']; ?></td>
-                    </tr>
-                    <tr>
-                        <td><div title="Versión del certificado emitido por Transbank" class="label label-info">?</div> <strong>Versión cetificado: </strong></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['cert_version']; ?></td>
-                    </tr>
-                    <tr>
-                        <td><div title="Informa si el certificado está vigente actualmente" class="label label-info">?</div> <strong>Vigencia: </strong></td>
-                        <td class="tbk_table_td"><span  class= <?php
-                        if($this->tbk_data['cert_is_valid']  == 'OK'){
-                            echo '"label label-success2">';}
-                        else{
-                            echo '"label label-danger2">';}
-                        echo  $this->tbk_data['cert_is_valid'];
-                        ?></span></td>
-                    </tr>
-                    <tr>
-                        <td><div title="Fecha desde la cual el certificado es válido" class="label label-info">?</div> <strong>Válido desde: </strong></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['valid_from']; ?></td>
-                    </tr>
-                    <tr>
-                        <td><div title="Fecha hasta la cual el certificado es válido" class="label label-info">?</div> <strong>Válido hasta: </strong></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['valid_to']; ?></td>
-                    </tr>
-                </table>
-
-                <br>
-
                 <h3 class="tbk_title_h3">Estado de la Extensiones de PHP</h3>
                 <h4 class="tbk_table_title">Información Principal</h4>
                 <table class="tbk_table_info">
@@ -131,44 +71,6 @@
 
                 <h4 class="tbk_table_title">Extensiones PHP requeridas</h4>
                 <table class="table table-responsive table-striped">
-                    <tr>
-                        <th>Extensión</th>
-                        <th>Estado</th>
-                        <th class="tbk_table_td">Versión</th>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold">openssl</td>
-                        <td class="tbk_table_td"><span class= <?php
-                        if( $this->tbk_data['openssl_status']  == 'OK'){
-                            echo '"label label-success2">';}
-                        else{
-                            echo '"label label-danger2">';}
-                        echo   $this->tbk_data['openssl_status'];
-                        ?></span></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['openssl_version']; ?></td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold">SimpleXml</td>
-                        <td class="tbk_table_td"><span class= <?php
-                        if( $this->tbk_data['SimpleXML_status']  == 'OK'){
-                            echo '"label label-success2">';}
-                        else{
-                            echo '"label label-danger2">';}
-                        echo $this->tbk_data['SimpleXML_status'];
-                        ?></span></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['SimpleXML_version']; ?></td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight:bold">soap</td>
-                        <td class="tbk_table_td"><span class= <?php
-                        if( $this->tbk_data['soap_status']  == 'OK'){
-                            echo '"label label-success2">';}
-                        else{
-                            echo '"label label-danger2">';}
-                        echo $this->tbk_data['soap_status'];
-                        ?></span></td>
-                        <td class="tbk_table_td"><?php echo $this->tbk_data['soap_version']; ?></td>
-                    </tr>
                     <tr>
                         <td style="font-weight:bold">dom</td>
                         <td class="tbk_table_td"><span class= <?php

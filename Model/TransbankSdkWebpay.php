@@ -14,7 +14,7 @@ class TransbankSdkWebpay {
     function __construct($config) {
         $this->log = new LogHandler();
         if (isset($config)) {
-            $environment = isset($config["MODO"]) ? $config["MODO"] : 'INTEGRACION';
+            $environment = isset($config["ENVIRONMENT"]) ? $config["ENVIRONMENT"] : 'INTEGRACION';
             $configuration = Configuration::forTestingWebpayPlusNormal();
 
             if ($environment != 'INTEGRACION') {

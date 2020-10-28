@@ -20,30 +20,28 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface 
 
     public function getPluginConfig() {
         $config = array(
-			'MODO' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'environment'),
-			'PRIVATE_KEY' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'private_key'),
-			'PUBLIC_CERT' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'public_cert'),
-			'WEBPAY_CERT' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'webpay_cert'),
+            'ENVIRONMENT' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'environment'),
             'COMMERCE_CODE' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'commerce_code'),
+			'API_KEY' => $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'api_key'),
 			'URL_RETURN' => 'checkout/transaction/commitwebpay',
 			'URL_FINAL' => 'checkout/transaction/commitwebpay',
             'ECOMMERCE' => 'magento',
-            'order_status' => $this->getOrderPendingStatus(),
-            'sucefully_pay' => $this->getOrderSuccessStatus(),
-            'error_pay' => $this->getOrderErrorStatus(),
+            'new_order_status' => $this->getOrderPendingStatus(),
+            'payment_successful_status' => $this->getOrderSuccessStatus(),
+            'payment_error_status' => $this->getOrderErrorStatus(),
         );
         return $config;
     }
 
     public function getOrderPendingStatus() {
-        return $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'order_status');
+        return $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'new_order_status');
     }
 
     public function getOrderSuccessStatus() {
-        return $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'sucefully_pay');
+        return $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'payment_successful_status');
     }
 
     public function getOrderErrorStatus() {
-        return $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'error_pay');
+        return $this->scopeConfigInterface->getValue(self::CONFIG_ROUTE.'payment_error_status');
     }
 }
