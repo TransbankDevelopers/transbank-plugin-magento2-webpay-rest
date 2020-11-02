@@ -1,8 +1,9 @@
 <?php
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Model\TransbankSdkWebpay;
+use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\LogHandler;
+
 
 use \Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\WebpayOrderData;
@@ -67,17 +68,16 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
             $paymentStatus = $webpayOrderData->getPaymentStatus();
             if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_WATING) {
                 
-                $transbankSdkWebpay = new TransbankSdkWebpay($config);
+                $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
                 $transactionResult = $transbankSdkWebpay->commitTransaction($tokenWs);
-                
                 $webpayOrderData->setMetadata(json_encode($transactionResult));
                 
-                if (isset($transactionResult->buyOrder) && isset($transactionResult->detailOutput) && $transactionResult->detailOutput->responseCode == 0) {
+                if (isset($transactionResult->buyOrder) && isset($transactionResult->responseCode) && $transactionResult->responseCode == 0) {
     
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_SUCCESS);
                     $webpayOrderData->save();
                     
-                    $authorizationCode = $transactionResult->detailOutput->authorizationCode;
+                    $authorizationCode = $transactionResult->authorizationCode;
                     $payment = $order->getPayment();
                     $payment->setLastTransId($authorizationCode);
                     $payment->setTransactionId($authorizationCode);
@@ -90,21 +90,23 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                     
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
                     
-                    return $this->toRedirect($transactionResult->urlRedirection, ['token_ws' => $tokenWs]);
+                    $message = $this->getSuccessMessage($this->commitResponseToArray($transactionResult));
+                    $this->messageManager->addSuccess(__($message));
+                    
+                    return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                     
                 } else {
-    
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
                     $order->cancel();
                     $order->save();
                     $order->setStatus($orderStatusCanceled);
-                    
+
                     $order->addStatusToHistory($order->getStatus(), json_encode($transactionResult));
                     $order->save();
-                    
+
                     $this->checkoutSession->restoreQuote();
-                    
-                    $message = $this->getRejectMessage(json_decode(json_encode($transactionResult), true));
+
+                    $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
                     
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -150,44 +152,64 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         
         return $response;
     }
+
+    protected function commitResponseToArray($response){
+        return [
+            'vci' => $response->getVci(),
+            'amount' => $response->getAmount(),
+            'status' => $response->getStatus(),
+            'buyOrder' => $response->getBuyOrder(),
+            'sessionId' => $response->getSessionId(),
+            'cardDetail' => $response->getCardDetail(),
+            'accountingDate' => $response->getAccountingDate(),
+            'transactionDate' => $response->getTransactionDate(),
+            'authorizationCode' => $response->getAuthorizationCode(),
+            'paymentTypeCode' => $response->getPaymentTypeCode(),
+            'responseCode' => $response->getResponseCode(),
+            'installmentsAmount' => $response->getInstallmentsAmount(),
+            'installmentsNumber' => $response->getInstallmentsNumber(),
+            'balance' => $response->getBalance()
+        ];
+    }
     
     protected function getSuccessMessage(array $transactionResult)
     {
-        
-        if ($transactionResult['detailOutput']['paymentTypeCode'] == "SI" || $transactionResult['detailOutput']['paymentTypeCode'] == "S2" || $transactionResult['detailOutput']['paymentTypeCode'] == "NC" || $transactionResult['detailOutput']['paymentTypeCode'] == "VC") {
-            $tipoCuotas = $this->paymentTypeCodearray[$transactionResult['detailOutput']['paymentTypeCode']];
+        if ($transactionResult['paymentTypeCode'] == "SI" || $transactionResult['paymentTypeCode'] == "S2" || $transactionResult['paymentTypeCode'] == "NC" || $transactionResult['paymentTypeCode'] == "VC") {
+            $tipoCuotas = $this->paymentTypeCodearray[$transactionResult['paymentTypeCode']];
         } else {
             $tipoCuotas = "Sin cuotas";
         }
         
-        if ($transactionResult['detailOutput']['responseCode'] == 0) {
+        if ($transactionResult['responseCode'] == 0) {
             $transactionResponse = "Transacci&oacute;n Aprobada";
         } else {
             $transactionResponse = "Transacci&oacute;n Rechazada";
         }
         
-        if ($transactionResult['detailOutput']['paymentTypeCode'] == "VD") {
+        if ($transactionResult['paymentTypeCode'] == "VD") {
             $paymentType = "Débito";
+        } elseif ($transactionResult['paymentTypeCode'] == "VP" ) {
+            $paymentType = "Prepago";
         } else {
             $paymentType = "Crédito";
         }
-        
+
         $message = "<h2>Detalles del pago con Webpay</h2>
         <p>
             <br>
             <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResponse}<br>
-            <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult['detailOutput']['responseCode']}<br>
-            <b>Monto:</b> $ {$transactionResult['detailOutput']['amount']}<br>
-            <b>Order de Compra: </b> {$transactionResult['detailOutput']['buyOrder']}<br>
+            <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
+            <b>Monto:</b> $ {$transactionResult['amount']}<br>
+            <b>Order de Compra: </b> {$transactionResult['buyOrder']}<br>
             <b>Fecha de la Transacci&oacute;n: </b>" . date('d-m-Y', strtotime($transactionResult['transactionDate'])) . "<br>
             <b>Hora de la Transacci&oacute;n: </b>" . date('H:i:s', strtotime($transactionResult['transactionDate'])) . "<br>
-            <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['cardNumber']}<br>
-            <b>C&oacute;digo de autorizacion: </b>{$transactionResult['detailOutput']['authorizationCode']}<br>
+            <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['card_number']}<br>
+            <b>C&oacute;digo de autorizacion: </b>{$transactionResult['authorizationCode']}<br>
             <b>Tipo de Pago: </b>{$paymentType}<br>
             <b>Tipo de Cuotas: </b>{$tipoCuotas}<br>
-            <b>N&uacute;mero de cuotas: </b>{$transactionResult['detailOutput']['sharesNumber']}
+            <b>N&uacute;mero de cuotas: </b>{$transactionResult['installmentsNumber']}
         </p>";
-        
+
         return $message;
     }
     
@@ -210,17 +232,17 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     
     protected function getRejectMessage(array $transactionResult)
     {
-        if (isset($transactionResult['detailOutput'])) {
+        if (isset($transactionResult)) {
             $message = "<h2>Transacci&oacute;n rechazada con Webpay</h2>
             <p>
                 <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult['detailOutput']['responseCode']}<br>
-                <b>Monto:</b> $ {$transactionResult['detailOutput']['amount']}<br>
-                <b>Order de Compra: </b> {$transactionResult['detailOutput']['buyOrder']}<br>
+                <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
+                <b>Monto:</b> $ {$transactionResult['amount']}<br>
+                <b>Order de Compra: </b> {$transactionResult['buyOrder']}<br>
                 <b>Fecha de la Transacci&oacute;n: </b>" . date('d-m-Y', strtotime($transactionResult['transactionDate'])) . "<br>
                 <b>Hora de la Transacci&oacute;n: </b>" . date('H:i:s', strtotime($transactionResult['transactionDate'])) . "<br>
                 <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['cardNumber']}<br>
-                <b>Mensaje de Rechazo: </b>{$transactionResult['detailOutput']['responseDescription']}
+                <b>Mensaje de Rechazo: </b>{$transactionResult['responseDescription']}
             </p>";
             
             return $message;

@@ -1,5 +1,6 @@
 <?php
 namespace Transbank\Webpay\Model;
+use Transbank\Webpay\Options;
 
 class HealthCheck {
 
@@ -14,6 +15,9 @@ class HealthCheck {
     var $config;
 
     public function __construct($config) {
+        $config['ENVIRONMENT'] = Options::defaultConfig()->getIntegrationType();
+        $config['COMMERCE_CODE'] = Options::defaultConfig()->getCommerceCode();
+        $config['API_KEY'] = Options::defaultConfig()->getApiKey();
         $this->config = $config;
         $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];
@@ -164,13 +168,12 @@ class HealthCheck {
     }
 
     public function setInitTransaction() {
-        $transbankSdkWebpay = new TransbankSdkWebpay($this->config);
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
         $amount = 990;
         $buyOrder = "_Healthcheck_";
         $sessionId = uniqid();
         $returnUrl = "https://webpay3gint.transbank.cl/filtroUnificado/initTransaction";
-        $finalUrl = "https://webpay3gint.transbank.cl/filtroUnificado/initTransaction";
-        $result = $transbankSdkWebpay->initTransaction($amount, $sessionId, $buyOrder, $returnUrl, $finalUrl);
+        $result = $transbankSdkWebpay->createTransaction($amount, $sessionId, $buyOrder, $returnUrl);
         if ($result) {
             if (!empty($result["error"]) && isset($result["error"])) {
                 $status = 'Error';

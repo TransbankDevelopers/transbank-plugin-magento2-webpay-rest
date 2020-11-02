@@ -2,7 +2,8 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
         <payment>
-            <transbank_webpay_plus_rest>
+            <transbank_webpay>
+                <model>Transbank\Webpay\Model\Webpay</model>
                 <active>1</active>
                 <general_parameters>
                     <payment_successful_status>complete</payment_successful_status>
@@ -11,14 +12,14 @@
                     <sort_order>0</sort_order>
                 </general_parameters>
                 <security>
-                    <environment>INTEGRACION</environment>
+                    <environment>TEST</environment>
                     <commerce_code>597055555532</commerce_code>
                     <api_key>579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C</api_key>
                 </security>
                 <diagnostics>
                     <!-- No config values yet -->
                 </diagnostics>
-            </transbank_webpay_plus_rest>
+            </transbank_webpay>
         </payment>
     </default>
 </config>
