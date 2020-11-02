@@ -1,93 +1,48 @@
 <?php
 namespace Transbank\Webpay\Model;
+use Transbank\Webpay\Options;
 
 class HealthCheck {
 
-    var $publicCert;
-    var $privateKey;
-    var $webpayCert;
+    var $apiKey;
     var $commerceCode;
     var $environment;
     var $extensions;
-    var $versioninfo;
+    var $versionInfo;
     var $resume;
     var $fullResume;
-    var $certficados;
     var $ecommerce;
     var $config;
 
     public function __construct($config) {
+        $config['ENVIRONMENT'] = Options::defaultConfig()->getIntegrationType();
+        $config['COMMERCE_CODE'] = Options::defaultConfig()->getCommerceCode();
+        $config['API_KEY'] = Options::defaultConfig()->getApiKey();
         $this->config = $config;
-        $this->environment = $config['MODO'];
+        $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];
-        $this->publicCert = $config['PUBLIC_CERT'];
-        $this->privateKey = $config['PRIVATE_KEY'];
-        $this->webpayCert = $config['WEBPAY_CERT'];
+        $this->apiKey = $config['API_KEY'];
         $this->ecommerce = $config['ECOMMERCE'];
         // extensiones necesarias
         $this->extensions = array(
-            'openssl',
-            'SimpleXML',
-            'soap',
             'dom'
         );
-    }
-
-    // validacion certificado publico versus la llave
-    private function getValidateCertificates() {
-        $this->certinfo = array(
-            'subject_commerce_code' => $this->commerceCode,
-            'version' => 'Error',
-            'is_valid' => 'Error',
-            'valid_from' => 'Error',
-            'valid_to' => 'Error',
-        );
-        $this->certificates = array(
-            'cert_vs_private_key' => 'Error!: Certificados inconsistentes',
-            'commerce_code_validate' => 'Error'
-        );
-        if ($var = openssl_x509_parse($this->publicCert)) {
-            $today = date('Y-m-d H:i:s');
-            $from = date('Y-m-d H:i:s', $var['validFrom_time_t']);
-            $to = date('Y-m-d H:i:s', $var['validTo_time_t']);
-            if ($today >= $from and $today <= $to) {
-                $val = "OK";
-            } else {
-                $val = "Error!: Certificado Inválido por Fecha";
-            }
-            $this->certinfo = array(
-                'subject_commerce_code' => $var['subject']['CN'],
-                'version' => $var['version'],
-                'is_valid' => $val,
-                'valid_from' => date('Y-m-d H:i:s', $var['validFrom_time_t']),
-                'valid_to' => date('Y-m-d H:i:s', $var['validTo_time_t']),
-            );
-        }
-        if (openssl_x509_check_private_key($this->publicCert, $this->privateKey)) {
-            if ($this->commerceCode == $this->certinfo['subject_commerce_code']) {
-                $this->certificates = array(
-                    'cert_vs_private_key' => 'OK',
-                    'commerce_code_validate' => 'OK'
-                );
-            }
-        }
-        return array('consistency' => $this->certificates, 'cert_info' => $this->certinfo);
     }
 
     // valida version de php
     private function getValidatephp() {
         if (version_compare(phpversion(), '7.2.1', '<=') and version_compare(phpversion(), '5.5.0', '>=')) {
-            $this->versioninfo = array(
+            $this->versionInfo = array(
                 'status' => 'OK',
                 'version' => phpversion()
             );
         } else {
-            $this->versioninfo = array(
+            $this->versionInfo = array(
                 'status' => 'WARN: El plugin no ha sido testeado con esta version',
                 'version' => phpversion()
             );
         }
-        return $this->versioninfo;
+        return $this->versionInfo;
     }
 
     // verifica si existe la extension y cual es la version de esta
@@ -195,9 +150,7 @@ class HealthCheck {
         $result = array(
             'environment' => $this->environment,
             'commerce_code' => $this->commerceCode,
-            'public_cert' => $this->publicCert,
-            'private_key' => $this->privateKey,
-            'webpay_cert' => $this->webpayCert
+            'api_key' => $this->apiKey
         );
         return array('data' => $result);
     }
@@ -215,13 +168,12 @@ class HealthCheck {
     }
 
     public function setInitTransaction() {
-        $transbankSdkWebpay = new TransbankSdkWebpay($this->config);
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
         $amount = 990;
         $buyOrder = "_Healthcheck_";
         $sessionId = uniqid();
         $returnUrl = "https://webpay3gint.transbank.cl/filtroUnificado/initTransaction";
-        $finalUrl = "https://webpay3gint.transbank.cl/filtroUnificado/initTransaction";
-        $result = $transbankSdkWebpay->initTransaction($amount, $sessionId, $buyOrder, $returnUrl, $finalUrl);
+        $result = $transbankSdkWebpay->createTransaction($amount, $sessionId, $buyOrder, $returnUrl);
         if ($result) {
             if (!empty($result["error"]) && isset($result["error"])) {
                 $status = 'Error';
@@ -243,7 +195,6 @@ class HealthCheck {
     //compila en solo un metodo toda la informacion obtenida, lista para imprimir
     private function getFullResume() {
         $this->fullResume = array(
-            'validate_certificates' => $this->getValidateCertificates(),
             'server_resume' => $this->getServerResume(),
             'php_extensions_status'  => $this->getExtensionsValidate(),
             'commerce_info' => $this->getCommerceInfo(),
@@ -263,11 +214,6 @@ class HealthCheck {
 
     public function printPhpInfo() {
         return json_encode($this->getPhpInfo());
-    }
-
-    // imprime resultado la consistencia de certificados y llabves
-    public function printCertificatesStatus() {
-        return json_encode($this->getValidateCertificates());
     }
 
     // imprime en formato json la validacion de extensiones / modulos de php

@@ -9,12 +9,12 @@ class OrderStatus implements \Magento\Framework\Option\ArrayInterface {
      * @return array
      */
     public function toOptionArray() {
-        return [['value' => 'processing', 'label' => __('processing')],
-                ['value' => 'pending_payment', 'label' => __('pending_payment')],
-                ['value' => 'payment_review', 'label' => __('payment_review')],
-                ['value' => 'complete', 'label' => __('complete')],
-                ['value' => 'canceled', 'label' => __('canceled')],
-                ['value' => 'closed', 'label' => __('closed')]];
+        return [['value' => 'processing', 'label' => __('Processing')],
+                ['value' => 'pending_payment', 'label' => __('Pending Payment')],
+                ['value' => 'payment_review', 'label' => __('Payment Review')],
+                ['value' => 'complete', 'label' => __('Complete')],
+                ['value' => 'canceled', 'label' => __('Canceled')],
+                ['value' => 'closed', 'label' => __('Closed')]];
     }
 
     /**
@@ -23,12 +23,12 @@ class OrderStatus implements \Magento\Framework\Option\ArrayInterface {
      * @return array
      */
     public function toArray() {
-        return ['processing' => __('processing'),
-                'pending_payment' => __('pending_payment'),
+        return ['processing' => __('Processing'),
+                'pending_payment' => __('Pending Payment'),
                 'payment_review' => __('payment_review'),
-                'complete' => __('complete'),
-                'canceled' => __('canceled'),
-                'closed' => __('closed')];
+                'complete' => __('Complete'),
+                'canceled' => __('Canceled'),
+                'closed' => __('Closed')];
     }
 
 }

@@ -1,7 +1,7 @@
 <?php
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Model\TransbankSdkWebpay;
+use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\LogHandler;
 use \Transbank\Webpay\Model\Webpay;
 
@@ -92,14 +92,13 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
             $returnUrl = $baseUrl . $config['URL_RETURN'];
-            $finalUrl = $baseUrl . $config['URL_FINAL'];
             $quoteId = $quote->getId();
             $orderId = $this->getOrderId();
 
             $quote->save();
 
-            $transbankSdkWebpay = new TransbankSdkWebpay($config);
-            $response = $transbankSdkWebpay->initTransaction($grandTotal, $quoteId, $orderId, $returnUrl, $finalUrl);
+            $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+            $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $orderId, $returnUrl);
 
             $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId];
             $message = "<h3>Esperando pago con Webpay</h3><br>" . json_encode($dataLog);

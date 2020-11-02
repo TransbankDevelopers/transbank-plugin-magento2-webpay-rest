@@ -1,12 +1,8 @@
 build .built:
 	./copy-plugin
-	docker-compose run p73-m23 install-magento
-	docker-compose stop
-	docker-compose run p73-m23 composer require transbank/transbank-sdk
-	docker-compose stop
-	docker-compose run p73-m23 install-plugin
-	docker-compose stop
-	docker-compose run p73-m23 install-sampledata
+	docker-compose up --build -d p73-m23 
+	docker-compose exec p73-m23 composer require transbank/transbank-sdk
+	docker-compose exec p73-m23 install-plugin
 	docker-compose stop
 	touch .built
 
@@ -19,4 +15,4 @@ start: .built
 
 clean:
 	docker-compose rm -vfs
-	rm .built
+	rm -f .built
