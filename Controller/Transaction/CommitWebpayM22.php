@@ -193,6 +193,13 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         } else {
             $paymentType = "Crédito";
         }
+        $installmentsString = '';
+        if ($tipoCuotas != "Sin cuotas"){
+            $installmentsString = "
+                <b>N&uacute;mero de cuotas: </b>{$transactionResult['installmentsNumber']}<br>
+                <b>Monto Cuota: </b>{$transactionResult['installmentsAmount']}<br>
+        ";
+        }
 
         $message = "<h2>Detalles del pago con Webpay</h2>
         <p>
@@ -207,7 +214,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
             <b>C&oacute;digo de autorizacion: </b>{$transactionResult['authorizationCode']}<br>
             <b>Tipo de Pago: </b>{$paymentType}<br>
             <b>Tipo de Cuotas: </b>{$tipoCuotas}<br>
-            <b>N&uacute;mero de cuotas: </b>{$transactionResult['installmentsNumber']}
+            {$installmentsString}
         </p>";
 
         return $message;
