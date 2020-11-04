@@ -17,15 +17,13 @@ Habilitar los siguientes módulos / extensiones para PHP:
 
 ## Instalación del Plugin
 
-**Nota:** En este punto composer podría pedirte si lo requiere tus creedenciales de magento2.
+**Nota:** En este punto composer podría pedirte si lo requiere tus credenciales de magento2.
 
 **Versiones disponibles** [Aquí](https://packagist.org/packages/transbank/webpay-magento2)
 
 En tu directorio de Magento2, ejecutar el siguiente comando para instalar la última versión:
 
-    composer require transbank/webpay-magento2
-
-  ![paso7](img/paso7.png)
+    composer require transbank/webpay-magento2-rest
 
 Cuando finalice, ejecutar el comando:
 
@@ -68,12 +66,10 @@ Para acceder a la configuración, debes seguir los siguientes pasos:
   ![paso14](img/paso14.png)
 
 6. ¡Ya está! Estás en la pantalla de configuración del plugin, debes ingresar la siguiente información:
-  * **Enable**: Al activarlo, Webpay estará disponible como medio de pago. Ten la precaución de que se encuentre marcada esta opción cuando quieras que los usuarios paguen con Webpay.
+  * **Habilitado**: Al activarlo, Webpay estará disponible como medio de pago. Ten la precaución de que se encuentre marcada esta opción cuando quieras que los usuarios paguen con Webpay.
   * **Ambiente**: Ambiente hacia donde se realiza la transacción. 
   * **Código de comercio**: Es lo que te identifica como comercio.
-  * **Llave Privada**: Llave secreta que te autoriza y valida a hacer transacciones.
-  * **Certificado Publico**: Llave publica que te autoriza y valida a hacer transacciones.
-  * **Certificado Webpay**: Llave secreta de webpay que te autoriza y valida a hacer transacciones.
+  * **API Key**: Es tu clave para acceder a los servicios REST de Webpay.
 
   Las opciones disponibles para _Ambiente_ son: "Integración" para realizar pruebas y certificar la instalación con Transbank, y "Producción" para hacer transacciones reales una vez que Transbank ha aprobado el comercio.
   
@@ -81,21 +77,20 @@ Para acceder a la configuración, debes seguir los siguientes pasos:
 
 Para el ambiente de Integración, puedes utilizar las siguientes credenciales para realizar pruebas:
 
-* Código de comercio: `597020000540`
-* Llave Privada: Se puede encontrar [aquí - private_key](https://github.com/TransbankDevelopers/transbank-webpay-credenciales/blob/master/integracion/Webpay%20Plus%20-%20CLP/597020000540.key)
-* Certificado Publico: Se puede encontrar [aquí - public_cert](https://github.com/TransbankDevelopers/transbank-webpay-credenciales/blob/master/integracion/Webpay%20Plus%20-%20CLP/597020000540.crt)
+* Código de comercio: `597055555532`
+* Llave Privada: `579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C`
 
 1. Guardar los cambios presionando el botón [Save Config]
 
   ![paso15](img/paso15.png)
 
-2. Además, puedes generar un documento de diagnóstico en caso que Transbank te lo pida. Para ello, haz click en "Parametros Principales" botón "Información" ahí podrás descargar un pdf.
+2. Además, puedes generar un documento de diagnóstico en caso que Transbank te lo pida. Para ello, haz click en "Herramientas de diagnóstico" botón "Información" ahí podrás descargar un pdf.
 
   ![paso17](img/paso17.png)
 
-## Configuración de magento2 para Chile CLP
+## Configuración de Magento2 para CLP
 
-El plugin solamente funciona con moneda chilena CLP dado esto magento2 debe estar correctamente configurado para que que se pueda usar Webpay.
+El plugin solamente funciona con moneda chilena CLP dado esto Magento 2 debe estar correctamente configurado para que que se pueda usar Webpay.
 
 1. Ir a la sección de administración (Stores / General / Country Option) y elegir Chile tal como se muestra en la siguiente imagen, luego guardar los cambios.
 
