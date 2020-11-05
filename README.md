@@ -51,7 +51,7 @@ El plugin depende de las siguientes librerías:
 2. [Opción 1] Ejecutar los siguientes comandos para instalar el plugin directamente desde packagist.org:
 
     ```bash
-	composer require transbank/webpay-magento2
+	composer require transbank/webpay-magento2-rest
     ```
    Esperar mientras las dependencias son actualizadas.
 
