@@ -23,7 +23,7 @@ Habilitar los siguientes módulos / extensiones para PHP:
 
 En tu directorio de Magento2, ejecutar el siguiente comando para instalar la última versión:
 
-    composer require transbank/webpay-magento2-rest
+    `composer require transbank/webpay-magento2-rest`
 
 Cuando finalice, ejecutar el comando:
 
