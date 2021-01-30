@@ -4,6 +4,7 @@
         <payment>
             <transbank_webpay>
                 <model>Transbank\Webpay\Model\Webpay</model>
+                <title translate="label">WebPay</title>
                 <active>1</active>
                 <general_parameters>
                     <payment_successful_status>complete</payment_successful_status>
