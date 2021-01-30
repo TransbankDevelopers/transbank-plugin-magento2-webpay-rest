@@ -85,7 +85,7 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
             $this->checkoutSession->setLastQuoteId($quote->getId());
             $this->checkoutSession->setLastSuccessQuoteId($quote->getId());
             $this->checkoutSession->setLastOrderId($order->getId());
-            $this->checkoutSession->setLastRealOrderId($order->getEntityId());
+            $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
             $this->checkoutSession->setLastOrderStatus($order->getStatus());
             $this->checkoutSession->setGrandTotal($grandTotal);
 

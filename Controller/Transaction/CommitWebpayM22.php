@@ -276,7 +276,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     protected function getOrder($orderId)
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
+        return $objectManager->create('\Magento\Sales\Model\Order')->loadByIncrementId($orderId);
     }
     /**
      * @param $tokenWs
