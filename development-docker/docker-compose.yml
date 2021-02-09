@@ -17,6 +17,8 @@ services:
 
   db:
     restart: always
+    ports:
+      - 33066:3306
     image: mysql:5.6
     volumes:
       - data:/var/lib/mysql
