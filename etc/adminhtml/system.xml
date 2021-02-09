@@ -9,7 +9,12 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
 
-                <group id="general_parameters" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Payment Title</label>
+                    <config_path>payment/transbank_webpay/title</config_path>
+                </field>
+
+                <group id="general_parameters" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Parámetros Generales</label>
                     <attribute type="expanded">0</attribute>
 
@@ -35,7 +40,7 @@
                         <comment>Posición en la que aparecerá la opción de pago, debe ser menor a otros medios de pago para que aparezca primero</comment>
                     </field>
                 </group>
-                <group id="security" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                <group id="security" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Parámetros de seguridad</label>
                     <attribute type="expanded">0</attribute>
 
@@ -57,7 +62,7 @@
                         <comment>Llave secreta utilizada para conectarse a la API ¡asegúrate de no compartir su contenido!</comment>
                     </field>
                 </group>
-                <group id="diagnostics" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                <group id="diagnostics" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Herramientas de diagnóstico</label>
                     <attribute type="expanded">0</attribute>
                     <field id="tbk_button" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="09" translate="label" type="button">
