@@ -1,4 +1,5 @@
 <?php
+
 namespace Transbank\Webpay\Model\ResourceModel;
 
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
@@ -6,8 +7,9 @@ use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 class WebpayOrderData extends AbstractDb
 {
     const TABLE_NAME = 'webpay_orders_data';
+
     /**
-     * Initialize resource
+     * Initialize resource.
      *
      * @return void
      */

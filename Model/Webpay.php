@@ -1,21 +1,22 @@
 <?php
+
 namespace Transbank\Webpay\Model;
 
-class Webpay extends \Magento\Payment\Model\Method\AbstractMethod {
-
+class Webpay extends \Magento\Payment\Model\Method\AbstractMethod
+{
     const CODE = 'transbank_webpay';
 
     /**
-     * Payment code
+     * Payment code.
      *
      * @var string
      */
     protected $_code = self::CODE;
 
     /**
-     * Array of currency support
+     * Array of currency support.
      */
-    protected $_supportedCurrencyCodes = array('CLP');
+    protected $_supportedCurrencyCodes = ['CLP'];
 
     protected $_isGateway = true;
     protected $_canCapture = true;
@@ -25,20 +26,23 @@ class Webpay extends \Magento\Payment\Model\Method\AbstractMethod {
     protected $_canAuthorize = true;
 
     /**
-     * Availability for currency
+     * Availability for currency.
      *
      * @param string $currencyCode
+     *
      * @return bool
      */
-    public function canUseForCurrency($currencyCode) {
+    public function canUseForCurrency($currencyCode)
+    {
         if (!in_array($currencyCode, $this->_supportedCurrencyCodes)) {
             return false;
         }
+
         return true;
     }
 
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) {
-
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
         if (!$this->canCapture()) {
             throw new \Magento\Framework\Exception\LocalizedException(__('The capture action is not available.'));
         }
@@ -50,8 +54,8 @@ class Webpay extends \Magento\Payment\Model\Method\AbstractMethod {
         return $this;
     }
 
-    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount) {
-
+    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
         if (!$this->canAuthorize()) {
             throw new \Magento\Framework\Exception\LocalizedException(__('The authorize action is not available.'));
         }
@@ -59,8 +63,8 @@ class Webpay extends \Magento\Payment\Model\Method\AbstractMethod {
         return $this;
     }
 
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount) {
-
+    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
         if (!$this->canRefund()) {
             throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
         }

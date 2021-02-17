@@ -12,6 +12,7 @@ class WebpayOrderData extends AbstractModel implements \Magento\Framework\DataOb
     const PAYMENT_STATUS_FAILED = 'FAILED';
     const PAYMENT_STATUS_CANCELED_BY_USER = 'FAILED';
     const PAYMENT_STATUS_ERROR = 'ERROR';
+
     /**
      * @return void
      */
@@ -19,9 +20,9 @@ class WebpayOrderData extends AbstractModel implements \Magento\Framework\DataOb
     {
         $this->_init(\Transbank\Webpay\Model\ResourceModel\WebpayOrderData::class);
     }
-    
+
     public function getIdentities()
     {
-        return [self::CACHE_TAG . '_' . $this->getId()];
+        return [self::CACHE_TAG.'_'.$this->getId()];
     }
 }

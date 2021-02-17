@@ -8,61 +8,52 @@
 /**
  * validate_m2_package.php - a script that checks a given M2 zip package to ensure
  * it is structured correctly and has all the required files.
- *
- *
  */
-
-
 
 /**
  * @global array List of files to check for magento2-module packages.
- *
  */
-$g_magentoModuleFiles = array(
-    'etc/module.xml'
-);
+$g_magentoModuleFiles = [
+    'etc/module.xml',
+];
 /**
  * @global array List of files to check for magento2-theme packages.
- *
  */
-$g_themeFiles = array(
-    'theme.xml'
-);
+$g_themeFiles = [
+    'theme.xml',
+];
 /**
  * @global array List of files to check for magento2-theme packages.
- *
  */
-$g_langFiles = array(
-    'language.xml'
-);
+$g_langFiles = [
+    'language.xml',
+];
 /**
  * @global array List of accepted package types to be validated in composer.json
  *               type field. The value here is not used.
- *
  */
-$g_moduleTypes = array(
-    'metapackage' => true,
-    'magento2-module' => true,
-    'magento2-theme' => true,
-    'magento2-language' => true
-);
+$g_moduleTypes = [
+    'metapackage'       => true,
+    'magento2-module'   => true,
+    'magento2-theme'    => true,
+    'magento2-language' => true,
+];
 
 /**
  * @global array List of Magento components or modules that an Extension developer must not depend on
  *               in the composer.json. The value here is not used.
- *
  */
-$g_invalidDependencies = array(
-    'magento/magento2-base' => true,
-    'magento/magento2-ee-base' => true,
-    'magento/product-community-edition' => true,
-    'magento/product-enterprise-edition' => true
-);
+$g_invalidDependencies = [
+    'magento/magento2-base'              => true,
+    'magento/magento2-ee-base'           => true,
+    'magento/product-community-edition'  => true,
+    'magento/product-enterprise-edition' => true,
+];
 
 main($argc, $argv);
 
 /**
- * Main entry point: process arguments and invokes validateM2Zip()
+ * Main entry point: process arguments and invokes validateM2Zip().
  *
  * It calls exit() with the following integer codes:
  *
@@ -73,22 +64,20 @@ main($argc, $argv);
  * Other codes - @see validateM2Zip() below.
  *
  * @see usage()
- *
  * @see validateM2Zip()
  *
  * @SuppressWarnings(PHPMD.ExitExpression)
- *
  */
 function main($argc, $argv)
 {
     $opts = getopt('hd');
 
-    if( isset($opts['h']) ) {
+    if (isset($opts['h'])) {
         usage();
         exit(0);
     }
 
-    if( $argc < 2 ) {
+    if ($argc < 2) {
         usage();
         exit(1);
     }
@@ -97,7 +86,7 @@ function main($argc, $argv)
 
     $zipFiles = getZipFiles($argv);
 
-    if( count($zipFiles) == 0 ) {
+    if (count($zipFiles) == 0) {
         fwrite(STDERR, "ERROR: No zip files were detected. Please refer to the usage.\n");
         usage();
         exit(1);
@@ -107,11 +96,10 @@ function main($argc, $argv)
     // return a non-zero code.
     $rc = 0;
 
-    foreach( $zipFiles as $zip ) {
+    foreach ($zipFiles as $zip) {
         $rc2 = validateM2Zip($zip, $debug);
 
-        if($rc2 != 0)
-        {
+        if ($rc2 != 0) {
             $rc = $rc2;
         }
     }
@@ -123,11 +111,10 @@ function main($argc, $argv)
  * Displays usage.
  *
  * @return void
- *
  */
 function usage()
 {
-    echo <<<EOF
+    echo <<<'EOF'
 Usage: validate_m2_package [OPTIONS] <M2 zip file> [<M2 zip file> ...]
 
        -h  help
@@ -140,12 +127,11 @@ EOF;
 }
 
 /**
- * Parses the zip files given as arguments
+ * Parses the zip files given as arguments.
  *
  * @param array $argv Command Line arguments
  *
  * @return array $zipFiles Names of the zip files.
- *
  */
 function getZipFiles($argv)
 {
@@ -153,16 +139,15 @@ function getZipFiles($argv)
     // Getting rid of the script name
     array_shift($argv);
 
-    foreach( $argv as $arg ) {
-        if( $arg == '-d' ) {
+    foreach ($argv as $arg) {
+        if ($arg == '-d') {
             continue;
         }
 
-        if( preg_match("/.*\.zip$/", $arg) ) {
+        if (preg_match("/.*\.zip$/", $arg)) {
             $zipFiles[] = $arg;
-        }
-        else {
-            print "ERROR: \"$arg\" was skipped because it is not of the correct file format (.zip).\n";
+        } else {
+            echo "ERROR: \"$arg\" was skipped because it is not of the correct file format (.zip).\n";
         }
     }
 
@@ -245,10 +230,10 @@ function getZipFiles($argv)
  *
  * Wherever possible, the check continues on and outputs any errors or warnings to the stderr.
  *
- * @param string  $fname The path to the zip file.
- * @param boolean $debug Debug flag, which if enabled, adds DEBUG lines to the output.
+ * @param string $fname The path to the zip file.
+ * @param bool   $debug Debug flag, which if enabled, adds DEBUG lines to the output.
  *
- * @return integer The return code to indicate the validation status:
+ * @return int The return code to indicate the validation status:
  *
  *   0 - All checks passed (no errors detected).
  *
@@ -261,18 +246,18 @@ function getZipFiles($argv)
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- *
  */
 function validateM2Zip($fname, $debug)
 {
     $pkgName = basename($fname);
-    $zip = new ZipArchive;
+    $zip = new ZipArchive();
     $res = $zip->open($fname);
 
-    if($res !== true)
+    if ($res !== true) {
         return processZipErrors($pkgName, $res);
+    }
 
-    if($debug) {
+    if ($debug) {
         displayZipArchive($pkgName, $zip);
     }
 
@@ -282,20 +267,21 @@ function validateM2Zip($fname, $debug)
     list($topDir, $numDirs) = getTopDir($zip);
     $topDirBasename = basename($topDir);
 
-    if($numDirs > 1) {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": More than one top-level directory detected, " .
+    if ($numDirs > 1) {
+        fwrite(STDERR, 'ERROR - "'.$pkgName.'": More than one top-level directory detected, '.
             "number of directories = $numDirs. Top level directory expected to be the module directory.\n");
+
         return 200;
     }
 
-    if($debug) {
-        print "DEBUG - \"" . $pkgName . "\": Top level directory - <$topDirBasename>.\n";
+    if ($debug) {
+        echo 'DEBUG - "'.$pkgName."\": Top level directory - <$topDirBasename>.\n";
     }
 
     $pkgName2 = basename($fname, '.zip');
 
-    if( ($numDirs ==1) && ($topDirBasename != $pkgName2) ) {
-        fwrite(STDERR, "NOTE  - \"" . $pkgName ."\": Top-level directory does not match " .
+    if (($numDirs == 1) && ($topDirBasename != $pkgName2)) {
+        fwrite(STDERR, 'NOTE  - "'.$pkgName.'": Top-level directory does not match '.
             "package name - \"$topDirBasename\" != \"$pkgName2\"\n");
     }
 
@@ -304,97 +290,92 @@ function validateM2Zip($fname, $debug)
     $composerJsonStr = getComposerJson($zip, $topDir);
     $composerJson = '';
 
-    if($composerJsonStr === false) {
+    if ($composerJsonStr === false) {
         // Is composer.json present anywhere?
         $composerFname = locateFile($zip, 'composer.json');
 
-        if($composerFname === false) {
-
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"composer.json\" missing. " .
+        if ($composerFname === false) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName.'": "composer.json" missing. '.
                 "Please consult the \"Name your component\" section of the PHP Developer Guide for more information.\n");
             $err = true;
-        }
-        else {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"composer.json\" found in unexpected " .
-                "place. Zip archive layout not to standard as described in the " .
+        } else {
+            fwrite(STDERR, 'ERROR - "'.$pkgName.'": "composer.json" found in unexpected '.
+                'place. Zip archive layout not to standard as described in the '.
                 "\"Component File Structure\" section of the PHP Developer Guide.\n");
             $err = true;
         }
-    }
-    else if($composerJsonStr == '') {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": Empty \"composer.json\" file detected. " .
+    } elseif ($composerJsonStr == '') {
+        fwrite(STDERR, 'ERROR - "'.$pkgName.'": Empty "composer.json" file detected. '.
             "Please consult the \"Name your component\" section of the PHP Developer Guide for more information.\n");
         $err = true;
-    }
-    else {
+    } else {
         $composerJson = json_decode($composerJsonStr, true);
 
-        if(is_null($composerJson)) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": Bad \"composer.json\" file detected. " .
+        if (is_null($composerJson)) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName.'": Bad "composer.json" file detected. '.
                 "Please consult the \"Name your component\" section of the PHP Developer Guide for more information.\n");
             $err = true;
         }
     }
 
-    if($debug) {
-        print "DEBUG - \"" . $pkgName . "\": composer.json\n" . rtrim( str_replace("\n", "\n\t", "\t" . $composerJsonStr), "\t" ) . "\n";
+    if ($debug) {
+        echo 'DEBUG - "'.$pkgName."\": composer.json\n".rtrim(str_replace("\n", "\n\t", "\t".$composerJsonStr), "\t")."\n";
     }
 
     $type = '';
 
     // Attempt to find the source folder if it exists
     $srcDir = findSourceFolder($composerJson);
-    if($srcDir !== "") {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": Alternate folder structure is currently not supported\n");
+    if ($srcDir !== '') {
+        fwrite(STDERR, 'ERROR - "'.$pkgName."\": Alternate folder structure is currently not supported\n");
         $err = true;
     }
 
-    if( is_array($composerJson) )  {
+    if (is_array($composerJson)) {
         // Ensure all the needed fields are present in the
         // composer.json.  Based on the type field, ensure
         // its respective files are also present.
         $type = (string) @$composerJson['type'];
 
-        if( !validateComposerJson($pkgName, $composerJson) ) {
+        if (!validateComposerJson($pkgName, $composerJson)) {
             $err = true;
         }
 
-        if( !validateFiles($type, $pkgName, $zip, $topDir, $srcDir) ) {
+        if (!validateFiles($type, $pkgName, $zip, $topDir, $srcDir)) {
             $err = true;
         }
     }
 
     // Check for registration.php - skip it for metapackages.
-    if( ($type != '') && ($type != 'metapackage') ) {
+    if (($type != '') && ($type != 'metapackage')) {
         $regPhp = findRegistrationLoad($composerJson);
         $hasRegPhp = false;
 
         // If we cannot locate "registration.php" based on the composer.json,
         // then we take our best guess as to where it should be.
-        if($regPhp === false) {
-            $hasRegPhp = registrationPhpExists($zip, $topDir . $srcDir . "registration.php");
-        }
-        else {
-            $hasRegPhp = registrationPhpExists($zip, $topDir . $regPhp);
+        if ($regPhp === false) {
+            $hasRegPhp = registrationPhpExists($zip, $topDir.$srcDir.'registration.php');
+        } else {
+            $hasRegPhp = registrationPhpExists($zip, $topDir.$regPhp);
         }
 
-        if( $hasRegPhp === false ) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"registration.php\" is missing. " .
+        if ($hasRegPhp === false) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName.'": "registration.php" is missing. '.
                 "Please consult the \"Component Registration\" section of the PHP Developer Guide for more information.\n");
             $err = true;
-        }
-        elseif( $hasRegPhp <= 0 ) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"registration.php\" is empty. " .
+        } elseif ($hasRegPhp <= 0) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName.'": "registration.php" is empty. '.
                 "Please consult the \"Component Registration\" section of the PHP Developer Guide for more information.\n");
             $err = true;
         }
     }
 
-    if($err)
+    if ($err) {
         return 200;
+    }
 
-    if($debug) {
-        print "DEBUG - \"" . $pkgName . "\": Success, passed all the validation checks.\n";
+    if ($debug) {
+        echo 'DEBUG - "'.$pkgName."\": Success, passed all the validation checks.\n";
     }
 
     return 0;
@@ -406,21 +387,22 @@ function validateM2Zip($fname, $debug)
  * Helper function to report zip archive errors.
  *
  * @param string $pkgName Name of the zip file.
- * @param integer $res ZipArchive::open() return code.
+ * @param int    $res     ZipArchive::open() return code.
  *
- * @return integer See codes below.
- *
+ * @return int See codes below.
  */
 function processZipErrors($pkgName, $res)
 {
-    switch($res) {
+    switch ($res) {
         case ZipArchive::ER_NOZIP:
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": Supplied file not in zip format. " .
+            fwrite(STDERR, 'ERROR - "'.$pkgName.'": Supplied file not in zip format. '.
                 "Please consult the \"Package a component\" section of the PHP Developer Guide for more information.\n");
+
             return 101;
 
         default:
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": Zip file open failure with code $res.\n");
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": Zip file open failure with code $res.\n");
+
             return 102;
     }
 }
@@ -431,71 +413,69 @@ function processZipErrors($pkgName, $res)
  * It looks for the composer.json at the top level or under the
  * top level directory if set.
  *
- * @param object $zip ZipArchive object
+ * @param object $zip    ZipArchive object
  * @param string $topDir Top level directory if present.
  *
  * @return string composer.json contents
- *
  */
 function getComposerJson($zip, $topDir)
 {
-    $fname = $topDir . 'composer.json';
+    $fname = $topDir.'composer.json';
+
     return $zip->getFromName($fname);
 }
 
 /**
- * Checks to see if the extension uses an alternate file structure
+ * Checks to see if the extension uses an alternate file structure.
  *
  * @param array $composerJson
  *
  * @return string filepath of the "source" folder, or empty string if none was found.
- *
  */
 function findSourceFolder($composerJson)
 {
     $srcFolder = @current(@$composerJson['autoload']['psr-4']);
 
-    if(is_null($srcFolder)) {
+    if (is_null($srcFolder)) {
         $pathParts = pathinfo(@current(@$composerJson['autoload']['files']));
         $dirname = @$pathParts['dirname'];
 
-        if(is_null($dirname) || ($dirname === '.')) {
+        if (is_null($dirname) || ($dirname === '.')) {
             return '';
         }
 
-        return (string) $pathParts['dirname'] . '/';
+        return (string) $pathParts['dirname'].'/';
     }
 
     return (string) @current(@$composerJson['autoload']['psr-4']);
 }
 
 /**
- * Checks to see if registration.php exists in the autoload files section
+ * Checks to see if registration.php exists in the autoload files section.
  *
  * @param array $composerJson
- * @param boolean $isAutoloadSection
+ * @param bool  $isAutoloadSection
  *
  * @return boolean/string Location of registration.php, false otherwise
- *
  */
 function findRegistrationLoad($composerJson, $isAutoloadSection = false)
 {
-    if($isAutoloadSection) {
+    if ($isAutoloadSection) {
         $files = @$composerJson['files'];
-    }
-    else {
+    } else {
         $files = @$composerJson['autoload']['files'];
     }
 
-    if(!is_null($files)) {
+    if (!is_null($files)) {
         $registrationFile = 'registration.php';
         $registrationFileStringLength = strlen($registrationFile);
         foreach ($files as $file) {
-            if (substr($file, -1*$registrationFileStringLength) === $registrationFile) {
+            if (substr($file, -1 * $registrationFileStringLength) === $registrationFile) {
                 return $file;
             }
         }
     }
+
     return false;
 }
 
@@ -506,11 +486,10 @@ function findRegistrationLoad($composerJson, $isAutoloadSection = false)
  * set. It also takes into account the source folder, if it exists.
  * It should be a non-empty file.
  *
- * @param object $zip ZipArchive object
+ * @param object $zip    ZipArchive object
  * @param string $topDir Top level directory if present.
  *
  * @return boolean/integer Size of registration.php, false otherwise.
- *
  */
 function registrationPhpExists($zip, $regPhp)
 {
@@ -518,8 +497,9 @@ function registrationPhpExists($zip, $regPhp)
 
     $stat = $zip->statName($regPhp);
 
-    if($stat === false)
+    if ($stat === false) {
         return false;
+    }
 
     return $stat['size'];
 }
@@ -538,15 +518,15 @@ function registrationPhpExists($zip, $regPhp)
  * See comments below for the expected format of the values. Any
  * errors detected here are reported to the stdout.
  *
- * @param string $pkgName Name of the supplied zip file.
- * @param array $composerJson  Json decoded composer.json contents.
- * @return boolean True if all validations succeeded, false otherwise.
+ * @param string $pkgName      Name of the supplied zip file.
+ * @param array  $composerJson Json decoded composer.json contents.
+ *
+ * @return bool True if all validations succeeded, false otherwise.
  *
  * @see validateComposerAutoload()
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
- *
  */
 function validateComposerJson($pkgName, $composerJson)
 {
@@ -562,23 +542,22 @@ function validateComposerJson($pkgName, $composerJson)
     $knownType = true;
 
     // name - must be of the format '<vendor>/<package name>'
-    if( !preg_match("/^([a-z0-9_-])+\/([a-z0-9_-])+$/i", $name) ) {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"composer.json\" has invalid name - " .
+    if (!preg_match("/^([a-z0-9_-])+\/([a-z0-9_-])+$/i", $name)) {
+        fwrite(STDERR, 'ERROR - "'.$pkgName.'": "composer.json" has invalid name - '.
             "\"$name\". It should be of the format '<vendor>/<package name>'.\n");
         $res = false;
     }
 
     // type - must be in the known types list.
-    if($type == '') {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The 'type' field in \"composer.json\" is " .
-            "missing or empty. The 'type' field is required and can only be one of the following: " .
+    if ($type == '') {
+        fwrite(STDERR, 'ERROR - "'.$pkgName."\": The 'type' field in \"composer.json\" is ".
+            "missing or empty. The 'type' field is required and can only be one of the following: ".
             "magento2-theme, magento2-language, or magento2-module.\n");
         $res = false;
-    }
-    else if( !isset($g_moduleTypes[$type]) ) {
+    } elseif (!isset($g_moduleTypes[$type])) {
         // unknown type
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": Unknown 'type' detected - '$type'. " .
-            "The 'type' field is required and can only be one of the following: " .
+        fwrite(STDERR, 'ERROR - "'.$pkgName."\": Unknown 'type' detected - '$type'. ".
+            "The 'type' field is required and can only be one of the following: ".
             "magento2-theme, magento2-language, or magento2-module.\n");
         $res = false;
         $knownType = false;
@@ -586,39 +565,39 @@ function validateComposerJson($pkgName, $composerJson)
 
     // version
     // Expected format as per https://getcomposer.org/doc/04-schema.md#version
-    if( !preg_match("/^(|v)([0-9])+\.([0-9])+\.([0-9])+" .
-        "(-(patch|p|dev|a|alpha|b|beta|rc)([0-9])*)?$/i", $version)
+    if (!preg_match("/^(|v)([0-9])+\.([0-9])+\.([0-9])+".
+        '(-(patch|p|dev|a|alpha|b|beta|rc)([0-9])*)?$/i', $version)
 
     ) {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The 'version' field in \"composer.json\" " .
-            "is missing, empty or not in expected format. The 'version' field is required and needs " .
-            "to be of the following form as described here: " .
+        fwrite(STDERR, 'ERROR - "'.$pkgName."\": The 'version' field in \"composer.json\" ".
+            "is missing, empty or not in expected format. The 'version' field is required and needs ".
+            'to be of the following form as described here: '.
             "https://getcomposer.org/doc/04-schema.md#version .\n");
         $res = false;
     }
 
-    if( $knownType && ($type != 'metapackage') ) {
+    if ($knownType && ($type != 'metapackage')) {
         // autoload check - not applicable to metapackage
-        if(!validateComposerAutoload($type, $pkgName, $autoload)) {
+        if (!validateComposerAutoload($type, $pkgName, $autoload)) {
             $res = false;
         }
     }
 
-    if(!validateComposerDependencies($type, $pkgName, $require)) {
+    if (!validateComposerDependencies($type, $pkgName, $require)) {
         $res = false;
     }
 
-    if( isset($extra) ) {
+    if (isset($extra)) {
         // extra['map'] is deprecated and should not be present anymore.
-        if( isset($extra['map']) ) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The \"extra['map']\" field is deprecated; " .
+        if (isset($extra['map'])) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": The \"extra['map']\" field is deprecated; ".
                 "it should not be present anymore.\n");
             $res = false;
         }
 
         // extra['magento-root-dir'] is deprecated and should not be present anymore.
-        if( isset($extra['magento-root-dir']) ) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The \"extra['magento-root-dir'] field is deprecated; " .
+        if (isset($extra['magento-root-dir'])) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": The \"extra['magento-root-dir'] field is deprecated; ".
                 "it should not be present anymore.\n");
             $res = false;
         }
@@ -638,33 +617,31 @@ function validateComposerJson($pkgName, $composerJson)
  *
  * Any errors detected here are reported to the stdout.
  *
- * @param string $type The module type from the composer.json 'type' field.
- * @param string $pkgName Name of the supplied zip file.
- * @param array $autoload Map contents of the autoload field from composer.json.
+ * @param string $type     The module type from the composer.json 'type' field.
+ * @param string $pkgName  Name of the supplied zip file.
+ * @param array  $autoload Map contents of the autoload field from composer.json.
  *
- * @return boolean True if all validations succeeded, false otherwise.
- *
+ * @return bool True if all validations succeeded, false otherwise.
  */
 function validateComposerAutoload($type, $pkgName, $autoload)
 {
     $res = true;
 
-    if(is_array($autoload)) {
+    if (is_array($autoload)) {
         $files = @$autoload['files'];
         $psr4 = @$autoload['psr-4'];
 
-        if( is_array($files) && (count($files) > 0) ) {
-            if(!findRegistrationLoad($autoload, true)) {
-                fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"registration.php\" not found in " .
-                    "'files' field of the 'autoload' directive. Please consult the \"Component registration\" section of the " .
+        if (is_array($files) && (count($files) > 0)) {
+            if (!findRegistrationLoad($autoload, true)) {
+                fwrite(STDERR, 'ERROR - "'.$pkgName.'": "registration.php" not found in '.
+                    "'files' field of the 'autoload' directive. Please consult the \"Component registration\" section of the ".
                     "PHP Developer Guide for more information.\n");
                 $res = false;
             }
-        }
-        else {
+        } else {
             // the 'files' field is what's being referenced.
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The 'files' field of the 'autoload' " .
-                "directive is missing or not set up correctly. Please consult the \"Component registration\" section of the " .
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": The 'files' field of the 'autoload' ".
+                'directive is missing or not set up correctly. Please consult the "Component registration" section of the '.
                 "PHP Developer Guide for more information.\n");
             $res = false;
         }
@@ -672,16 +649,15 @@ function validateComposerAutoload($type, $pkgName, $autoload)
         // Currently psr-4 check is only valid for 'magento2-module'.
         //
         //TODO: Can the namespace setting here be actually verified?
-        if( ($type == 'magento2-module') && (!is_array($psr4) || (count($psr4) <= 0)) ) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The 'psr4' field of the 'autoload' " .
-                "directive is missing or not set up correctly. Please consult the \"Component registration\" section of the " .
+        if (($type == 'magento2-module') && (!is_array($psr4) || (count($psr4) <= 0))) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": The 'psr4' field of the 'autoload' ".
+                'directive is missing or not set up correctly. Please consult the "Component registration" section of the '.
                 "PHP Developer Guide for more information.\n");
             $res = false;
         }
-    }
-    else {
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The 'autoload' directive is missing or not " .
-            "set up correctly. Please consult the \"Component registration\" section of the PHP Developer Guide for more " .
+    } else {
+        fwrite(STDERR, 'ERROR - "'.$pkgName."\": The 'autoload' directive is missing or not ".
+            'set up correctly. Please consult the "Component registration" section of the PHP Developer Guide for more '.
             "information.\n");
         $res = false;
     }
@@ -696,40 +672,35 @@ function validateComposerAutoload($type, $pkgName, $autoload)
  *
  * Any errors detected here are reported to the stdout.
  *
- * @param string $type The module type from the composer.json 'type' field.
+ * @param string $type    The module type from the composer.json 'type' field.
  * @param string $pkgName Name of the supplied zip file.
- * @param array $require List of dependencies specified in require field from composer.json.
+ * @param array  $require List of dependencies specified in require field from composer.json.
  *
- * @return boolean True if all validations succeeded, false otherwise.
- *
+ * @return bool True if all validations succeeded, false otherwise.
  */
 function validateComposerDependencies($type, $pkgName, $require)
 {
     global $g_invalidDependencies;
     $res = true;
 
-    if(is_array($require) && (count($require) > 0)) {
-        foreach($require as $package => $version) {
-            if(isset($g_invalidDependencies[$package])) {
-                fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The '$package' package must not be specified as a dependency.\n");
+    if (is_array($require) && (count($require) > 0)) {
+        foreach ($require as $package => $version) {
+            if (isset($g_invalidDependencies[$package])) {
+                fwrite(STDERR, 'ERROR - "'.$pkgName."\": The '$package' package must not be specified as a dependency.\n");
                 $res = false;
-            }
-            else if(preg_match("/^magento\//", $package) && ($version === '*')) {
-                fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The '$package' must have specific version(s) as a dependency.\n");
+            } elseif (preg_match("/^magento\//", $package) && ($version === '*')) {
+                fwrite(STDERR, 'ERROR - "'.$pkgName."\": The '$package' must have specific version(s) as a dependency.\n");
                 $res = false;
-            }
-            else if($package === 'php') {
-                fwrite(STDERR, "WARNING - \"" . $pkgName . "\": It is not recommended to specify supported php versions in dependencies. " .
+            } elseif ($package === 'php') {
+                fwrite(STDERR, 'WARNING - "'.$pkgName.'": It is not recommended to specify supported php versions in dependencies. '.
                     "If specified, it must at least match the php requirements of the supported Magento versions.\n");
             }
-
         }
-    }
-    else if($type == 'metapackage') {
+    } elseif ($type == 'metapackage') {
         // metapackages should have non-empty require directive
 
-        fwrite(STDERR, "ERROR - \"" . $pkgName . "\": The 'require' directive in " .
-            "\"composer.json\" is missing, empty, or incorrect. Please consult the \"Package a component\" section " .
+        fwrite(STDERR, 'ERROR - "'.$pkgName."\": The 'require' directive in ".
+            '"composer.json" is missing, empty, or incorrect. Please consult the "Package a component" section '.
             "of the PHP Developer Guide for more information.\n");
         $res = false;
     }
@@ -745,22 +716,20 @@ function validateComposerDependencies($type, $pkgName, $require)
  * map the needed files for a given package type. The actual check is done
  * at validateFilesCore()
  *
- * @param string $type The type field from composer.json
+ * @param string $type    The type field from composer.json
  * @param string $pkgName Name of the supplied zip file.
- * @param object $zip The ZipArchive object
- * @param string $topDir The top level directory if present in the zip.
+ * @param object $zip     The ZipArchive object
+ * @param string $topDir  The top level directory if present in the zip.
  *
- * @return boolean True if all validations succeeded, false otherwise.
+ * @return bool True if all validations succeeded, false otherwise.
  *
  * @see validateFilesCore()
- *
  */
 function validateFiles($type, $pkgName, $zip, $topDir, $srcDir = '')
 {
     global $g_magentoModuleFiles;
     global $g_themeFiles;
     global $g_langFiles;
-
 
     //TODO: for the various file checks below, right now it does
     //      only existence check (size > 0). It will be nice to
@@ -769,7 +738,7 @@ function validateFiles($type, $pkgName, $zip, $topDir, $srcDir = '')
 
     $res = true;
 
-    switch($type) {
+    switch ($type) {
         case 'magento2-module':
             $res = validateFilesCore($type, $pkgName, $g_magentoModuleFiles, $zip, $topDir, $srcDir);
             break;
@@ -797,32 +766,30 @@ function validateFiles($type, $pkgName, $zip, $topDir, $srcDir = '')
  * for each of them, it checks to see if the file exists and
  * it is not empty in the given zip file.
  *
- * @param string $type The type of package
- * @param string $pkgName Name of the supplied zip file.
- * @param array $files The list of files to check.
- * @param ZipArchive $zip The zip file package to inspect.
- * @param string $topDir The top level directory if present in the zip.
- * @param string $srcDir The source folder if it is present
+ * @param string     $type    The type of package
+ * @param string     $pkgName Name of the supplied zip file.
+ * @param array      $files   The list of files to check.
+ * @param ZipArchive $zip     The zip file package to inspect.
+ * @param string     $topDir  The top level directory if present in the zip.
+ * @param string     $srcDir  The source folder if it is present
  *
- * @return boolean True if all the files in the list is present, false otherwise.
- *
+ * @return bool True if all the files in the list is present, false otherwise.
  */
 function validateFilesCore($type, $pkgName, $files, $zip, $topDir, $srcDir = '')
 {
     $res = true;
 
-    foreach($files as $f) {
-        $f = $topDir . $srcDir . $f;
+    foreach ($files as $f) {
+        $f = $topDir.$srcDir.$f;
 
         $stat = $zip->statName($f);
 
-        if($stat === false) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"$f\" is missing. " .
+        if ($stat === false) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": \"$f\" is missing. ".
                 "\"$f\" is a required file for the '$type' type.\n");
             $res = false;
-        }
-        else if( $stat['size'] <= 0 ) {
-            fwrite(STDERR, "ERROR - \"" . $pkgName . "\": \"$f\" is empty. " .
+        } elseif ($stat['size'] <= 0) {
+            fwrite(STDERR, 'ERROR - "'.$pkgName."\": \"$f\" is empty. ".
                 "\"$f\" is a required file for the '$type' type.\n");
             $res = false;
         }
@@ -845,22 +812,20 @@ function validateFilesCore($type, $pkgName, $files, $zip, $topDir, $srcDir = '')
  * @return array The following values (tuple) are returned in the given offsets:
  *               0 - string Top level directory is present; can be an empty string.
  *               1 - integer Number of top-level directories detected.
- *
- *
  */
 function getTopDir($zip)
 {
-    $topDirs = array();
+    $topDirs = [];
 
-    for($i = 0; $i < $zip->numFiles; ++$i) {
-        $fname =  $zip->getNameIndex($i);
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $fname = $zip->getNameIndex($i);
         $pos = strpos($fname, '/');
 
-        if($pos === false) {
+        if ($pos === false) {
             // Any regular files on the top-level implies that there is either no top level directory
             // (i.e. composer.json etc.. is at the top level), or there are spurious files at the top level
             // which is also not expected.
-            return array('', 0);
+            return ['', 0];
         }
 
         $topDir = substr($fname, 0, $pos + 1);
@@ -870,11 +835,11 @@ function getTopDir($zip)
     // Now if there are more that one top level directory, it is not in the expected format.
     $numDirs = count($topDirs);
 
-    if($numDirs != 1) {
-        return array('', $numDirs);
+    if ($numDirs != 1) {
+        return ['', $numDirs];
     }
 
-    return array( array_shift($topDirs), 1);
+    return [array_shift($topDirs), 1];
 }
 
 /**
@@ -883,19 +848,18 @@ function getTopDir($zip)
  * Displays the file names and its respective sizes
  * for debugging purposes.
  *
- * @param string $pkgName Name of the supplied zip file.
- * @param ZipArchive $zip The zip file to dump.
+ * @param string     $pkgName Name of the supplied zip file.
+ * @param ZipArchive $zip     The zip file to dump.
  *
  * @return void
- *
  */
 function displayZipArchive($pkgName, $zip)
 {
-    print "DEBUG - \"" . $pkgName . "\": Zip file contents (file and size).\n";
-    for($i = 0; $i < $zip->numFiles; ++$i) {
-        $fname =  $zip->getNameIndex($i);
+    echo 'DEBUG - "'.$pkgName."\": Zip file contents (file and size).\n";
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $fname = $zip->getNameIndex($i);
         $stat = $zip->statName($fname);
-        print "\t$fname - " . $stat['size'] . "\n";
+        echo "\t$fname - ".$stat['size']."\n";
     }
 }
 
@@ -906,18 +870,17 @@ function displayZipArchive($pkgName, $zip)
  * the file path locations in the zip archive at
  * any depth level.
  *
- * @param ZipArchive $zip The zip file to inspect.
- * @param string $fname The file name to check.
+ * @param ZipArchive $zip   The zip file to inspect.
+ * @param string     $fname The file name to check.
  *
- * @return mix  Returns full path to the file if found, or false otherwise.
- *
+ * @return mix Returns full path to the file if found, or false otherwise.
  */
 function locateFile($zip, $fname)
 {
-    for($i = 0; $i < $zip->numFiles; ++$i) {
-        $fname2 =  $zip->getNameIndex($i);
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $fname2 = $zip->getNameIndex($i);
 
-        if($fname == basename($fname2)) {
+        if ($fname == basename($fname2)) {
             return $fname2;
         }
     }
