@@ -4,6 +4,17 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [1.0.2] - 2021-02-17
+## Fixed
+- Change the minimum amount to $50CLP on Readme 
+- Remove unused error description on failed payments
+- Aplicar StyleCI
+- Arreglar título del medio de pago
+- Agregar port binding a docker de desarrollo
+- Arreglar NOTICE que aparecía en pagos rechazados
+- Cambiar entityID por IncrementId para identificar ordenes
+
+
 # [1.0.1] - 2020-11-05
 ## Fixed
 - Se modifica versión minima requerida del SDK PHP de Transbank
