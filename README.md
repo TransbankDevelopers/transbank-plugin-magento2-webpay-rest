@@ -20,7 +20,7 @@ Al instalar el plugin, este vendrá configurado para funcionar en modo '**integr
 1. Tener tu propio código de comercio. Si no lo tienes, solicita Webpay Plus en [transbank.cl](https://publico.transbank.cl) 
 2. Enviar [esta planilla de integración](https://transbankdevelopers.cl/files/evidencia-integracion-webpay-plugins-rest.docx) a soporte@transbank.cl y tu **logo (130x59 pixeles en formato GIF)**. Estos dos archivos deben ser incluidos como un link y no como adjuntos para evitar problemas en la entrega.
 3. Configurar la API Key que te entregará Transbank en la configuración del Plugin.
-4. Debes hacer una compra de $10 en el ambiente de producción para confirmar el correcto funcionamiento. 
+4. Debes hacer una compra de $50 en el ambiente de producción para confirmar el correcto funcionamiento. 
 
 Puedes ver más información sobre este proceso en [este link](https://www.transbankdevelopers.cl/documentacion/como_empezar#puesta-en-produccion).
 
