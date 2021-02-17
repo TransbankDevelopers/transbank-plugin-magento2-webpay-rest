@@ -249,7 +249,6 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                 <b>Fecha de la Transacci&oacute;n: </b>" . date('d-m-Y', strtotime($transactionResult['transactionDate'])) . "<br>
                 <b>Hora de la Transacci&oacute;n: </b>" . date('H:i:s', strtotime($transactionResult['transactionDate'])) . "<br>
                 <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['card_number']}<br>
-                <b>Mensaje de Rechazo: </b>{$transactionResult['responseDescription']}
             </p>";
 
             return $message;
