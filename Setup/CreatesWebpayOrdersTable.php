@@ -17,30 +17,30 @@ trait CreatesWebpayOrdersTable
                 'identity' => true,
                 'unsigned' => true,
                 'nullable' => false,
-                'primary' => true
+                'primary'  => true,
             ], 'ID')
             ->addColumn('token', Table::TYPE_TEXT, 200, [
-                'nullable' => false
+                'nullable' => false,
             ], 'Token')
             ->addColumn('order_id', Table::TYPE_TEXT, 20, [
-                'nullable' => false
+                'nullable' => false,
             ], 'Order Id')
             ->addColumn('quote_id', Table::TYPE_TEXT, 20, [
-                'nullable' => false
+                'nullable' => false,
             ], 'Quote ID')
             ->addColumn('payment_status', Table::TYPE_TEXT, 30, [
-                'nullable' => false
+                'nullable' => false,
             ], 'Payment Status')
             ->addColumn('metadata', Table::TYPE_TEXT, null, [
-                'nullable' => false
+                'nullable' => false,
             ], 'Metadata')
             ->addColumn('created_at', Table::TYPE_TIMESTAMP, null, [
                 'nullable' => false,
-                'default' => Table::TIMESTAMP_INIT
+                'default'  => Table::TIMESTAMP_INIT,
             ], 'created_at')
             ->addColumn('updated_at', Table::TYPE_TIMESTAMP, null, [
                 'nullable' => false,
-                'default' => Table::TIMESTAMP_INIT_UPDATE
+                'default'  => Table::TIMESTAMP_INIT_UPDATE,
             ], 'updated_at')
             ->addIndex($setup->getTable(WebpayOrderData::TABLE_NAME), 'token');
         $setup->getConnection()->createTable($table);

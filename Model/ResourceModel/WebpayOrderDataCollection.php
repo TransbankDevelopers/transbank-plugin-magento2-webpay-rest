@@ -1,13 +1,13 @@
 <?php
+
 namespace Transbank\Webpay\Model\ResourceModel;
 
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 class WebpayOrderDataCollection extends AbstractCollection
 {
     /**
-     * Initialize resource
+     * Initialize resource.
      *
      * @return void
      */
