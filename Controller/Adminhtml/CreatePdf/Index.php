@@ -10,8 +10,7 @@ class Index extends \Magento\Backend\App\Action
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->configProvider = $configProvider;
     }

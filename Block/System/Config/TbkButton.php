@@ -15,8 +15,7 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
-    )
-    {
+    ) {
         parent::__construct($context);
 
         $config = $configProvider->getPluginConfig();
