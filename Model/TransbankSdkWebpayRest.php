@@ -92,7 +92,7 @@ class TransbankSdkWebpayRest
      *
      * @throws Exception
      *
-     * @return array|WebpayPlus\TransactionCommitResponse
+     * @return array|WebpayPlus\Transaction
      */
     public function commitTransaction($tokenWs)
     {
