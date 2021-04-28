@@ -5,7 +5,7 @@ El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
-# [1.1.0] - 2021-02-17
+# [1.1.0] - 2021-03-28
 ## Added 
 - Se actualiza SDK de PHP a versión 2.0, por lo que ahora se usa la API v1.2 de Transbank.
 
