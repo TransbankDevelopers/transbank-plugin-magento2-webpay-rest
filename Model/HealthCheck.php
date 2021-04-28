@@ -2,8 +2,6 @@
 
 namespace Transbank\Webpay\Model;
 
-use Transbank\Webpay\Modal\Transaction;
-use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 
 class HealthCheck
