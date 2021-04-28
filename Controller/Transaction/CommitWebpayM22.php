@@ -54,7 +54,10 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
         try {
             $tokenWs = $_POST['token_ws'] ?? $_GET['token_ws'] ?? null;
-            if (isset($_POST['TBK_TOKEN']) || isset($_GET['TBK_TOKEN'])) {
+            if (isset($_POST['TBK_TOKEN'])) {
+                return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $orderStatusCanceled);
+            }
+            if(isset($_GET['TBK_TOKEN'])){
                 return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $orderStatusCanceled);
             }
 

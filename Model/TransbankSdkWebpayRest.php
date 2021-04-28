@@ -39,7 +39,6 @@ class TransbankSdkWebpayRest
             $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
             $this->transaction = new WebpayPlus\Transaction();
             $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
-            $this->options->setIntegrationType($environment);
         }
     }
 
