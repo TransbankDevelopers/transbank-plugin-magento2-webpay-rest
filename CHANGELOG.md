@@ -4,6 +4,14 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+# [1.1.0] - 2021-02-17
+## Added 
+- Se actualiza SDK de PHP a versión 2.0, por lo que ahora se usa la API v1.2 de Transbank.
+
+## Fixed
+- Se corrige retorno al sitio de éxito cuando la transacción es aprobada.
+
 # [1.0.2] - 2021-02-17
 ## Fixed
 - Change the minimum amount to $50CLP on Readme 
