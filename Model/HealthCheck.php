@@ -2,7 +2,7 @@
 
 namespace Transbank\Webpay\Model;
 
-use Transbank\Webpay\Options;
+use Transbank\Webpay\WebpayPlus;
 
 class HealthCheck
 {
@@ -18,9 +18,8 @@ class HealthCheck
 
     public function __construct($config)
     {
-        $config['ENVIRONMENT'] = Options::defaultConfig()->getIntegrationType();
-        $config['COMMERCE_CODE'] = Options::defaultConfig()->getCommerceCode();
-        $config['API_KEY'] = Options::defaultConfig()->getApiKey();
+        $config['COMMERCE_CODE'] = WebpayPlus::DEFAULT_COMMERCE_CODE;
+        $config['API_KEY'] = WebpayPlus::DEFAULT_API_KEY;
         $this->config = $config;
         $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];

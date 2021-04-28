@@ -23,6 +23,11 @@ class TransbankSdkWebpayRest
     protected $log;
 
     /**
+     * @var WebpayPlus\Transaction
+     */
+    public $transaction;
+
+    /**
      * TransbankSdkWebpayRest constructor.
      *
      * @param $config
@@ -32,8 +37,8 @@ class TransbankSdkWebpayRest
         $this->log = new LogHandler();
         if (isset($config)) {
             $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
-            $this->options = ($environment != 'TEST') ? new Options($config['API_KEY'], $config['COMMERCE_CODE']) : Options::defaultConfig();
-            $this->options->setIntegrationType($environment);
+            $this->transaction = new WebpayPlus\Transaction();
+            $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
         }
     }
 
@@ -57,7 +62,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('initTransaction - amount: '.$amount.', sessionId: '.$sessionId.
                 ', buyOrder: '.$buyOrder.', txDate: '.$txDate.', txTime: '.$txTime);
 
-            $initResult = WebpayPlus\Transaction::create($buyOrder, $sessionId, $amount, $returnUrl, $this->options);
+            $initResult = $this->transaction->create($buyOrder, $sessionId, $amount, $returnUrl);
 
             $this->log->logInfo('createTransaction - initResult: '.json_encode($initResult));
             if (isset($initResult) && isset($initResult->url) && isset($initResult->token)) {
@@ -84,7 +89,7 @@ class TransbankSdkWebpayRest
      *
      * @throws Exception
      *
-     * @return array|WebpayPlus\TransactionCommitResponse
+     * @return array|WebpayPlus\Transaction
      */
     public function commitTransaction($tokenWs)
     {
@@ -94,7 +99,7 @@ class TransbankSdkWebpayRest
                 throw new Exception('El token webpay es requerido');
             }
 
-            return WebpayPlus\Transaction::commit($tokenWs, $this->options);
+            return $this->transaction->commit($tokenWs);
         } catch (TransactionCommitException $e) {
             $result = [
                 'error'  => 'Error al confirmar la transacción',
