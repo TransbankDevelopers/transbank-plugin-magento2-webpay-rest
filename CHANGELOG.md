@@ -4,6 +4,9 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [1.1.1] - 2021-04-29
+## Fixed
+- Se corrigen errores de compatibilidad con PHP 7.0.
 
 # [1.1.0] - 2021-04-28
 ## Added 
