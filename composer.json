@@ -3,7 +3,7 @@
   "description": "Plugin oficial de Magento 2 para Webpay REST",
   "require": {
     "ext-json": "*",
-    "transbank/transbank-sdk": "2.0.1",
+    "transbank/transbank-sdk": "~2.0",
     "tecnickcom/tcpdf": "^6.3"
   },
   "type": "magento2-module",
