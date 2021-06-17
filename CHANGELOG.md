@@ -4,6 +4,10 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [1.1.3] - 2021-06-17
+## Fixed
+- Prevenir crear más ordenes en el checkout mientras espera el redireccionamiento a Transbank.
+
 # [1.1.2] - 2021-04-30
 ## Fixed
 - Se corrige versión de SDK de PHP requerida para el plugin. Esto soluciona error al redireccionar a la pasarela de pago.
