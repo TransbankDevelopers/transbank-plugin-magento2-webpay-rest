@@ -9,7 +9,6 @@ define(
         'Magento_Checkout/js/model/payment/additional-validators',
         'mage/url',
         'Magento_Checkout/js/model/quote',
-        'Magento_Checkout/js/model/full-screen-loader',
         'Magento_Checkout/js/action/set-payment-information'
     ],
     function ($,
@@ -21,7 +20,6 @@ define(
         additionalValidators,
         url,
         quote,
-        fullScreenLoader,
         setPaymentInformationAction) {
         'use strict';
 
@@ -76,7 +74,7 @@ define(
                         ).always(
                             function () {
                                 self.isPlaceOrderActionAllowed(true);
-                                fullScreenLoader.stopLoader();
+                                $('body').loader('show');
                             }
                         );
                     return true;
