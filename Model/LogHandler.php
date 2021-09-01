@@ -344,18 +344,18 @@ class LogHandler
     {
         switch ($priority) {
             case 'error':
-                $prior = \Zend\Log\Logger::ERR;
+                $prior = \Monolog\Logger::ERROR;
             break;
             case 'info':
-                $prior = \Zend\Log\Logger::INFO;
+                $prior = \Monolog\Logger::INFO;
             break;
             default:
-                $prior = \Zend\Log\Logger::DEBUG;
+                $prior = \Monolog\Logger::DEBUG;
             break;
         }
-        $writer = new \Zend\Log\Writer\Stream($this->logFile);
-        $logger = new \Zend\Log\Logger();
-        $logger->addWriter($writer);
+        $logger = new \Monolog\Logger($this->logFile);
+        $writer = new \Monolog\Handler\StreamHandler($this->logFile, $prior);
+        $logger->pushHandler($writer);
         $logger->log($prior, $msg);
     }
 
