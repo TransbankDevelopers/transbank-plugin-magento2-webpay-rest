@@ -1,7 +1,7 @@
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/transbankdevelopers/transbank-plugin-magento2-webpay)](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay/releases/tag/2.5.2)
 [![GitHub](https://img.shields.io/github/license/transbankdevelopers/transbank-plugin-magento2-webpay)](LICENSE)
 [![GitHub contributors](https://img.shields.io/github/contributors/transbankdevelopers/transbank-plugin-magento2-webpay)](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay/graphs/contributors)
-[![Build Status](https://travis-ci.org/TransbankDevelopers/transbank-plugin-magento2-webpay.svg?branch=master)](https://travis-ci.org/TransbankDevelopers/transbank-plugin-magento2-webpay)
+[![Build Status](https://travis-ci.org/TransbankDevelopers/transbank-plugin-magento2-webpay.svg?branch=master)](https://travis-ci.org/TransbankDevelopers/transbank-plugin-magento2-webpay-rest)
 
 # Transbank Magento2 Webpay Plugin
 Plugin oficial de Webpay para Magento2
@@ -99,10 +99,9 @@ Si no sabes como realizar esta configuracion puedes verlo en [este documento](do
 
 ```bash
 magento module:disable Transbank_Webpay --clear-static-content
-composer remove transbank/webpay-magento2:dev-master
-rm -rf vendor/transbank/webpay*
-rm -rf app/code/Transbank/Webpay*
+magento module:uninstall Transbank_Webpay
 ```
+** Debes aceptar la eliminación de tablas y código asociado al plugin.
 
 3. Seguir el proceso de instalación descrito anteriormente.
 
