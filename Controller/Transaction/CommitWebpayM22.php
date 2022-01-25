@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
+use Magento\Quote\Model\QuoteRepository;
 use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
@@ -22,10 +23,13 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     ];
     protected $configProvider;
 
+    protected $quoteRepository;
+
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Checkout\Model\Cart $cart,
         \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
@@ -35,6 +39,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
         $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
+        $this->quoteRepository = $quoteRepository;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
@@ -55,10 +60,10 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         try {
             $tokenWs = $_POST['token_ws'] ?? $_GET['token_ws'] ?? null;
             if (isset($_POST['TBK_TOKEN'])) {
-                return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $orderStatusCanceled);
+                return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $_POST['TBK_ID_SESION'], $orderStatusCanceled);
             }
             if (isset($_GET['TBK_TOKEN'])) {
-                return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $orderStatusCanceled);
+                return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
             }
 
             if (is_null($tokenWs)) {
@@ -215,12 +220,27 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         return $message;
     }
 
-    protected function orderCanceledByUser($token, $orderStatusCanceled)
+    protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
     {
         list($webpayOrderData, $order) = $this->getOrderByToken($token);
         $message = 'Orden cancelada por el usuario';
         $this->checkoutSession->restoreQuote();
+
+        $getQuoteById = $this->quoteRepository->get($quoteId);
+
+        if($getQuoteById)
+        {
+            $customerId = $getQuoteById->getCustomerId();
+            $isGuest = $getQuoteById->getCustomerIsGuest();
+
+            if($customerId && $isGuest == 1){
+                $getQuoteById->setCustomerIsGuest(false);
+                $getQuoteById->save();
+            }
+        }
+
         $this->messageManager->addError(__($message));
+
 
         if ($order != null) {
             $order->cancel();
