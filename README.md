@@ -18,7 +18,7 @@ Puedes ver las instrucciones de instalación y su documentación completa en [tr
 Al instalar el plugin, este vendrá configurado para funcionar en modo '**integración**'(en el ambiente de pruebas de Transbank). Para poder operar con dinero real (ambiente de **producción**), debes:
 
 1. Tener tu propio código de comercio. Si no lo tienes, solicita Webpay Plus en [transbank.cl](https://publico.transbank.cl) 
-2. Enviar [esta planilla de integración](https://transbankdevelopers.cl/files/evidencia-integracion-webpay-plugins-rest.docx) a soporte@transbank.cl y tu **logo (130x59 pixeles en formato GIF)**. Estos dos archivos deben ser incluidos como un link y no como adjuntos para evitar problemas en la entrega.
+2. Completar el [formulario de validación](https://www.transbankdevelopers.cl/documentacion/como_empezar#el-proceso-de-validacion). Debes selecciona el link **Para integración con plugins**.
 3. Configurar la API Key que te entregará Transbank en la configuración del Plugin.
 4. Debes hacer una compra de $50 en el ambiente de producción para confirmar el correcto funcionamiento. 
 
@@ -57,8 +57,8 @@ El plugin depende de las siguientes librerías:
 3. [Opción 2] Ejecutar los siguientes comandos para instalar el plugin directamente desde git:
 
     ```bash
-    composer config repositories.transbankwebpay vcs https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay.git
-	composer require transbank/webpay-magento2:dev-master
+    composer config repositories.transbankwebpay vcs https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay-rest.git
+	composer require transbank/webpay-magento2-rest:dev-master
     ```
    Esperar mientras las dependencias son actualizadas.
 
