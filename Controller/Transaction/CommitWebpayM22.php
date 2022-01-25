@@ -3,7 +3,6 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
-use Magento\Quote\Model\QuoteRepository;
 use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
@@ -228,19 +227,17 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
         $getQuoteById = $this->quoteRepository->get($quoteId);
 
-        if($getQuoteById)
-        {
+        if ($getQuoteById) {
             $customerId = $getQuoteById->getCustomerId();
             $isGuest = $getQuoteById->getCustomerIsGuest();
 
-            if($customerId && $isGuest == 1){
+            if ($customerId && $isGuest == 1) {
                 $getQuoteById->setCustomerIsGuest(false);
                 $getQuoteById->save();
             }
         }
 
         $this->messageManager->addError(__($message));
-
 
         if ($order != null) {
             $order->cancel();
