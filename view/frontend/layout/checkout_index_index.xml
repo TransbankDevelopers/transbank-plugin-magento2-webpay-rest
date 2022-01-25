@@ -1,7 +1,9 @@
 <?xml version="1.0" ?>
-<pagepage layout="1column" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
+        <referenceBlock name="header.container" remove="true" />
+        <referenceBlock name="footer.container" remove="true" />
         <referenceBlock name="checkout.root">
             <arguments>
                 <argument name="jsLayout" xsi:type="array">
@@ -41,4 +43,4 @@
             </arguments>
         </referenceBlock>
     </body>
-</pagepage>
+</page>
