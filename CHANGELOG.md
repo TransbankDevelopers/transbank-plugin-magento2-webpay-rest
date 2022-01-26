@@ -4,6 +4,13 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [1.1.4] - 2022-01-26
+## Fixed
+- Se corrige error en deshabilitación por anulación de pago con Webpay en usuarios con sesión iniciada en el comercio.
+- Se corrige checkout forzado a 1 columna y se oculta header y footer en checkout. Muchas gracias por tu aporte @HeikelV
+- Se agrega nueva versión mínima a librería Monolog. Muchas gracias por tu aporte @asterion
+- Se modifican los pasos de desinstalación del plugin y las referencias a la versión SOAP del repositorio.
+
 # [1.1.3] - 2021-09-15
 ## Fixed
 - Se elimina librería Zend\Log por incompatibilidad con versiones >=2.4.3 de Magento. Se agrega librería recomendada (Monolog) y se prueba retrocompatibilidad hasta la versión 2.2.0 de Magento.
