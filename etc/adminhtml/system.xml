@@ -39,6 +39,12 @@
                         <frontend_class>validate-number</frontend_class>
                         <comment>Posición en la que aparecerá la opción de pago, debe ser menor a otros medios de pago para que aparezca primero</comment>
                     </field>
+                    <!-- New Email Order -->
+                    <field id="new_email_order" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Comportamiento del Email</label>
+                        <source_model>Transbank\Webpay\Model\Config\ConfigEmail</source_model>
+                        <comment>Al seleccionar 'Default' el correo electrónico se enviará al crear el pedido y no al procesar la compra</comment>
+                    </field>
                 </group>
                 <group id="security" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Parámetros de seguridad</label>
