@@ -32,7 +32,8 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
             'new_order_status'          => $this->getOrderPendingStatus(),
             'payment_successful_status' => $this->getOrderSuccessStatus(),
             'payment_error_status'      => $this->getOrderErrorStatus(),
-            'new_email_order'           => $this->getOrderSuccessStatus(),
+            'new_email_order'           => $this->getEmailSettings(),
+            'invoice_settings'          => $this->getInvoiceSettings(),
         ];
 
         return $config;
@@ -56,5 +57,10 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     public function getEmailSettings()
     {
         return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE.'new_email_order');
+    }
+
+    public function getInvoiceSettings()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE.'invoice_settings');
     }
 }

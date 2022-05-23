@@ -6,4 +6,7 @@
         <event name="sales_order_place_before">
             <observer name="transbank_stop_email" instance="Transbank\Webpay\Observer\SubmitObserver"/>
         </event>
+        <event name="admin_system_config_changed_section_payment">
+            <observer name="transbank_configuration" instance="Transbank\Webpay\Observer\InvoiceObserver"/>
+        </event>
     </config>

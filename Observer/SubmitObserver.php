@@ -42,4 +42,3 @@ class SubmitObserver implements ObserverInterface
     }
     
 }
-

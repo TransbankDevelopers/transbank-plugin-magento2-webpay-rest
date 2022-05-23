@@ -14,11 +14,15 @@ class SendMail implements ObserverInterface
         \Psr\Log\LoggerInterface $logger,
         \Magento\Sales\Model\Order $order,
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Framework\DB\Transaction $transaction,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider)
     {
         $this->_logger = $logger;
         $this->order = $order;
         $this->orderSender = $orderSender;
+        $this->invoiceService = $invoiceService;
+        $this->transaction = $transaction;
         $this->configProvider = $configProvider;
     }
 
@@ -27,8 +31,9 @@ class SendMail implements ObserverInterface
         $emailSettings = $this->configProvider->getEmailSettings();
         $this->_logger->debug($emailSettings);
 
+        $order = $observer->getEvent()->getOrder();
+
         if ($emailSettings == 'transbank') {
-            $order = $observer->getEvent()->getOrder();
             $this->_current_order = $order;
     
             $order->setCanSendNewEmailFlag(true);
@@ -40,6 +45,28 @@ class SendMail implements ObserverInterface
                 $this->_logger->critical($e);
             }
         }
+
+        $invoiceSettings = $this->configProvider->getInvoiceSettings();
+        if ($invoiceSettings == 'transbank') {
+
+            $order->addStatusHistoryComment('Automatically Invoiced by Transbank', true);
+
+            $this->_logger->debug('Creating Invoice');
+
+            $order->setCanSendNewEmailFlag(true);
+            $order->save();
+
+            if ($order->canInvoice()) {
+
+                $invoice = $this->invoiceService->prepareInvoice($order);
+                $invoice->register();
+                $invoice->save();
+                
+                $transactionSave = $this->transaction->addObject($invoice)->addObject($invoice->getOrder());
+                $transactionSave->save();
+            }
+        }
     }
+
     
 }

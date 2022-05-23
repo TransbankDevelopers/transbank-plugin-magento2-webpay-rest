@@ -45,6 +45,13 @@
                         <source_model>Transbank\Webpay\Model\Config\ConfigEmail</source_model>
                         <comment>Al seleccionar 'Default' el correo electrónico se enviará al crear el pedido y no al procesar la compra</comment>
                     </field>
+                    <!-- Invoice Settings -->
+                    <field id="invoice_settings" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Generar Invoice</label>
+                        <source_model>Transbank\Webpay\Model\Config\ConfigInvoice</source_model>
+                        <comment>Para modificar esta opción es necesario que el estado de Pago Exitoso sea "Processing"</comment>
+                        <frontend_model>Transbank\Webpay\Helper\Disable</frontend_model>
+                    </field>
                 </group>
                 <group id="security" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Parámetros de seguridad</label>
