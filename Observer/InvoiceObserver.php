@@ -3,38 +3,58 @@
 namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer as EventObserver;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\Config\Storage\WriterInterface;
 
 class InvoiceObserver implements ObserverInterface
 {
 
+    protected $orderSender;
+    protected $invoiceSender;
     protected $_logger;
+
 
     public function __construct (
         \Psr\Log\LoggerInterface $logger,
-        RequestInterface $request,
-        WriterInterface $configWriter)
+        \Magento\Sales\Model\Order $order,
+        \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
+        \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Framework\DB\Transaction $transaction,
+        \Transbank\Webpay\Model\Config\ConfigProvider $configProvider)
     {
-        $this->request = $request;
         $this->_logger = $logger;
-        $this->configWriter = $configWriter;
+        $this->order = $order;
+        $this->orderSender = $orderSender;
+        $this->invoiceSender = $invoiceSender;
+        $this->invoiceService = $invoiceService;
+        $this->transaction = $transaction;
+        $this->configProvider = $configProvider;
+    }
+
+    public function execute(\Magento\Framework\Event\Observer $observer) {
+
+        $order = $observer->getEvent()->getOrder();
+
+        $invoiceSettings = $this->configProvider->getInvoiceSettings();
+        if ($invoiceSettings == 'transbank') {
+
+            $order->addStatusHistoryComment('Automatically Invoiced by Transbank', true);
+
+            $this->_logger->debug('Creating Invoice email.');
+
+            $order->setCanSendNewEmailFlag(true);
+            $order->save();
+
+            if ($order->canInvoice()) {
+                $invoice = $this->invoiceService->prepareInvoice($order);
+                $invoice->register();
+                $invoice->save();
+                
+                $transactionSave = $this->transaction->addObject($invoice)->addObject($invoice->getOrder());
+                $transactionSave->save();
+            }
+        }
+
     }
 
     
-    public function execute(EventObserver $observer)
-    {
-        $this->_logger->info('Invoice Observer');
-
-        $params = $this->request->getParam('groups');
-        $orderStatus = $params['transbank_webpay']['groups']['general_parameters']['fields']['payment_successful_status']['value'];
-
-        if ($orderStatus !== 'processing') {
-            $value = 'default';
-            $this->configWriter->save('payment/transbank_webpay/general_parameters/invoice_settings', $value);
-        }
-
-        return $this;
-    }
 }
