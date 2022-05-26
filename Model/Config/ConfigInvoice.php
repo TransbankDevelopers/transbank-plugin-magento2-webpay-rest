@@ -11,8 +11,7 @@ class ConfigInvoice implements \Magento\Framework\Option\ArrayInterface
      */
     public function toOptionArray()
     {
-        return [['value' => 'transbank', 'label' => __('Al confirmar el pago')],
-            ['value' => 'default', 'label' => __('Default Magento')] ];
+        return [['value' => 'default', 'label' => __('Default Magento')], ['value' => 'transbank', 'label' => __('Al confirmar el pago')]];
     }
 
     /**
@@ -22,7 +21,6 @@ class ConfigInvoice implements \Magento\Framework\Option\ArrayInterface
      */
     public function toArray()
     {
-        return ['transbank'  => __('Al confirmar el pago'),
-            'default' => __('Default Magento')];
+        return ['default' => __('Default Magento'), 'transbank'  => __('Al confirmar el pago')];
     }
 }
