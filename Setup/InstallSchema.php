@@ -12,6 +12,7 @@ use Magento\Framework\Setup\SchemaSetupInterface;
 class InstallSchema implements InstallSchemaInterface
 {
     use CreatesWebpayOrdersTable;
+    use CreatesOneclickInscriptionTable;
 
     /**
      * {@inheritdoc}
@@ -20,6 +21,7 @@ class InstallSchema implements InstallSchemaInterface
     {
         $setup->startSetup();
         $this->createWebpayOrdersTable($setup);
+        $this->createOneclickInscriptionTable($setup);
         $setup->endSetup();
     }
 }
