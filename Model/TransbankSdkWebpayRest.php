@@ -8,6 +8,10 @@ use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
 
+use Transbank\Webpay\Oneclick;
+use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
+use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
+
 /**
  * Class TransbankSdkWebpayRest.
  */
@@ -28,9 +32,15 @@ class TransbankSdkWebpayRest
     public $transaction;
 
     /**
+     * @var Oneclick\MallInscription
+     */
+    public $inscription;
+
+    /**
      * TransbankSdkWebpayRest constructor.
      *
      * @param $config
+     * @param $product
      */
     public function __construct($config)
     {
@@ -39,6 +49,9 @@ class TransbankSdkWebpayRest
             $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
             $this->transaction = new WebpayPlus\Transaction();
             $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
+        
+            $this->inscription = new Oneclick\MallInscription();
+
         }
     }
 
@@ -103,6 +116,74 @@ class TransbankSdkWebpayRest
         } catch (TransactionCommitException $e) {
             $result = [
                 'error'  => 'Error al confirmar la transacción',
+                'detail' => $e->getMessage(),
+            ];
+            $this->log->logError(json_encode($result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $username
+     * @param $email
+     * @param $responseUrl
+     *
+     * @throws Exception
+     *
+     * @return array
+     */
+    public function createInscription($username, $email, $responseUrl)
+    {
+        $result = [];
+
+        try {
+            $txDate = date('d-m-Y');
+            $txTime = date('H:i:s');
+            $this->log->logInfo('initInscription - Username: '.$username.', email: '.$email.
+                ', responseUrl: '.$responseUrl);
+
+            $initResult = $this->inscription->start($username, $email, $responseUrl);
+
+            $this->log->logInfo('createInscription - initResult: '.json_encode($initResult));
+            if (isset($initResult) && isset($initResult->token) && isset($initResult->urlWebpay)) {
+                $result = [
+                    'token'      => $initResult->token,
+                    'urlWebpay' => $initResult->urlWebpay,
+                ];
+            } else {
+                throw new Exception('No se ha creado la inscripción para, username: '.$username.', email: '.$email.', responseUrl: '.$responseUrl);
+            }
+        } catch (InscriptionStartException $e) {
+            $result = [
+                'error'  => 'Error al crear la inscripción',
+                'detail' => $e->getMessage(),
+            ];
+            $this->log->logError(json_encode($result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $tbkToken
+     *
+     * @throws Exception
+     *
+     * @return array
+     */
+    public function finishInscription($tbkToken)
+    {
+        try {
+            $this->log->logInfo('getInscriptonResult - tokenWs: '.$tbkToken);
+            if ($tbkToken == null) {
+                throw new Exception('El token tokenWs es requerido');
+            }
+
+            return $this->inscription->finish($tbkToken);
+        } catch (InscriptionFinishException $e) {
+            $result = [
+                'error'  => 'Error al confirmar la inscripción',
                 'detail' => $e->getMessage(),
             ];
             $this->log->logError(json_encode($result));

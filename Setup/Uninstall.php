@@ -5,6 +5,7 @@ namespace Transbank\Webpay\Setup;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UninstallInterface;
+use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData;
 use Transbank\Webpay\Model\ResourceModel\WebpayOrderData;
 
 class Uninstall implements UninstallInterface
@@ -15,6 +16,7 @@ class Uninstall implements UninstallInterface
         $installer->startSetup();
 
         $installer->getConnection()->dropTable($installer->getTable(WebpayOrderData::TABLE_NAME));
+        $installer->getConnection()->dropTable($installer->getTable(OneclickInscriptionData::TABLE_NAME));
 
         $installer->endSetup();
     }

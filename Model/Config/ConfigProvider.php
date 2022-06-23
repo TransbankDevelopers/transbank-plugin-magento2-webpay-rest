@@ -39,6 +39,24 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
         return $config;
     }
 
+    public function getPluginConfigOneclick()
+    {
+        $config = [
+            'ENVIRONMENT'               => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE.'environment'),
+            'COMMERCE_CODE'             => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE.'commerce_code'),
+            'API_KEY'                   => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE.'api_key'),
+            'URL_RETURN'                => 'checkout/transaction/commitoneclick',
+            'ECOMMERCE'                 => 'magento',
+            'new_order_status'          => $this->getOrderPendingStatus(),
+            'payment_successful_status' => $this->getOrderSuccessStatus(),
+            'payment_error_status'      => $this->getOrderErrorStatus(),
+            'new_email_order'           => $this->getEmailSettings(),
+            'invoice_settings'          => $this->getInvoiceSettings(),
+        ];
+
+        return $config;
+    }
+
     public function getOrderPendingStatus()
     {
         return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE.'new_order_status');

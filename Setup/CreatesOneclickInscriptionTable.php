@@ -22,6 +22,9 @@ trait CreatesOneclickInscriptionTable
             ->addColumn('token', Table::TYPE_TEXT, 100, [
                 'nullable' => false,
             ], 'Token')
+            ->addColumn('tbk_user', Table::TYPE_TEXT, 100, [
+                'nullable' => false,
+            ], 'TBK User')
             ->addColumn('username', Table::TYPE_TEXT, 60, [
                 'nullable' => false,
             ], 'Username')

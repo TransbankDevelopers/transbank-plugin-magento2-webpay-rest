@@ -21,6 +21,25 @@
                     <!-- No config values yet -->
                 </diagnostics>
             </transbank_webpay>
+            <transbank_oneclick>
+                <model>Transbank\Webpay\Model\Oneclick</model>
+                <title translate="label">Oneclick</title>
+                <active>1</active>
+                <general_parameters>
+                    <payment_successful_status>complete</payment_successful_status>
+                    <payment_error_status>canceled</payment_error_status>
+                    <new_order_status>pending</new_order_status>
+                    <sort_order>0</sort_order>
+                </general_parameters>
+                <security>
+                    <environment>TEST</environment>
+                    <commerce_code>597055555532</commerce_code>
+                    <api_key>579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C</api_key>
+                </security>
+                <diagnostics>
+                    <!-- No config values yet -->
+                </diagnostics>
+            </transbank_oneclick>
         </payment>
     </default>
 </config>
