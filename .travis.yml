@@ -9,6 +9,7 @@ deploy:
     name: "$TRAVIS_TAG"
     api_key: $GITHUB_TOKEN
     skip_cleanup: true
+    file: "transbank-plugin-magento2-webpay-rest.zip"
     on:
       repo: TransbankDevelopers/transbank-plugin-magento2-webpay-rest
       tags: true
