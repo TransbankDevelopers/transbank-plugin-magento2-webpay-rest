@@ -18,7 +18,7 @@ define(
         customer,
         checkoutData,
         additionalValidators,
-        url,
+        urlBuilder,
         quote,
         setPaymentInformationAction) {
         'use strict';
@@ -39,6 +39,8 @@ define(
             placeOrder: function (data, event) {
                 var self = this;
 
+                const selected_inscription = jQuery('#'+this.getCode()+'_payment_profile_id').val();
+
                 if (event) {
                     event.preventDefault();
                 }
@@ -55,22 +57,34 @@ define(
                             function () {
                                 self.afterPlaceOrder();
 
-                                var url = window.checkoutConfig.pluginConfigOneclick.createTransactionUrl;
+                                if (!selected_inscription) {
+                                    var url = window.checkoutConfig.pluginConfigOneclick.createTransactionUrl;
+                                    $.getJSON(url, function (result) {
+                                        if (result != undefined && result.token != undefined) {
+                                            var form = $('<form action="' + result.urlWebpay + '?TBK_TOKEN=' + result.token + '" method="post">' +
+                                                '</form>');
+                                            $('body').append(form);
+                                            form.submit();
+                                        } else {
+                                            alert('Error al crear transacción');
+                                        }
+                                    });
+                                } else {
+                                    var url = window.checkoutConfig.pluginConfigOneclick.confirmTransactionUrl;
+                                    console.log(`:: Charge ${selected_inscription}`);
 
-                                if (quote.guestEmail) {
-                                    url += '?guestEmail=' + encodeURIComponent(quote.guestEmail);
+                                    $.post(url, {
+                                        inscription: selected_inscription
+                                    }, function (result) {
+                                        console.log(result.status);
+                                        if (result.status == 'success') {
+                                            window.location.reload();
+                                        } else {
+                                            alert('Error al autorizar la compra');
+                                        }
+                                    });
                                 }
-
-                                $.getJSON(url, function (result) {
-                                    if (result != undefined && result.token != undefined) {
-                                        var form = $('<form action="' + result.urlWebpay + '?TBK_TOKEN=' + result.token + '" method="post">' +
-                                            '</form>');
-                                        $('body').append(form);
-                                        form.submit();
-                                    } else {
-                                        alert('Error al crear transacción');
-                                    }
-                                });
+                                
                             }
                         ).always(
                             function () {

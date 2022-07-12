@@ -18,6 +18,10 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
             'pluginConfigWebpay' => [
                 'createTransactionUrl' => 'transaction/createwebpay',
             ],
+            'pluginConfigOneclick' => [
+                'createTransactionUrl' => 'transaction/createoneclick',
+                'confirmTransactionUrl' => 'transaction/confirmoneclick',
+            ]
         ];
     }
 

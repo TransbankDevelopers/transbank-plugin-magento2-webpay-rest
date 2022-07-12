@@ -184,7 +184,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      *
      * @throws \Exception
      *
-     * @return WebpayOrderData
+     * @return OneclickInscriptionData
      */
     protected function saveOneclickInscriptionData( // Copiar esta funcion para guardar los datos en CommitOneClick.php
         $status,
@@ -197,8 +197,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $commerce_code
     )
     {
-        $webpayOrderData = $this->OneclickInscriptionDataFactory->create();
-        $webpayOrderData->setData([
+        $oneclickInscriptionData = $this->OneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData->setData([
             'status'          => $status,
             'token'          => $token,
             'username'       => $username,
@@ -209,9 +209,9 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             'commerce_code'  => $commerce_code,
             'metadata'       => json_encode($this->checkoutSession->getData()),
         ]);
-        $webpayOrderData->save();
+        $oneclickInscriptionData->save();
 
-        return $webpayOrderData;
+        return $oneclickInscriptionData;
     }
 
     /**

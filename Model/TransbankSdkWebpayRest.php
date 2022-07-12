@@ -12,6 +12,8 @@ use Transbank\Webpay\Oneclick;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
 
+use Transbank\Webpay\Oneclick\MallTransaction;
+
 /**
  * Class TransbankSdkWebpayRest.
  */
@@ -34,7 +36,12 @@ class TransbankSdkWebpayRest
     /**
      * @var Oneclick\MallInscription
      */
-    public $inscription;
+    public $mallInscription;
+
+    /**
+     * @var Oneclick\MallTransaction
+     */
+    public $mallTransaction;
 
     /**
      * TransbankSdkWebpayRest constructor.
@@ -51,6 +58,8 @@ class TransbankSdkWebpayRest
             $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
         
             $this->inscription = new Oneclick\MallInscription();
+
+            $this->mallTransaction = new Oneclick\MallTransaction();
 
         }
     }
@@ -184,6 +193,36 @@ class TransbankSdkWebpayRest
         } catch (InscriptionFinishException $e) {
             $result = [
                 'error'  => 'Error al confirmar la inscripción',
+                'detail' => $e->getMessage(),
+            ];
+            $this->log->logError(json_encode($result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $username
+     * @param $tbkUser
+     * @param $total
+     *
+     * @throws Exception
+     *
+     * @return array
+     */
+    public function authorizeTransaction($customerId, $username, $tbkUser, $details)
+    {
+        try {
+            $this->log->logInfo('authorizeTransaction - username: '.$username);
+            if ($username == null || $tbkUser == null) {
+                throw new Exception('El token tbkUser y el username son requerido');
+            }
+
+            return $this->mallTransaction->authorize($username, $tbkUser, $customerId, $details);
+
+        } catch (InscriptionFinishException $e) {
+            $result = [
+                'error'  => 'Error al autorizar la transacción',
                 'detail' => $e->getMessage(),
             ];
             $this->log->logError(json_encode($result));
