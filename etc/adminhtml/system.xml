@@ -46,7 +46,91 @@
                         <comment>Al seleccionar 'Default' el correo electrónico se enviará al crear el pedido y no al procesar la compra</comment>
                     </field>
                     <!-- Invoice Settings -->
-                    <field id="invoice_settings" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="invoice_settings" translate="label" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Generar Invoice</label>
+                        <source_model>Transbank\Webpay\Model\Config\ConfigInvoice</source_model>
+                        <comment>Para modificar esta opción es necesario que el estado de Pago Exitoso sea "Processing"</comment>
+                        <frontend_model>Transbank\Webpay\Helper\Disable</frontend_model>
+                    </field>
+                </group>
+                <group id="security" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Parámetros de seguridad</label>
+                    <attribute type="expanded">0</attribute>
+
+                    <!-- Environment -->
+                    <field id="environment" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Ambiente</label>
+                        <source_model>Transbank\Webpay\Model\Config\Environment</source_model>
+                    </field>
+
+                    <!-- Commerce Code -->
+                    <field id="commerce_code" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Código de Comercio</label>
+                        <comment>Identificador único del comercio, asegurate de que comience con 5970</comment>
+                    </field>
+
+                    <!-- Api Key -->
+                    <field id="api_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>API Key</label>
+                        <comment>Llave secreta utilizada para conectarse a la API ¡asegúrate de no compartir su contenido!</comment>
+                    </field>
+                </group>
+                <group id="diagnostics" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Herramientas de diagnóstico</label>
+                    <attribute type="expanded">0</attribute>
+                    <field id="tbk_button" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="09" translate="label" type="button">
+                        <label>Herramienta de diagnóstico</label>
+                        <frontend_model>Transbank\Webpay\Block\System\Config\TbkButton</frontend_model>
+                    </field>
+                </group>
+            </group>
+
+            <group id="transbank_oneclick" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>Transbank Oneclick REST</label>
+
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Habilitado</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Payment Title</label>
+                    <config_path>payment/transbank_oneclick/title</config_path>
+                </field>
+
+                <group id="general_parameters" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Parámetros Generales</label>
+                    <attribute type="expanded">0</attribute>
+
+                    <!-- Payment success -->
+                    <field id="payment_successful_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Estado de Pago Exitoso</label>
+                        <source_model>Transbank\Webpay\Model\Config\OrderStatus</source_model>
+                    </field>
+                    <!-- Payment error -->
+                    <field id="payment_error_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Estado de Pago Erroneo</label>
+                        <source_model>Transbank\Webpay\Model\Config\OrderStatus</source_model>
+                    </field>
+                    <!-- New order status -->
+                    <field id="new_order_status" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Estado de Nueva Orden</label>
+                        <source_model>Magento\Sales\Model\Config\Source\Order\Status\NewStatus</source_model>
+                    </field>
+                    <!-- Plugin sort order -->
+                    <field id="sort_order" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Posición del plugin</label>
+                        <frontend_class>validate-number</frontend_class>
+                        <comment>Posición en la que aparecerá la opción de pago, debe ser menor a otros medios de pago para que aparezca primero</comment>
+                    </field>
+                    <!-- New Email Order -->
+                    <field id="new_email_order" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Comportamiento del Email</label>
+                        <source_model>Transbank\Webpay\Model\Config\ConfigEmail</source_model>
+                        <comment>Al seleccionar 'Default' el correo electrónico se enviará al crear el pedido y no al procesar la compra</comment>
+                    </field>
+                    <!-- Invoice Settings -->
+                    <field id="invoice_settings" translate="label" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Generar Invoice</label>
                         <source_model>Transbank\Webpay\Model\Config\ConfigInvoice</source_model>
                         <comment>Para modificar esta opción es necesario que el estado de Pago Exitoso sea "Processing"</comment>

@@ -12,14 +12,14 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
  */
 class CommitOneclick extends \Magento\Framework\App\Action\Action
 {
-    // protected $paymentTypeCodearray = [
-    //     'VD' => 'Venta Debito',
-    //     'VN' => 'Venta Normal',
-    //     'VC' => 'Venta en cuotas',
-    //     'SI' => '3 cuotas sin interés',
-    //     'S2' => '2 cuotas sin interés',
-    //     'NC' => 'N cuotas sin interés',
-    // ];
+    protected $paymentTypeCodearray = [
+        'VD' => 'Venta Debito',
+        'VN' => 'Venta Normal',
+        'VC' => 'Venta en cuotas',
+        'SI' => '3 cuotas sin interés',
+        'S2' => '2 cuotas sin interés',
+        'NC' => 'N cuotas sin interés',
+    ];
     protected $configProvider;
 
     protected $quoteRepository;
@@ -52,15 +52,12 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     public function execute()
     {
-        $config = $this->configProvider->getPluginConfig();
-        $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
+        $config = $this->configProvider->getPluginConfigOneclick();
+        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $inscriptionResult = [];
 
         try {
             $tbkToken = $_POST['TBK_TOKEN'] ?? $_GET['TBK_TOKEN'] ?? null;
-            // if (empty($tbkToken)) {
-            //     return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
-            // }
 
             if (is_null($tbkToken)) {
                 throw new \Exception('Token no encontrado');
@@ -84,27 +81,16 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     $OneclickInscriptionData->save();
 
-                    // $authorizationCode = $inscriptionResult->authorizationCode;
-                    // $payment = $order->getPayment();
-                    // $payment->setLastTransId($authorizationCode);
-                    // $payment->setTransactionId($authorizationCode);
-                    // $payment->setAdditionalInformation([\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $inscriptionResult]);
-
-                    // $orderStatus = $this->configProvider->getOrderSuccessStatus();
-                    // $order->setState($orderStatus)->setStatus($orderStatus);
-                    // $order->addStatusToHistory($order->getStatus(), json_encode($inscriptionResult));
-                    // $order->save();
-
-                    // $this->checkoutSession->getQuote()->setIsActive(false)->save();
-
-                    // $message = $this->getSuccessMessage($this->commitResponseToArray($inscriptionResult));
                     $message = "Success - Oneclick Inscription";
                     $this->messageManager->addSuccess(__($message));
 
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout');
+                    return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } else {
-                    $OneclickInscriptionData->setPaymentStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
+                    $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
+                    $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
+                    $OneclickInscriptionData->save();
+
                     $order->cancel();
                     $order->save();
                     $order->setStatus($orderStatusCanceled);
@@ -123,12 +109,15 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                 $inscriptionResult = json_decode($OneclickInscriptionData->getMetadata(), true);
 
                 if ($status == OneclickInscriptionData::PAYMENT_STATUS_SUCCESS) {
-                    // $message = $this->getSuccessMessage($inscriptionResult);
-                    $message = "Success - Oneclick Inscription";
+                    $message = "¡Tarjeta inscrita exitosamente!";
                     $this->messageManager->addSuccess(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($status == OneclickInscriptionData::PAYMENT_STATUS_FAILED) {
+                    $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
+                    $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
+                    $OneclickInscriptionData->save();
+
                     $this->checkoutSession->restoreQuote();
                     $message = $this->getRejectMessage($inscriptionResult);
                     $this->messageManager->addError(__($message));
@@ -138,6 +127,11 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             }
         } catch (\Exception $e) {
             $order = isset($order) ? $order : null;
+
+            $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
+            $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
+
+            $OneclickInscriptionData->save();
 
             return $this->errorOnConfirmation($e, $order, $orderStatusCanceled);
         }
@@ -166,120 +160,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             'cardType'              => $response->cardType,
             'cardNumber'            => $response->cardNumber,
         ];
-    }
-
-    protected function getSuccessMessage(array $inscriptionResult)
-    {
-        if ($inscriptionResult['responseCode'] == 0) {
-            $tipoCuotas = $this->paymentTypeCodearray[$transactionResult['paymentTypeCode']];
-        } else {
-            $tipoCuotas = 'Sin cuotas';
-        }
-
-        if ($transactionResult['responseCode'] == 0) {
-            $transactionResponse = 'Transacci&oacute;n Aprobada';
-        } else {
-            $transactionResponse = 'Transacci&oacute;n Rechazada';
-        }
-
-        if ($transactionResult['paymentTypeCode'] == 'VD') {
-            $paymentType = 'Débito';
-        } elseif ($transactionResult['paymentTypeCode'] == 'VP') {
-            $paymentType = 'Prepago';
-        } else {
-            $paymentType = 'Crédito';
-        }
-        $installmentsString = '';
-        if ($tipoCuotas != 'Sin cuotas') {
-            $installmentsString = "
-                <b>N&uacute;mero de cuotas: </b>{$transactionResult['installmentsNumber']}<br>
-                <b>Monto Cuota: </b>{$transactionResult['installmentsAmount']}<br>
-        ";
-        }
-
-        $message = "<h2>Detalles del pago con Webpay</h2>
-        <p>
-            <br>
-            <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResponse}<br>
-            <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
-            <b>Monto:</b> $ {$transactionResult['amount']}<br>
-            <b>Order de Compra: </b> {$transactionResult['buyOrder']}<br>
-            <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult['transactionDate'])).'<br>
-            <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult['transactionDate']))."<br>
-            <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['card_number']}<br>
-            <b>C&oacute;digo de autorizacion: </b>{$transactionResult['authorizationCode']}<br>
-            <b>Tipo de Pago: </b>{$paymentType}<br>
-            <b>Tipo de Cuotas: </b>{$tipoCuotas}<br>
-            {$installmentsString}
-        </p>";
-
-        return $message;
-    }
-
-    protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
-    {
-        list($OneclickInscriptionData, $order) = $this->getOrderByToken($token);
-        $message = 'Orden cancelada por el usuario';
-        $this->checkoutSession->restoreQuote();
-
-        $getQuoteById = $this->quoteRepository->get($quoteId);
-
-        if ($getQuoteById) {
-            $customerId = $getQuoteById->getCustomerId();
-            $isGuest = $getQuoteById->getCustomerIsGuest();
-
-            if ($customerId && $isGuest == 1) {
-                $getQuoteById->setCustomerIsGuest(false);
-                $getQuoteById->save();
-            }
-        }
-
-        $this->messageManager->addError(__($message));
-
-        if ($order != null) {
-            $order->cancel();
-            $order->save();
-            $order->setStatus($orderStatusCanceled);
-            $order->addStatusToHistory($order->getStatus(), $message);
-            $order->save();
-        }
-
-        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-    }
-
-    protected function getRejectMessage(array $transactionResult)
-    {
-        if (isset($transactionResult)) {
-            $message = "<h2>Transacci&oacute;n rechazada con Webpay</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
-                <b>Monto:</b> $ {$transactionResult['amount']}<br>
-                <b>Order de Compra: </b> {$transactionResult['buyOrder']}<br>
-                <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult['transactionDate'])).'<br>
-                <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult['transactionDate']))."<br>
-                <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['card_number']}<br>
-            </p>";
-
-            return $message;
-        } else {
-            if (isset($transactionResult['error'])) {
-                $error = $transactionResult['error'];
-                $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con Webpay</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
-                <b>Mensaje: </b>{$detail}
-            </p>";
-
-                return $message;
-            } else {
-                $message = '<h2>Transacci&oacute;n Fallida</h2>';
-
-                return $message;
-            }
-        }
     }
 
     protected function getOrder($orderId)

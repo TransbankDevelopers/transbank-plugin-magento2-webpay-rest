@@ -6,6 +6,11 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
 {
     const SECURITY_CONFIGS_ROUTE = 'payment/transbank_webpay/security/';
     const ORDER_CONFIGS_ROUTE = 'payment/transbank_webpay/general_parameters/';
+    
+    const SECURITY_CONFIGS_ROUTE_ONECLICK = 'payment/transbank_oneclick/security/';
+    const ORDER_CONFIGS_ROUTE_ONECLICK = 'payment/transbank_oneclick/general_parameters/';
+
+    const CC_VAULT_CODE = 'transbank_oneclick_cc_vault';
 
     public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface)
     {
@@ -46,9 +51,9 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     public function getPluginConfigOneclick()
     {
         $config = [
-            'ENVIRONMENT'               => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE.'environment'),
-            'COMMERCE_CODE'             => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE.'commerce_code'),
-            'API_KEY'                   => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE.'api_key'),
+            'ENVIRONMENT'               => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'environment'),
+            'COMMERCE_CODE'             => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'commerce_code'),
+            'API_KEY'                   => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'api_key'),
             'URL_RETURN'                => 'checkout/transaction/commitoneclick',
             'ECOMMERCE'                 => 'magento',
             'new_order_status'          => $this->getOrderPendingStatus(),
@@ -84,5 +89,32 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     public function getInvoiceSettings()
     {
         return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE.'invoice_settings');
+    }
+
+    // Oneclick
+
+    public function getOneclickOrderPendingStatus()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE_ONECLICK.'new_order_status');
+    }
+
+    public function getOneclickOrderSuccessStatus()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE_ONECLICK.'payment_successful_status');
+    }
+
+    public function getOneclickOrderErrorStatus()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE_ONECLICK.'payment_error_status');
+    }
+
+    public function getOneclickEmailSettings()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE_ONECLICK.'new_email_order');
+    }
+
+    public function getOneclickInvoiceSettings()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE_ONECLICK.'invoice_settings');
     }
 }

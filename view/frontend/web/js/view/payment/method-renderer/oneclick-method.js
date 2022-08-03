@@ -76,9 +76,9 @@ define(
                                     $.post(url, {
                                         inscription: selected_inscription
                                     }, function (result) {
-                                        console.log(result.status);
+                                        console.log(result);
                                         if (result.status == 'success') {
-                                            window.location.reload();
+                                            window.location.href = '/checkout/cart/#payment';
                                         } else {
                                             alert('Error al autorizar la compra');
                                         }

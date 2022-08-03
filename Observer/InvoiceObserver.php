@@ -35,7 +35,9 @@ class InvoiceObserver implements ObserverInterface
         $order = $observer->getEvent()->getOrder();
 
         $invoiceSettings = $this->configProvider->getInvoiceSettings();
-        if ($invoiceSettings == 'transbank') {
+        $invoiceOneclickSettings = $this->configProvider->getOneclickInvoiceSettings();
+
+        if ($invoiceSettings == 'transbank' || $invoiceOneclickSettings == 'transbank') {
 
             $order->addStatusHistoryComment('Automatically Invoiced by Transbank', true);
 

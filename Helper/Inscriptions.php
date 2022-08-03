@@ -13,11 +13,13 @@ class Inscriptions extends AbstractHelper {
         \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
         \Magento\Customer\Model\Session $Session,
         Context $context,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         ResourceConnection $resourceConnection)
     {
         $this->_OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
         $this->_session = $Session;
         $this->resourceConnection = $resourceConnection;
+        $this->_scopeConfig = $scopeConfig;
         parent::__construct($context);
     }
     public function getInscriptions()
@@ -32,10 +34,11 @@ class Inscriptions extends AbstractHelper {
             // Select query
             $selectquery = "SELECT id, username, card_type, card_number FROM ".$table." WHERE user_id = ".$customerId." AND status = 'SUCCESS'";
             $result = $connection->fetchAll($selectquery);
-
-            return $result;
         } else {
-            return [];
+            $result = [];
         }
+
+        return $result;
+
     }
 }

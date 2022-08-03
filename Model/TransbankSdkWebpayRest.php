@@ -41,7 +41,7 @@ class TransbankSdkWebpayRest
     /**
      * @var Oneclick\MallTransaction
      */
-    public $mallTransaction;
+    public $inscription;
 
     /**
      * TransbankSdkWebpayRest constructor.
@@ -54,12 +54,12 @@ class TransbankSdkWebpayRest
         $this->log = new LogHandler();
         if (isset($config)) {
             $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
+            
             $this->transaction = new WebpayPlus\Transaction();
-            $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
-        
-            $this->inscription = new Oneclick\MallInscription();
-
+            $this->mallInscription = new Oneclick\MallInscription();
             $this->mallTransaction = new Oneclick\MallTransaction();
+
+            $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
 
         }
     }
@@ -152,7 +152,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('initInscription - Username: '.$username.', email: '.$email.
                 ', responseUrl: '.$responseUrl);
 
-            $initResult = $this->inscription->start($username, $email, $responseUrl);
+            $initResult = $this->mallInscription->start($username, $email, $responseUrl);
 
             $this->log->logInfo('createInscription - initResult: '.json_encode($initResult));
             if (isset($initResult) && isset($initResult->token) && isset($initResult->urlWebpay)) {
@@ -189,7 +189,7 @@ class TransbankSdkWebpayRest
                 throw new Exception('El token tokenWs es requerido');
             }
 
-            return $this->inscription->finish($tbkToken);
+            return $this->mallInscription->finish($tbkToken);
         } catch (InscriptionFinishException $e) {
             $result = [
                 'error'  => 'Error al confirmar la inscripción',
@@ -223,6 +223,35 @@ class TransbankSdkWebpayRest
         } catch (InscriptionFinishException $e) {
             $result = [
                 'error'  => 'Error al autorizar la transacción',
+                'detail' => $e->getMessage(),
+            ];
+            $this->log->logError(json_encode($result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $username
+     * @param $tbkUser
+     *
+     * @throws Exception
+     *
+     * @return array
+     */
+    public function deleteInscription($username, $tbkUser)
+    {
+        try {
+            $this->log->logInfo('deleteInscription - username: '.$username);
+            if ($username == null || $tbkUser == null) {
+                throw new Exception('El token tbkUser y el username son requerido');
+            }
+
+            return $this->mallInscription->delete($tbkUser, $username);
+
+        } catch (InscriptionFinishException $e) {
+            $result = [
+                'error'  => 'Error al eliminar una inscripción',
                 'detail' => $e->getMessage(),
             ];
             $this->log->logError(json_encode($result));

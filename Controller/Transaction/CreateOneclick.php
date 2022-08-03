@@ -58,8 +58,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $response = null;
         $order = null;
         // $config = $this->configProvider->getPluginConfigOneclick();
-        $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
-        $orderStatusPendingPayment = $this->configProvider->getOrderPendingStatus();
+        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
+        $orderStatusPendingPayment = $this->configProvider->getOneclickOrderPendingStatus();
 
         try {
             $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;

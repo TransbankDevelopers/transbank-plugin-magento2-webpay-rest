@@ -46,6 +46,7 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
         $this->quoteManagement = $quoteManagement;
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
+        $this->messageManager = $context->getMessageManager();
         $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new LogHandler();
@@ -59,8 +60,8 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         $response = null;
-        $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
-        $orderStatusSuccess = $this->configProvider->getOrderSuccessStatus();
+        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
+        $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
 
         try {
             $resultJson = $this->resultJsonFactory->create();
@@ -88,13 +89,6 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
             }
             $grandTotal = round($order->getGrandTotal());
 
-            // $this->checkoutSession->setLastQuoteId($quote->getId());
-            // $this->checkoutSession->setLastSuccessQuoteId($quote->getId());
-            // $this->checkoutSession->setLastOrderId($order->getId());
-            // $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
-            // $this->checkoutSession->setLastOrderStatus($order->getStatus());
-            // $this->checkoutSession->setGrandTotal($grandTotal);
-
             $quoteId = $quote->getId();
             $orderId = $order->getId();
             $customerId = $order->getCustomerId();
@@ -105,8 +99,7 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
 
             $details = [
                 [
-                    // "commerce_code" => $config['COMMERCE_CODE'],
-                    "commerce_code" => '597055555542',
+                    "commerce_code" => $config['COMMERCE_CODE'],
                     "buy_order" => $orderId,
                     "amount" => $grandTotal,
                     "installments_number" => 1
@@ -138,17 +131,15 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
                 $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
                 $order->addStatusToHistory($order->getStatus(), $message);
 
-                $order->save();
-
-                $this->checkoutSession->getQuote()->setIsActive(false)->save();
+                // $order->save();
 
                 $message = $this->getSuccessMessage($response);
-                $order->addStatusToHistory($order->getStatus(), $message);
+                // $order->addStatusToHistory($order->getStatus(), $message);
 
-                $this->messageManager->addSuccess(__($message));
+                $this->messageManager->addSuccessMessage(__($message));
                 $order->save();
+                $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                // return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 return $resultJson->setData(['status' => 'success', 'response' => $response]);
 
             } else {
@@ -220,7 +211,7 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
      *
      * @throws \Exception
      *
-     * @return OneclickOrderData
+     * @return OneclickInscriptionData
      */
     protected function getOneclickInscriptionData($inscriptionId)
     {
@@ -298,19 +289,30 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
             $paymentType = 'Crédito';
         }
 
-        $message = "<h2>Detalles del pago con Oneclick</h2>
-        <p>
-            <br>
-            <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResponse}<br>
-            <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult->details[0]->responseCode}<br>
-            <b>Monto:</b> $ {$transactionResult->details[0]->amount}<br>
-            <b>Order de Compra: </b> {$transactionResult->details[0]->buyOrder}<br>
-            <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'<br>
-            <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."<br>
-            <b>Tarjeta: </b>**** **** **** {$transactionResult->cardNumber}<br>
-            <b>C&oacute;digo de autorizacion: </b>{$transactionResult->details[0]->authorizationCode}<br>
-            <b>Tipo de Pago: </b>{$paymentType}<br>
-        </p>";
+        // $message = "<h2>Detalles del pago con Oneclick</h2>
+        // <p>
+        //     <br>
+        //     <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResponse}<br>
+        //     <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult->details[0]->responseCode}<br>
+        //     <b>Monto:</b> $ {$transactionResult->details[0]->amount}<br>
+        //     <b>Order de Compra: </b> {$transactionResult->details[0]->buyOrder}<br>
+        //     <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'<br>
+        //     <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."<br>
+        //     <b>Tarjeta: </b>**** **** **** {$transactionResult->cardNumber}<br>
+        //     <b>C&oacute;digo de autorizacion: </b>{$transactionResult->details[0]->authorizationCode}<br>
+        //     <b>Tipo de Pago: </b>{$paymentType}<br>
+        // </p>";
+
+        $message = "Detalles del pago con Oneclick
+            Respuesta de la Transacci&oacute;n: {$transactionResponse}
+            C&oacute;digo de la Transacci&oacute;n: {$transactionResult->details[0]->responseCode}
+            Monto: $ {$transactionResult->details[0]->amount}
+            Order de Compra: {$transactionResult->details[0]->buyOrder}
+            Fecha de la Transacci&oacute;n: ".date('d-m-Y', strtotime($transactionResult->transactionDate)).'
+            Hora de la Transacci&oacute;n: '.date('H:i:s', strtotime($transactionResult->transactionDate))."
+            Tarjeta: **** **** **** {$transactionResult->cardNumber}
+            C&oacute;digo de autorizacion: {$transactionResult->details[0]->authorizationCode}
+            Tipo de Pago: {$paymentType}";
 
         return $message;
     }
