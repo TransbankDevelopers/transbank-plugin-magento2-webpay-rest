@@ -35,6 +35,13 @@ class SaveConfigObserver implements ObserverInterface
             $this->configWriter->save('payment/transbank_webpay/general_parameters/invoice_settings', $value);
         }
 
+        $oneclickOrderStatus = $params['transbank_oneclick']['groups']['general_parameters']['fields']['payment_successful_status']['value'];
+
+        if ($oneclickOrderStatus !== 'processing') {
+            $value = 'default';
+            $this->configWriter->save('payment/transbank_oneclick/general_parameters/invoice_settings', $value);
+        }
+
         return $this;
     }
 }

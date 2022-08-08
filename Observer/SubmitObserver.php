@@ -26,9 +26,10 @@ class SubmitObserver implements ObserverInterface
         try {
             
             $emailSettings = $this->configProvider->getEmailSettings();
+            $oneclickEmailSettings = $this->configProvider->getOneclickEmailSettings();
             $this->_logger->debug($emailSettings);
 
-            if ($emailSettings == 'transbank') {
+            if ($emailSettings == 'transbank' || $oneclickEmailSettings == 'transbank') {
                 $order = $observer->getEvent()->getOrder();
                 $this->_current_order = $order;
 

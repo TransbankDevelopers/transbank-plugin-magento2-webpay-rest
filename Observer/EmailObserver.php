@@ -33,10 +33,11 @@ class EmailObserver implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer) {
 
         $emailSettings = $this->configProvider->getEmailSettings();
+        $oneclickEmailSettings = $this->configProvider->getOneclickEmailSettings();
 
         $order = $observer->getEvent()->getOrder();
 
-        if ($emailSettings == 'transbank') {
+        if ($emailSettings == 'transbank' || $oneclickEmailSettings == 'transbank') {
             $this->_current_order = $order;
     
             $order->setCanSendNewEmailFlag(true);

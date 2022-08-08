@@ -9,5 +9,8 @@
         </event>                                                                                                                                                                                                  
         <event name="admin_system_config_changed_section_payment">                                                                                                                                                
             <observer name="transbank_configuration" instance="Transbank\Webpay\Observer\SaveConfigObserver"/>                                                                                                    
-        </event>                                                                                                                                                                                                  
+        </event>       
+        <event name="payment_method_is_active">
+            <observer name="custom_payment" instance="Transbank\Webpay\Observer\OneclickAvailable" />
+        </event>                                                                                                                                                                                           
     </config>
