@@ -153,6 +153,12 @@
                         <comment>Identificador único del comercio, asegurate de que comience con 5970</comment>
                     </field>
 
+                    <!-- Child Commerce Code -->
+                    <field id="child_commerce_code" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Código de Comercio para la tienda</label>
+                        <comment>Identificador único del comercio asignado por Transbank para la tienda perteneciente al mall, asegurate de que comience con 5970</comment>
+                    </field>
+
                     <!-- Api Key -->
                     <field id="api_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>API Key</label>

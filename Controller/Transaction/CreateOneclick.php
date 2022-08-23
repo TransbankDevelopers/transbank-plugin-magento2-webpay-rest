@@ -57,7 +57,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     {
         $response = null;
         $order = null;
-        // $config = $this->configProvider->getPluginConfigOneclick();
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $orderStatusPendingPayment = $this->configProvider->getOneclickOrderPendingStatus();
 
@@ -92,7 +91,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
 
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
-            $returnUrl = $baseUrl.$config['URL_RETURN']; // Might be error change to URL_RETURN
+            $returnUrl = $baseUrl.$config['URL_RETURN'];
             $quoteId = $quote->getId();
             $orderId = $this->getOrderId();
 

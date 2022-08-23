@@ -88,7 +88,15 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } else {
                     $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-                    $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
+                    if (isset($inscriptionResult->responseCode)) {
+                        $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
+                        $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult));
+                    } else {
+                        $message = $this->getRejectMessage($inscriptionResult);
+                    }
+
+                    $this->messageManager->addError(__($message));
+
                     $OneclickInscriptionData->save();
 
                     $order->cancel();
@@ -99,9 +107,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
-
-                    $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult));
-                    $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -115,7 +120,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($status == OneclickInscriptionData::PAYMENT_STATUS_FAILED) {
                     $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-                    $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
                     $OneclickInscriptionData->save();
 
                     $this->checkoutSession->restoreQuote();
@@ -128,10 +132,10 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         } catch (\Exception $e) {
             $order = isset($order) ? $order : null;
 
-            $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-            $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
+            // $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
+            // $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
 
-            $OneclickInscriptionData->save();
+            // $OneclickInscriptionData->save();
 
             return $this->errorOnConfirmation($e, $order, $orderStatusCanceled);
         }
@@ -193,7 +197,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     private function errorOnConfirmation(\Exception $e, $order, $orderStatusCanceled)
     {
-        $message = 'Error al confirmar transacción: '.$e->getMessage();
+        $message = 'Error al crear inscripción: '.$e->getMessage();
         $this->log->logError($message);
         $this->checkoutSession->restoreQuote();
         $this->messageManager->addError(__($message));
@@ -206,6 +210,36 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         }
 
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+    }
+
+    protected function getRejectMessage(array $transactionResult)
+    {
+        if (isset($transactionResult['responseCode'])) {
+            $message = "<h2>Transacci&oacute;n rechazada con Oneclick</h2>
+            <p>
+                <br>
+                <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
+            </p>";
+
+            return $message;
+        } else {
+            if (isset($transactionResult['error'])) {
+                $error = $transactionResult['error'];
+                $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
+                $message = "<h2>Transacci&oacute;n fallida con Webpay</h2>
+            <p>
+                <br>
+                <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
+                <b>Mensaje: </b>{$detail}
+            </p>";
+
+                return $message;
+            } else {
+                $message = '<h2>Transacci&oacute;n Fallida</h2>';
+
+                return $message;
+            }
+        }
     }
     
 }

@@ -116,12 +116,14 @@ class TransbankSdkWebpayRest
     public function commitTransaction($tokenWs)
     {
         try {
-            $this->log->logInfo('getTransactionResult - tokenWs: '.$tokenWs);
             if ($tokenWs == null) {
                 throw new Exception('El token webpay es requerido');
             }
 
-            return $this->transaction->commit($tokenWs);
+            $transaction = $this->transaction->commit($tokenWs);
+
+            $this->log->logInfo('commitTransaction: '.json_encode($transaction));
+            return $transaction;
         } catch (TransactionCommitException $e) {
             $result = [
                 'error'  => 'Error al confirmar la transacción',
@@ -189,7 +191,10 @@ class TransbankSdkWebpayRest
                 throw new Exception('El token tokenWs es requerido');
             }
 
-            return $this->mallInscription->finish($tbkToken);
+            $inscription = $this->mallInscription->finish($tbkToken);
+            $this->log->logInfo('finishInscription: '.json_encode($inscription));
+
+            return $inscription;
         } catch (InscriptionFinishException $e) {
             $result = [
                 'error'  => 'Error al confirmar la inscripción',
@@ -210,15 +215,17 @@ class TransbankSdkWebpayRest
      *
      * @return array
      */
-    public function authorizeTransaction($customerId, $username, $tbkUser, $details)
+    public function authorizeTransaction($username, $tbkUser, $buyOrder, $details)
     {
         try {
-            $this->log->logInfo('authorizeTransaction - username: '.$username);
             if ($username == null || $tbkUser == null) {
                 throw new Exception('El token tbkUser y el username son requerido');
             }
 
-            return $this->mallTransaction->authorize($username, $tbkUser, $customerId, $details);
+            $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
+            $this->log->logInfo('authorizeTransaction: '.json_encode($transaction));
+
+            return $transaction;
 
         } catch (InscriptionFinishException $e) {
             $result = [
@@ -242,12 +249,14 @@ class TransbankSdkWebpayRest
     public function deleteInscription($username, $tbkUser)
     {
         try {
-            $this->log->logInfo('deleteInscription - username: '.$username);
             if ($username == null || $tbkUser == null) {
                 throw new Exception('El token tbkUser y el username son requerido');
             }
 
-            return $this->mallInscription->delete($tbkUser, $username);
+            $delInscription = $this->mallInscription->delete($tbkUser, $username);
+            $this->log->logInfo('deleteInscription: '.json_encode($delInscription));
+
+            return $delInscription;
 
         } catch (InscriptionFinishException $e) {
             $result = [

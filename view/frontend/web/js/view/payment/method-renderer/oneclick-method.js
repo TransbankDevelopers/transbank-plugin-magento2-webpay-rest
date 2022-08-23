@@ -32,10 +32,6 @@ define(
                 return 'transbank_oneclick';
             },
 
-            getTitle: function () {
-                return "Transbank Oneclick";
-            },
-
             placeOrder: function (data, event) {
                 var self = this;
 
@@ -79,6 +75,7 @@ define(
                                         console.log(result);
                                         if (result.status == 'success') {
                                             window.location.href = '/checkout/cart/#payment';
+                                            // window.location.reload();
                                         } else {
                                             alert('Error al autorizar la compra');
                                         }

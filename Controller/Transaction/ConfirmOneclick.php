@@ -5,7 +5,7 @@ namespace Transbank\Webpay\Controller\Transaction;
 use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
-use Transbank\Webpay\Model\WebpayOrderData;
+use Transbank\Webpay\Model\OneclickInscriptionData;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -36,7 +36,8 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        \Magento\Framework\Message\ManagerInterface $messageManager
     ) {
         parent::__construct($context);
 
@@ -46,7 +47,7 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
         $this->quoteManagement = $quoteManagement;
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
-        $this->messageManager = $context->getMessageManager();
+        $this->messageManager = $messageManager;
         $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new LogHandler();
@@ -76,22 +77,17 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
 
             $config = $this->configProvider->getPluginConfigOneclick();
 
-            $tmpOrder = $this->getOrder();
             $this->checkoutSession->restoreQuote();
 
             $quote = $this->cart->getQuote();
 
             $quote->getPayment()->importData(['method' => Oneclick::CODE]);
             $quote->collectTotals();
-            $order = $tmpOrder;
-            if ($tmpOrder != null && $tmpOrder->getStatus() == $orderStatusCanceled) {
-                $order = $this->quoteManagement->submit($quote);
-            }
+            $order = $this->getOrder();
             $grandTotal = round($order->getGrandTotal());
 
             $quoteId = $quote->getId();
             $orderId = $order->getId();
-            $customerId = $order->getCustomerId();
 
             $quote->save();
 
@@ -106,8 +102,7 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
                 ]
             ]; 
 
-            $response = $transbankSdkWebpay->authorizeTransaction($customerId, $username, $tbkUser, $details);
-            // $response = (object)array($response);
+            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $orderId, $details);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
 
             if (isset($response->details) && $response->details[0]->responseCode == 0) {
@@ -116,7 +111,7 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
                     $response->buyOrder, 
                     $response->details[0]->buyOrder, 
                     $response->details[0]->commerceCode, 
-                    WebpayOrderData::PAYMENT_STATUS_SUCCESS, 
+                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS, 
                     $orderId, 
                     $quoteId,
                     $response
@@ -131,33 +126,30 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
                 $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
                 $order->addStatusToHistory($order->getStatus(), $message);
 
-                // $order->save();
-
                 $message = $this->getSuccessMessage($response);
-                // $order->addStatusToHistory($order->getStatus(), $message);
 
-                $this->messageManager->addSuccessMessage(__($message));
+                $this->messageManager->addSuccess(__($message));
                 $order->save();
                 $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                return $resultJson->setData(['status' => 'success', 'response' => $response]);
+                return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
 
             } else {
                 $webpayOrderData = $this->saveWebpayData(
                     '', 
                     '', 
                     '', 
-                    WebpayOrderData::PAYMENT_STATUS_FAILED, 
+                    OneclickInscriptionData::PAYMENT_STATUS_FAILED, 
                     $orderId, 
                     $quoteId,
                     $response
                 );
 
-                $order->cancel();
                 $order->setStatus($orderStatusCanceled);
                 $message = '<h3>Error en Inscripción con Oneclick</h3><br>'.json_encode($response);
 
                 $order->addStatusToHistory($order->getStatus(), $message);
+                $order->cancel();
                 $order->save();
 
                 $this->checkoutSession->restoreQuote();
@@ -177,7 +169,6 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
             $response = ['error' => $message];
             if ($order != null) {
                 $order->cancel();
-                $order->save();
                 $order->setStatus($orderStatusCanceled);
                 $order->addStatusToHistory($order->getStatus(), $message);
                 $order->save();
@@ -232,19 +223,6 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param $guestEmail
-     */
-    private function setQuoteData(\Magento\Quote\Model\Quote $quote, $guestEmail)
-    {
-        $quote->getBillingAddress()->setEmail($guestEmail);
-        $quote->setData('customer_email', $quote->getBillingAddress()->getEmail());
-        $quote->setData('customer_firstname', $quote->getBillingAddress()->getFirstName());
-        $quote->setData('customer_lastname', $quote->getBillingAddress()->getLastName());
-        $quote->setData('customer_is_guest', 1);
-    }
-
-    /**
      * @param $buyOrder
      * @param $childBuyOrder
      * @param $commerceCode
@@ -288,20 +266,6 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
         } else {
             $paymentType = 'Crédito';
         }
-
-        // $message = "<h2>Detalles del pago con Oneclick</h2>
-        // <p>
-        //     <br>
-        //     <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResponse}<br>
-        //     <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult->details[0]->responseCode}<br>
-        //     <b>Monto:</b> $ {$transactionResult->details[0]->amount}<br>
-        //     <b>Order de Compra: </b> {$transactionResult->details[0]->buyOrder}<br>
-        //     <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'<br>
-        //     <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."<br>
-        //     <b>Tarjeta: </b>**** **** **** {$transactionResult->cardNumber}<br>
-        //     <b>C&oacute;digo de autorizacion: </b>{$transactionResult->details[0]->authorizationCode}<br>
-        //     <b>Tipo de Pago: </b>{$paymentType}<br>
-        // </p>";
 
         $message = "Detalles del pago con Oneclick
             Respuesta de la Transacci&oacute;n: {$transactionResponse}
