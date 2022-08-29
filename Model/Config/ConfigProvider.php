@@ -25,7 +25,7 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
             ],
             'pluginConfigOneclick' => [
                 'createTransactionUrl' => 'transaction/createoneclick',
-                'confirmTransactionUrl' => 'transaction/confirmoneclick',
+                'authorizeTransactionUrl' => 'transaction/authorizeoneclick',
             ]
         ];
     }

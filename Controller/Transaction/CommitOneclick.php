@@ -8,18 +8,11 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 
 /**
- * Controller for commit transaction Webpay.
+ * Controller for commit transaction Oneclick.
  */
 class CommitOneclick extends \Magento\Framework\App\Action\Action
 {
-    protected $paymentTypeCodearray = [
-        'VD' => 'Venta Debito',
-        'VN' => 'Venta Normal',
-        'VC' => 'Venta en cuotas',
-        'SI' => '3 cuotas sin interés',
-        'S2' => '2 cuotas sin interés',
-        'NC' => 'N cuotas sin interés',
-    ];
+
     protected $configProvider;
 
     protected $quoteRepository;
@@ -131,11 +124,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             }
         } catch (\Exception $e) {
             $order = isset($order) ? $order : null;
-
-            // $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-            // $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
-
-            // $OneclickInscriptionData->save();
 
             return $this->errorOnConfirmation($e, $order, $orderStatusCanceled);
         }

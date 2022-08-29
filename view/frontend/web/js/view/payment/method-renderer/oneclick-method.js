@@ -66,7 +66,7 @@ define(
                                         }
                                     });
                                 } else {
-                                    var url = window.checkoutConfig.pluginConfigOneclick.confirmTransactionUrl;
+                                    var url = window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
                                     console.log(`:: Charge ${selected_inscription}`);
 
                                     $.post(url, {

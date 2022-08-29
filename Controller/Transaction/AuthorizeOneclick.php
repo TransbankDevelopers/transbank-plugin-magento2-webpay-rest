@@ -7,15 +7,16 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 
+
 /**
  * Controller for create Oneclick Inscription.
  */
-class ConfirmOneclick extends \Magento\Framework\App\Action\Action
+class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 {
     protected $configProvider;
 
     /**
-     * ConfirmOneclick constructor.
+     * AuthorizeOneclick constructor.
      *
      * @param \Magento\Framework\App\Action\Context            $context
      * @param \Magento\Checkout\Model\Cart                     $cart
@@ -117,14 +118,14 @@ class ConfirmOneclick extends \Magento\Framework\App\Action\Action
                     $response
                 );
 
-                $message = '<h3>Pago autorizado exitosamente con Oneclick</h3><br>'.json_encode($dataLog);
+                $orderLogs = '<h3>Pago autorizado exitosamente con Oneclick</h3><br>'.json_encode($dataLog);
                 $payment = $order->getPayment();
                 $payment->setLastTransId($response->details[0]->authorizationCode);
                 $payment->setTransactionId($response->details[0]->authorizationCode);
                 $payment->setAdditionalInformation([\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $response]);
 
                 $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
-                $order->addStatusToHistory($order->getStatus(), $message);
+                $order->addStatusToHistory($order->getStatus(), $orderLogs);
 
                 $message = $this->getSuccessMessage($response);
 

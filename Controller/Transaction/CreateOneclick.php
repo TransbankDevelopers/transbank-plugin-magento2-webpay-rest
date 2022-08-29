@@ -6,6 +6,7 @@ use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Helper\Inscriptions;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -34,7 +35,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory
+        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
+        Inscriptions $getInscriptions
     ) {
         parent::__construct($context);
 
@@ -46,6 +48,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
         $this->log = new LogHandler();
+        $this->_getInscriptions = $getInscriptions;
     }
 
     /**
@@ -92,23 +95,23 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
             $returnUrl = $baseUrl.$config['URL_RETURN'];
-            $quoteId = $quote->getId();
             $orderId = $this->getOrderId();
 
-            $customerId = 'U_'.$order->getCustomerId();
+            $username = $this->createUsername($order->getCustomerId()); // Generate new Username
+            $this->log->logInfo('New username: '.json_encode($username));
 
             $quote->save();
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
-            $response = $transbankSdkWebpay->createInscription($customerId, $order->getCustomerEmail(), $returnUrl);
-            $dataLog = ['customerId' => $customerId, 'orderId' => $orderId];
+            $response = $transbankSdkWebpay->createInscription($username, $order->getCustomerEmail(), $returnUrl);
+            $dataLog = ['customerId' => $username, 'orderId' => $orderId];
             $message = '<h3>Esperando Inscripción con Oneclick</h3><br>'.json_encode($dataLog);
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
                 $oneclickInscriptionData = $this->saveOneclickInscriptionData(
                     OneclickInscriptionData::PAYMENT_STATUS_WATING,     // status
                     $response['token'],             // token
-                    $customerId,                    // username
+                    $username,                    // username
                     $order->getCustomerEmail(),     // email
                     $order->getCustomerId(),        // user_id
                     $this->getOrderId(),            // order_id
@@ -232,5 +235,26 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $quote->setData('customer_firstname', $quote->getBillingAddress()->getFirstName());
         $quote->setData('customer_lastname', $quote->getBillingAddress()->getLastName());
         $quote->setData('customer_is_guest', 1);
+    }
+
+    /**
+     * @param $username
+     */
+    protected function createUsername($customerId) {
+
+        // seleccionar insripciones y crear un username
+        $inscriptions = $this->_getInscriptions->getInscriptions();
+
+        if (empty($inscriptions)){
+            $username = 'U_'.$customerId.'_1';
+        } else {
+            $last_inscription = end($inscriptions);
+            $last_username = $last_inscription['username'];
+            $last_correlative = intval(substr($last_username, -1));
+            $new_correlative = $last_correlative + 1;
+            $username = 'U_'.$customerId.'_'.$new_correlative;
+        }
+
+        return $username;
     }
 }
