@@ -72,13 +72,7 @@ define(
                                     $.post(url, {
                                         inscription: selected_inscription
                                     }, function (result) {
-                                        console.log(result);
-                                        if (result.status == 'success') {
-                                            window.location.href = '/checkout/cart/#payment';
-                                            // window.location.reload();
-                                        } else {
-                                            alert('Error al autorizar la compra');
-                                        }
+                                        window.location.href = '/checkout/cart/#payment';
                                     });
                                 }
                                 
@@ -115,6 +109,17 @@ define(
                 });
 
                 return inscriptions;
+            },
+
+            getOneclickConfig: function() {
+                const grandTotal = window.checkoutConfig.totalsData.grand_total;
+                const oneclickMaxAmount = window.checkoutConfig.totalsData.oneclick_max_amount;
+
+                if (oneclickMaxAmount < grandTotal) {
+                    return true;
+                } else {
+                    return false;
+                }
             },
     
 

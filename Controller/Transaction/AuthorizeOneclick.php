@@ -15,6 +15,13 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 {
     protected $configProvider;
 
+    protected $responseCodeArray = [
+        '-96' => 'Cancelaste la inscripción durante el formulario de Oneclick.',
+        '-97' => 'La transacción ha sido rechazada porque se superó el monto máximo diario de pago.',
+        '-98' => 'La transacción ha sido rechazada porque se superó el monto máximo de pago.',
+        '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
+    ];
+
     /**
      * AuthorizeOneclick constructor.
      *
@@ -288,7 +295,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $message = "<h2>Autorizaci&oacute;n de transacci&oacute;n rechazada con Oneclick</h2>
             <p>
                 <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult->details[0]->authorizationCode}<br>
+                <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult->details[0]->responseCode]}<br>
                 <b>Monto:</b> $ {$transactionResult->details[0]->amount}<br>
                 <b>Order de Compra: </b> {$transactionResult->details[0]->buyOrder}<br>
                 <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'<br>

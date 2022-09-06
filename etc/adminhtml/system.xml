@@ -159,6 +159,11 @@
                         <comment>Identificador único del comercio asignado por Transbank para la tienda perteneciente al mall, asegurate de que comience con 5970</comment>
                     </field>
 
+                    <!-- Transaction Max Amount -->
+                    <field id="transaction_max_amount" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Monto máximo de transacción permitido</label>
+                    </field>
+
                     <!-- Api Key -->
                     <field id="api_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>API Key</label>

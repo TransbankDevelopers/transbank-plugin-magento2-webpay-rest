@@ -54,6 +54,7 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
             'ENVIRONMENT'               => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'environment'),
             'COMMERCE_CODE'             => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'commerce_code'),
             'CHILD_COMMERCE_CODE'       => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'child_commerce_code'),
+            'TRANSACTION_MAX_AMOUNT'    => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'transaction_max_amount'),
             'API_KEY'                   => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'api_key'),
             'URL_RETURN'                => 'checkout/transaction/commitoneclick',
             'ECOMMERCE'                 => 'magento',

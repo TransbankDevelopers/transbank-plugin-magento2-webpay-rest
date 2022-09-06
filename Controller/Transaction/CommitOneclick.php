@@ -12,6 +12,12 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
  */
 class CommitOneclick extends \Magento\Framework\App\Action\Action
 {
+    protected $responseCodeArray = [
+        '-96' => 'Cancelaste la inscripción durante el formulario de Oneclick.',
+        '-97' => 'La transacción ha sido rechazada porque se superó el monto máximo diario de pago.',
+        '-98' => 'La transacción ha sido rechazada porque se superó el monto máximo de pago.',
+        '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
+    ];
 
     protected $configProvider;
 
@@ -50,6 +56,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $inscriptionResult = [];
 
         try {
+
             $tbkToken = $_POST['TBK_TOKEN'] ?? $_GET['TBK_TOKEN'] ?? null;
 
             if (is_null($tbkToken)) {
@@ -85,7 +92,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                         $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
                         $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult));
                     } else {
-                        $message = $this->getRejectMessage($inscriptionResult);
+                        $message = 'Cancelaste la inscripción durante el formulario de Oneclick.';
                     }
 
                     $this->messageManager->addError(__($message));
@@ -203,10 +210,11 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected function getRejectMessage(array $transactionResult)
     {
         if (isset($transactionResult['responseCode'])) {
+            // $message = $this->responseCodeArray[$transactionResult['responseCode']];
             $message = "<h2>Transacci&oacute;n rechazada con Oneclick</h2>
             <p>
                 <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
+                <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult['responseCode']]}<br>
             </p>";
 
             return $message;
@@ -214,7 +222,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             if (isset($transactionResult['error'])) {
                 $error = $transactionResult['error'];
                 $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con Webpay</h2>
+                $message = "<h2>Transacci&oacute;n fallida con Oneclick</h2>
             <p>
                 <br>
                 <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
