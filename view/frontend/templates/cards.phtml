@@ -1,0 +1,31 @@
+<?php 
+$collection = $block->getCards();
+?>
+<div class="table-wrapper orders-history">
+    <table class="data table table-order-items history" id="my-orders-table">
+        <caption class="table-caption"><?php echo __('Grid Record') ?></caption>
+        <thead>
+        <tr>
+            <th scope="col" class="col email"><?php echo __('Card Number') ?></th>
+            <th scope="col" class="col name"><?php echo __('Card Type') ?></th>
+            <th scope="col" class="col action"><?php echo __('Action') ?></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php
+        foreach ($collection as $item): ?>
+        <tr>
+            <td data-th="<?= $block->escapeHtml(__('Card Number')) ?>" class="col email">
+                <?php echo $item['card_number']; ?>
+            </td>
+            <td data-th="<?= $block->escapeHtml(__('Card Type')) ?>" class="col name">
+                <?php echo $item['card_type']; ?>
+            </td>
+            <td data-th="<?= $block->escapeHtml(__('Action')) ?>" class="col delete">
+                <a href="<?php echo $block->getDeleteAction() . 'id/' . $item['id']; ?>"><?php echo __('Delete') ?></a>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>

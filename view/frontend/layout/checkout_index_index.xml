@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceBlock name="header.container" remove="true" />
         <referenceBlock name="footer.container" remove="true" />
@@ -24,6 +23,9 @@
                                                                     <item name="component" xsi:type="string">Transbank_Webpay/js/view/payment/webpay</item>
                                                                     <item name="methods" xsi:type="array">
                                                                         <item name="transbank_webpay" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                        <item name="transbank_oneclick" xsi:type="array">
                                                                             <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
                                                                         </item>
                                                                     </item>

@@ -1,9 +1,16 @@
-<?xml version="1.0"?>
-    <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-        <event name="checkout_onepage_controller_success_action">
-            <observer name="transbank_email" instance="Transbank\Webpay\Observer\SendMail"/>
-        </event>
-        <event name="sales_order_place_before">
-            <observer name="transbank_stop_email" instance="Transbank\Webpay\Observer\SubmitObserver"/>
-        </event>
+<?xml version="1.0"?>                                                                                                                                                                                             
+    <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">                                                                     
+        <event name="checkout_onepage_controller_success_action">                                                                                                                                                 
+            <observer name="transbank_email" instance="Transbank\Webpay\Observer\EmailObserver"/>                                                                                                                 
+            <observer name="transbank_invoice" instance="Transbank\Webpay\Observer\InvoiceObserver"/>                                                                                                             
+        </event>                                                                                                                                                                                                  
+        <event name="sales_order_place_before">                                                                                                                                                                   
+            <observer name="transbank_stop_email" instance="Transbank\Webpay\Observer\SubmitObserver"/>                                                                                                           
+        </event>                                                                                                                                                                                                  
+        <event name="admin_system_config_changed_section_payment">                                                                                                                                                
+            <observer name="transbank_configuration" instance="Transbank\Webpay\Observer\SaveConfigObserver"/>                                                                                                    
+        </event>       
+        <event name="payment_method_is_active">
+            <observer name="custom_payment" instance="Transbank\Webpay\Observer\OneclickAvailable" />
+        </event>                                                                                                                                                                                           
     </config>

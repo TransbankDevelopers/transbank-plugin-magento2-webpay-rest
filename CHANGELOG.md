@@ -4,9 +4,10 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-# [1.2.4] - 2022-04-29
+# [1.3.0-beta] - 2022-06-02
 ## Added
 - Se agrego en la configuración del plugin una opción para modificar el comportamiento del correo electrónico al realizar una compra.
+- Se agrego en la configuración del plugin una opción para crear el invoice al realizar una compra.
 
 # [1.1.4] - 2022-01-26
 ## Fixed
