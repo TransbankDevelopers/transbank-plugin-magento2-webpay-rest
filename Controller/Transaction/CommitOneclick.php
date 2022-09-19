@@ -54,6 +54,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $config = $this->configProvider->getPluginConfigOneclick();
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $inscriptionResult = [];
+        $oneclickTitle = $this->configProvider->getOneclickTitle();
 
         try {
 
@@ -81,7 +82,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     $OneclickInscriptionData->save();
 
-                    $message = "Success - Oneclick Inscription";
+                    $message = "Tarjeta inscrita exitosamente";
                     $this->messageManager->addSuccess(__($message));
 
 
@@ -90,9 +91,9 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
                     if (isset($inscriptionResult->responseCode)) {
                         $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
-                        $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult));
+                        $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult), $oneclickTitle);
                     } else {
-                        $message = 'Cancelaste la inscripción durante el formulario de Oneclick.';
+                        $message = "Cancelaste la inscripción durante el formulario de {$oneclickTitle}.";
                     }
 
                     $this->messageManager->addError(__($message));
@@ -123,7 +124,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $OneclickInscriptionData->save();
 
                     $this->checkoutSession->restoreQuote();
-                    $message = $this->getRejectMessage($inscriptionResult);
+                    $message = $this->getRejectMessage($inscriptionResult, $oneclickTitle);
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -207,11 +208,11 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
-    protected function getRejectMessage(array $transactionResult)
+    protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
         if (isset($transactionResult['responseCode'])) {
             // $message = $this->responseCodeArray[$transactionResult['responseCode']];
-            $message = "<h2>Transacci&oacute;n rechazada con Oneclick</h2>
+            $message = "<h2>Transacci&oacute;n rechazada con {$oneclickTitle}</h2>
             <p>
                 <br>
                 <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult['responseCode']]}<br>
@@ -222,7 +223,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             if (isset($transactionResult['error'])) {
                 $error = $transactionResult['error'];
                 $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con Oneclick</h2>
+                $message = "<h2>Transacci&oacute;n fallida con {$oneclickTitle}</h2>
             <p>
                 <br>
                 <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>

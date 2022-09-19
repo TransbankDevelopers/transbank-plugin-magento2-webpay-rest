@@ -67,6 +67,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;
 
             $config = $this->configProvider->getPluginConfigOneclick();
+            $oneclickTitle = $config['title'];
 
             $tmpOrder = $this->getOrder();
             $this->checkoutSession->restoreQuote();
@@ -105,7 +106,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
             $response = $transbankSdkWebpay->createInscription($username, $order->getCustomerEmail(), $returnUrl);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
-            $message = '<h3>Esperando Inscripción con Oneclick</h3><br>'.json_encode($dataLog);
+            $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>".json_encode($dataLog);
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
                 $oneclickInscriptionData = $this->saveOneclickInscriptionData(
@@ -133,7 +134,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                 $order->cancel();
                 $order->save();
                 $order->setStatus($orderStatusCanceled); // Debería de cancelar la orden?
-                $message = '<h3>Error en Inscripción con Oneclick</h3><br>'.json_encode($response);
+                $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>'.json_encode($response);
             }
 
             $order->addStatusToHistory($order->getStatus(), $message);

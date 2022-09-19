@@ -12,8 +12,6 @@ use Transbank\Webpay\Oneclick;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
 
-use Transbank\Webpay\Oneclick\MallTransaction;
-
 /**
  * Class TransbankSdkWebpayRest.
  */
@@ -59,7 +57,19 @@ class TransbankSdkWebpayRest
             $this->mallInscription = new Oneclick\MallInscription();
             $this->mallTransaction = new Oneclick\MallTransaction();
 
-            $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
+            // $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
+
+            $this->log->logInfo('Environment: '.json_encode($environment));
+
+            if ($environment != 'TEST') {
+                $this->options = $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->options = $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->options = $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+            } else {
+                $this->options = $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
+                $this->options = $this->mallInscription->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
+                $this->options = $this->mallTransaction->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
+            }
 
         }
     }

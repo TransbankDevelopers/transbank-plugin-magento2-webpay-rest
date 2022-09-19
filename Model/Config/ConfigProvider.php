@@ -58,6 +58,7 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
             'API_KEY'                   => $this->scopeConfigInterface->getValue(self::SECURITY_CONFIGS_ROUTE_ONECLICK.'api_key'),
             'URL_RETURN'                => 'checkout/transaction/commitoneclick',
             'ECOMMERCE'                 => 'magento',
+            'title'                     => $this->getOneclickTitle(),
             'new_order_status'          => $this->getOneclickOrderPendingStatus(),
             'payment_successful_status' => $this->getOneclickOrderSuccessStatus(),
             'payment_error_status'      => $this->getOneclickOrderErrorStatus(),
@@ -94,6 +95,11 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
     }
 
     // Oneclick
+
+    public function getOneclickTitle()
+    {
+        return $this->scopeConfigInterface->getValue(self::ORDER_CONFIGS_ROUTE_ONECLICK.'title');
+    }
 
     public function getOneclickOrderPendingStatus()
     {

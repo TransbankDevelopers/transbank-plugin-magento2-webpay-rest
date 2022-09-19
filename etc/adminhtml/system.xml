@@ -162,6 +162,7 @@
                     <!-- Transaction Max Amount -->
                     <field id="transaction_max_amount" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Monto máximo de transacción permitido</label>
+                        <comment>El monto máximo por transacción para Transbank es ajeno al que se establezca en esta configuración.</comment>
                     </field>
 
                     <!-- Api Key -->

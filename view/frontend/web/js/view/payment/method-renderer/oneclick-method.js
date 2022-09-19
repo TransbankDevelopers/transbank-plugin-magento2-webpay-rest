@@ -72,6 +72,7 @@ define(
                                     $.post(url, {
                                         inscription: selected_inscription
                                     }, function (result) {
+                                        console.log(result);
                                         window.location.href = '/checkout/cart/#payment';
                                     });
                                 }

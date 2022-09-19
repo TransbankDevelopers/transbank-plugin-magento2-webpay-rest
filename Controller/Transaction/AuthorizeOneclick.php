@@ -71,6 +71,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         $response = null;
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
+        $oneclickTitle = $this->configProvider->getOneclickOrderSuccessStatus();
 
         try {
             $resultJson = $this->resultJsonFactory->create();
@@ -78,7 +79,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             if (isset($_POST['inscription'])) {
                 $inscriptionId = intval($_POST['inscription']);
             } else {
-                return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción']);
+                return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción', 'flag' => 0]);
             }
 
             list($username, $tbkUser) = $this->getOneclickInscriptionData($inscriptionId);
@@ -103,7 +104,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 
             $details = [
                 [
-                    "commerce_code" => $config['COMMERCE_CODE'],
+                    "commerce_code" => $config['CHILD_COMMERCE_CODE'],
                     "buy_order" => $orderId,
                     "amount" => $grandTotal,
                     "installments_number" => 1
@@ -125,7 +126,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                     $response
                 );
 
-                $orderLogs = '<h3>Pago autorizado exitosamente con Oneclick</h3><br>'.json_encode($dataLog);
+                $orderLogs = '<h3>Pago autorizado exitosamente con '.$oneclickTitle.'</h3><br>'.json_encode($dataLog);
                 $payment = $order->getPayment();
                 $payment->setLastTransId($response->details[0]->authorizationCode);
                 $payment->setTransactionId($response->details[0]->authorizationCode);
@@ -134,7 +135,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
                 $order->addStatusToHistory($order->getStatus(), $orderLogs);
 
-                $message = $this->getSuccessMessage($response);
+                $message = $this->getSuccessMessage($response, $oneclickTitle);
 
                 $this->messageManager->addSuccess(__($message));
                 $order->save();
@@ -162,19 +163,19 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 
                 $this->checkoutSession->restoreQuote();
 
-                $message = $this->getRejectMessage($response);
+                $message = $this->getRejectMessage($response, $oneclickTitle);
                 $this->messageManager->addError(__($message));
 
                 // return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-                return $resultJson->setData(['status' => 'error', 'response' => $response]);
+                return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 1]);
             }
 
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: '.$e->getMessage();
-            return $resultJson->setData(['status' => 'error', 'message' => $message]);
 
             $this->log->logError($message);
             $response = ['error' => $message];
+
             if ($order != null) {
                 $order->cancel();
                 $order->setStatus($orderStatusCanceled);
@@ -182,7 +183,8 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 $order->save();
             }
 
-            return $resultJson->setData(['status' => 'error', 'response' => $response]);
+            $this->messageManager->addError($e->getMessage());
+            return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 2]);
         }
 
     }
@@ -259,7 +261,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         return $webpayOrderData;
     }
 
-    protected function getSuccessMessage($transactionResult)
+    protected function getSuccessMessage($transactionResult, $oneclickTitle)
     {
         if ($transactionResult->details[0]->responseCode == 0) {
             $transactionResponse = 'Transacci&oacute;n Aprobada';
@@ -275,7 +277,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $paymentType = 'Crédito';
         }
 
-        $message = "Detalles del pago con Oneclick
+        $message = "Detalles del pago {$oneclickTitle}
             Respuesta de la Transacci&oacute;n: {$transactionResponse}
             C&oacute;digo de la Transacci&oacute;n: {$transactionResult->details[0]->responseCode}
             Monto: $ {$transactionResult->details[0]->amount}
@@ -289,10 +291,10 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         return $message;
     }
 
-    protected function getRejectMessage($transactionResult)
+    protected function getRejectMessage($transactionResult, $oneclickTitle)
     {
         if (isset($transactionResult)) {
-            $message = "<h2>Autorizaci&oacute;n de transacci&oacute;n rechazada con Oneclick</h2>
+            $message = "<h2>Autorizaci&oacute;n de transacci&oacute;n rechazada con {$oneclickTitle}</h2>
             <p>
                 <br>
                 <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult->details[0]->responseCode]}<br>
