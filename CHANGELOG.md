@@ -4,6 +4,14 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [2.0.0-beta] - 2022-09-19
+## Added
+- Se agrego la opción de inscribir tarjetas utilizando Oneclick.
+- Se agrego un módulo de administración para Oneclick.
+- Se agrego un módulo en el perfil del usuario para administrar sus tarjetas inscritas.
+- Se agrego soporte para agregar multiples tarjetas por usuario.
+- Se ha actualizado la versión del SDK a la 3.0.
+
 # [1.3.0-beta] - 2022-06-02
 ## Added
 - Se agrego en la configuración del plugin una opción para modificar el comportamiento del correo electrónico al realizar una compra.
