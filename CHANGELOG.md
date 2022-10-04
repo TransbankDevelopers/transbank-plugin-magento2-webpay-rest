@@ -4,6 +4,10 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [2.0.1-beta] - 2022-10-04
+## Added
+- Se ha regresado a la versión del SDK 2.0.
+
 # [2.0.0-beta] - 2022-09-19
 ## Added
 - Se agrego la opción de inscribir tarjetas utilizando Oneclick.
