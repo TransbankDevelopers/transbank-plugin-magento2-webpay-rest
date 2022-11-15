@@ -102,6 +102,12 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
 
+            $this->log->logError(json_encode($order));
+
+            $this->log->logError($config['CHILD_COMMERCE_CODE']);
+            $this->log->logError($orderId);
+            $this->log->logError($grandTotal);
+
             $details = [
                 [
                     "commerce_code" => $config['CHILD_COMMERCE_CODE'],
@@ -126,20 +132,31 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                     $response
                 );
 
+
+                $this->checkoutSession->setLastQuoteId($quote->getId());
+                $this->checkoutSession->setLastSuccessQuoteId($quote->getId());
+                $this->checkoutSession->setLastOrderId($order->getId());
+                $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+                $this->checkoutSession->setLastOrderStatus($order->getStatus());
+                $this->checkoutSession->setGrandTotal($grandTotal);
+                $this->checkoutSession->getQuote()->setIsActive(true)->save();
+                $this->cart->getQuote()->setIsActive(true)->save();
+
                 $orderLogs = '<h3>Pago autorizado exitosamente con '.$oneclickTitle.'</h3><br>'.json_encode($dataLog);
                 $payment = $order->getPayment();
+
                 $payment->setLastTransId($response->details[0]->authorizationCode);
                 $payment->setTransactionId($response->details[0]->authorizationCode);
-                $payment->setAdditionalInformation([\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $response]);
+                $payment->setAdditionalInformation([\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $response->details[0]]);
 
                 $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
                 $order->addStatusToHistory($order->getStatus(), $orderLogs);
+                $order->save();
+
+                $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
                 $message = $this->getSuccessMessage($response, $oneclickTitle);
-
-                $this->messageManager->addSuccess(__($message));
-                $order->save();
-                $this->checkoutSession->getQuote()->setIsActive(false)->save();
+                $this->messageManager->addSuccessMessage(__($message));
 
                 return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
 
@@ -164,7 +181,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 $this->checkoutSession->restoreQuote();
 
                 $message = $this->getRejectMessage($response, $oneclickTitle);
-                $this->messageManager->addError(__($message));
+                $this->messageManager->addErrorMessage(__($message));
 
                 // return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 1]);
@@ -183,7 +200,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 $order->save();
             }
 
-            $this->messageManager->addError($e->getMessage());
+            $this->messageManager->addErrorMessage($e->getMessage());
             return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 2]);
         }
 
@@ -192,16 +209,18 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
     /**
      * @return |null
      */
-    protected function getOrder()
+    private function getOrder()
     {
         try {
             $orderId = $this->checkoutSession->getLastOrderId();
             if ($orderId == null) {
                 return null;
             }
+
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
             return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
+
         } catch (\Exception $e) {
             return null;
         }

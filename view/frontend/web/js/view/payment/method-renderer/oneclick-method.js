@@ -73,7 +73,7 @@ define(
                                         inscription: selected_inscription
                                     }, function (result) {
                                         console.log(result);
-                                        window.location.href = '/checkout/cart/#payment';
+                                        window.location.href = 'onepage/success';
                                     });
                                 }
                                 
