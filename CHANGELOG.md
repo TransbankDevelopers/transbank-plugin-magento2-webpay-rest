@@ -4,6 +4,11 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+# [2.0.2] - 2022-11-22
+## Fixed
+- Se corrige retorno al sitio de éxito cuando la transacción es aprobada autorizando un pago de Oneclick.
+
 # [2.0.1] - 2022-10-04
 ## Added
 - Se ha regresado a la versión del SDK 2.0.
