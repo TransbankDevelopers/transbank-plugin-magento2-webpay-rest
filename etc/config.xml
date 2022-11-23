@@ -37,8 +37,8 @@
                 </general_parameters>
                 <security>
                     <environment>TEST</environment>
-                    <commerce_code>597055555542</commerce_code>
-                    <child_commerce_code>597055555527</child_commerce_code>
+                    <commerce_code>597055555541</commerce_code>
+                    <child_commerce_code>597055555542</child_commerce_code>
                     <transaction_max_amount>0</transaction_max_amount>
                     <api_key>579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C</api_key>
                 </security>

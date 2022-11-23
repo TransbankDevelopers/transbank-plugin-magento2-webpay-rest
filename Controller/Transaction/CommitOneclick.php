@@ -166,7 +166,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
-        return $objectManager->create('\Magento\Sales\Model\Order')->loadByIncrementId($orderId);
+        return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
     }
 
     /**
