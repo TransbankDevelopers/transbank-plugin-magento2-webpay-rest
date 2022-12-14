@@ -71,7 +71,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         $response = null;
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
-        $oneclickTitle = $this->configProvider->getOneclickOrderSuccessStatus();
+        $oneclickTitle = $this->configProvider->getOneclickTitle();
 
         try {
             $resultJson = $this->resultJsonFactory->create();
@@ -111,13 +111,13 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $details = [
                 [
                     "commerce_code" => $config['CHILD_COMMERCE_CODE'],
-                    "buy_order" => $orderId,
+                    "buy_order" => "200000".$orderId,
                     "amount" => $grandTotal,
                     "installments_number" => 1
                 ]
             ]; 
 
-            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $orderId, $details);
+            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, "100000".$orderId, $details);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
 
             if (isset($response->details) && $response->details[0]->responseCode == 0) {
@@ -126,6 +126,8 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                     $response->buyOrder, 
                     $response->details[0]->buyOrder, 
                     $response->details[0]->commerceCode, 
+                    $config['CHILD_COMMERCE_CODE'],
+                    $grandTotal,
                     OneclickInscriptionData::PAYMENT_STATUS_SUCCESS, 
                     $orderId, 
                     $quoteId,
@@ -156,7 +158,12 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
                 $message = $this->getSuccessMessage($response, $oneclickTitle);
-                $this->messageManager->addSuccessMessage(__($message));
+                $this->messageManager->addComplexSuccessMessage(
+                    'successMessage',
+                    [
+                        'message' => $message
+                    ]
+                );
 
                 return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
 
@@ -165,6 +172,8 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                     '', 
                     '', 
                     '', 
+                    '',
+                    '',
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED, 
                     $orderId, 
                     $quoteId,
@@ -263,16 +272,18 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
      *
      * @return WebpayOrderData
      */
-    protected function saveWebpayData($buyOrder, $childBuyOrder, $commerceCode, $payment_status, $order_id, $quote_id, $response)
+    protected function saveWebpayData($buyOrder, $childBuyOrder, $commerceCode, $childCommerceCode, $amount, $payment_status, $order_id, $quote_id, $response)
     {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'buy_order'       => $buyOrder,
             'child_buy_order' => $childBuyOrder,
             'commerce_code'   => $commerceCode,
+            'child_commerce_code'   => $childCommerceCode,
             'payment_status'  => $payment_status,
             'order_id'        => $order_id,
             'quote_id'        => $quote_id,
+            'amount'          => $amount,
             'metadata'        => json_encode($response),
         ]);
         $webpayOrderData->save();
@@ -296,16 +307,37 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $paymentType = 'Crédito';
         }
 
-        $message = "Detalles del pago {$oneclickTitle}
-            Respuesta de la Transacci&oacute;n: {$transactionResponse}
-            C&oacute;digo de la Transacci&oacute;n: {$transactionResult->details[0]->responseCode}
-            Monto: $ {$transactionResult->details[0]->amount}
-            Order de Compra: {$transactionResult->details[0]->buyOrder}
-            Fecha de la Transacci&oacute;n: ".date('d-m-Y', strtotime($transactionResult->transactionDate)).'
-            Hora de la Transacci&oacute;n: '.date('H:i:s', strtotime($transactionResult->transactionDate))."
-            Tarjeta: **** **** **** {$transactionResult->cardNumber}
-            C&oacute;digo de autorizacion: {$transactionResult->details[0]->authorizationCode}
-            Tipo de Pago: {$paymentType}";
+        
+        $message = "
+        <b>Detalles del pago {$oneclickTitle}</b>
+        <div>
+            • Respuesta de la Transacci&oacute;n: <b>{$transactionResponse}</b>
+        </div>
+        <div>
+            • C&oacute;digo de la Transacci&oacute;n: <b>{$transactionResult->details[0]->responseCode}</b>
+        </div>
+        <div>
+            • Monto: <b>$ {$transactionResult->details[0]->amount}</b>
+        </div>
+        <div>
+            • Order de Compra: <b>{$transactionResult->details[0]->buyOrder}</b>
+        </div>
+        <div>
+            • Fecha de la Transacci&oacute;n: <b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'</b>
+        </div>
+        <div>
+            • Hora de la Transacci&oacute;n: <b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."</b>
+        </div>
+        <div>
+            • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
+        </div>
+        <div>
+            • C&oacute;digo de autorizacion: <b>{$transactionResult->details[0]->authorizationCode}</b>
+        </div>
+        <div>
+            • Tipo de Pago: <b>{$paymentType}</b>
+        </div>
+        ";
 
         return $message;
     }

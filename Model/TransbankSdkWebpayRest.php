@@ -39,7 +39,7 @@ class TransbankSdkWebpayRest
     /**
      * @var Oneclick\MallTransaction
      */
-    public $inscription;
+    public $mallTransaction;
 
     /**
      * TransbankSdkWebpayRest constructor.
@@ -56,8 +56,6 @@ class TransbankSdkWebpayRest
             $this->transaction = new WebpayPlus\Transaction();
             $this->mallInscription = new Oneclick\MallInscription();
             $this->mallTransaction = new Oneclick\MallTransaction();
-
-            // $this->options = ($environment != 'TEST') ? $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']) : $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
 
             $this->log->logInfo('Environment: '.json_encode($environment));
 
@@ -271,6 +269,33 @@ class TransbankSdkWebpayRest
         } catch (InscriptionFinishException $e) {
             $result = [
                 'error'  => 'Error al eliminar una inscripción',
+                'detail' => $e->getMessage(),
+            ];
+            $this->log->logError(json_encode($result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $username
+     * @param $tbkUser
+     *
+     * @throws Exception
+     *
+     * @return array
+     */
+    public function refundTransaction($buyOrder, $childCommerceCode, $childBuyOrder, $amount)
+    {
+        try {
+            $refund = $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
+            $this->log->logInfo('refundTransaction: '.json_encode($refund));
+
+            return $refund;
+
+        } catch (InscriptionFinishException $e) {
+            $result = [
+                'error'  => 'Error al hacer reversa en Oneclick',
                 'detail' => $e->getMessage(),
             ];
             $this->log->logError(json_encode($result));

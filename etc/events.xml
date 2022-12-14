@@ -12,5 +12,8 @@
         </event>       
         <event name="payment_method_is_active">
             <observer name="custom_payment" instance="Transbank\Webpay\Observer\OneclickAvailable" />
+        </event>  
+        <event name="order_cancel_after">
+            <observer name="reverse_oneclick_order" instance="Transbank\Webpay\Observer\ReverseOneclickOrder" />
         </event>                                                                                                                                                                                           
     </config>
