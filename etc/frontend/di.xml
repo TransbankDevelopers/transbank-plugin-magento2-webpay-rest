@@ -4,6 +4,19 @@
         <arguments>
             <argument name="configProviders" xsi:type="array">
                 <item name="transbank_webpay_config_provider" xsi:type="object">Transbank\Webpay\Model\Config\ConfigProvider</item>
+                <item name="transbank_oneclick_additional_provider" xsi:type="object">Transbank\Webpay\Model\Config\AdditionalConfigVars</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\View\Element\Message\MessageConfigurationsPool">
+        <arguments>
+            <argument name="configurationsMap" xsi:type="array">
+                <item name="successMessage" xsi:type="array">
+                    <item name="renderer" xsi:type="const">\Magento\Framework\View\Element\Message\Renderer\BlockRenderer::CODE</item>
+                    <item name="data" xsi:type="array">
+                        <item name="template" xsi:type="string">Transbank_Webpay::messages/successMessage.phtml</item>
+                    </item>
+                </item>
             </argument>
         </arguments>
     </type>

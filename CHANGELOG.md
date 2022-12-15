@@ -4,9 +4,35 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-# [1.2.4] - 2022-04-29
+
+# [2.1.0] - 2022-12-14
+## Added
+- Capacidad para hacer reversas en Oneclick si el **Estado de Pago Exitoso** se cambia a proccesing.
+
+## Fixed
+- Se corrige el error que evitaba mostrar el título personalizado en Oneclick y mantenía el título por defecto.
+- Se cambia el método **addSuccessMessage()** por **addComplexSuccessMessage()** que permite desplegar mensajes de exito utilizando algunos tags en HTML.
+
+# [2.0.2] - 2022-11-22
+## Fixed
+- Se corrige retorno al sitio de éxito cuando la transacción es aprobada autorizando un pago de Oneclick.
+
+# [2.0.1] - 2022-10-04
+## Added
+- Se ha regresado a la versión del SDK 2.0.
+
+# [2.0.0-beta] - 2022-09-19
+## Added
+- Se agrego la opción de inscribir tarjetas utilizando Oneclick.
+- Se agrego un módulo de administración para Oneclick.
+- Se agrego un módulo en el perfil del usuario para administrar sus tarjetas inscritas.
+- Se agrego soporte para agregar multiples tarjetas por usuario.
+- Se ha actualizado la versión del SDK a la 3.0.
+
+# [1.3.0-beta] - 2022-06-02
 ## Added
 - Se agrego en la configuración del plugin una opción para modificar el comportamiento del correo electrónico al realizar una compra.
+- Se agrego en la configuración del plugin una opción para crear el invoice al realizar una compra.
 
 # [1.1.4] - 2022-01-26
 ## Fixed

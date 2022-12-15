@@ -10,6 +10,10 @@ define(
             {
                 type: 'transbank_webpay',
                 component: 'Transbank_Webpay/js/view/payment/method-renderer/webpay-method'
+            },
+            {
+                type: 'transbank_oneclick',
+                component: 'Transbank_Webpay/js/view/payment/method-renderer/oneclick-method'
             }
         );
         // View logic goes here!

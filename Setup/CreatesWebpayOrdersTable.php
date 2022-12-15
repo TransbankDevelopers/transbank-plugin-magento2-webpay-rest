@@ -19,12 +19,33 @@ trait CreatesWebpayOrdersTable
                 'nullable' => false,
                 'primary'  => true,
             ], 'ID')
-            ->addColumn('token', Table::TYPE_TEXT, 200, [
-                'nullable' => false,
-            ], 'Token')
-            ->addColumn('order_id', Table::TYPE_TEXT, 20, [
+            ->addColumn('order_id', Table::TYPE_TEXT, 60, [
                 'nullable' => false,
             ], 'Order Id')
+            ->addColumn('buy_order', Table::TYPE_TEXT, 20, [
+                'nullable' => false,
+            ], 'Buy order')
+            ->addColumn('child_buy_order', Table::TYPE_TEXT, 20, [
+                'nullable' => false,
+            ], 'Child buy order')
+            ->addColumn('commerce_code', Table::TYPE_TEXT, 60, [
+                'nullable' => false,
+            ], 'Commerce code')
+            ->addColumn('child_commerce_code', Table::TYPE_TEXT, 60, [
+                'nullable' => false,
+            ], 'Child commerce code')
+            ->addColumn('amount', Table::TYPE_BIGINT, 20, [
+                'nullable' => false,
+            ], 'Amount')
+            ->addColumn('token', Table::TYPE_TEXT, 100, [
+                'nullable' => false,
+            ], 'Token')
+            ->addColumn('transbank_status', Table::TYPE_TEXT, null, [
+                'nullable' => false,
+            ], 'Transbank status')
+            ->addColumn('session_id', Table::TYPE_TEXT, 20, [
+                'nullable' => false,
+            ], 'Session ID')
             ->addColumn('quote_id', Table::TYPE_TEXT, 20, [
                 'nullable' => false,
             ], 'Quote ID')
@@ -42,6 +63,12 @@ trait CreatesWebpayOrdersTable
                 'nullable' => false,
                 'default'  => Table::TIMESTAMP_INIT_UPDATE,
             ], 'updated_at')
+            ->addColumn('product', Table::TYPE_TEXT, 50, [
+                'nullable' => false,
+            ], 'Product')
+            ->addColumn('environment', Table::TYPE_TEXT, 50, [
+                'nullable' => false,
+            ], 'Environment')
             ->addIndex($setup->getTable(WebpayOrderData::TABLE_NAME), 'token');
         $setup->getConnection()->createTable($table);
     }

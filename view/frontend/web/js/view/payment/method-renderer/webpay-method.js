@@ -31,6 +31,7 @@ define(
             getCode: function () {
                 return 'transbank_webpay';
             },
+
             placeOrder: function (data, event) {
                 var self = this;
 
