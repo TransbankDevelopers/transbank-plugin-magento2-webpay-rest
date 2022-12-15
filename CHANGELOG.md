@@ -5,6 +5,14 @@ El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+# [2.1.0] - 2022-12-14
+## Added
+- Capacidad para hacer reversas en Oneclick si el **Estado de Pago Exitoso** se cambia a proccesing.
+
+## Fixed
+- Se corrige el error que evitaba mostrar el título personalizado en Oneclick y mantenía el título por defecto.
+- Se cambia el método **addSuccessMessage()** por **addComplexSuccessMessage()** que permite desplegar mensajes de exito utilizando algunos tags en HTML.
+
 # [2.0.2] - 2022-11-22
 ## Fixed
 - Se corrige retorno al sitio de éxito cuando la transacción es aprobada autorizando un pago de Oneclick.

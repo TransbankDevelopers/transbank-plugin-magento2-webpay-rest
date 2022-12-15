@@ -95,7 +95,15 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
                     $message = $this->getSuccessMessage($this->commitResponseToArray($transactionResult));
-                    $this->messageManager->addSuccess(__($message));
+
+                    $this->messageManager->addComplexSuccessMessage(
+                        'successMessage',
+                        [
+                            'message' => $message
+                        ]
+                    );
+
+                    // $this->messageManager->addSuccess(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } else {
@@ -119,7 +127,13 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
                 if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
                     $message = $this->getSuccessMessage($transactionResult);
-                    $this->messageManager->addSuccess(__($message));
+
+                    $this->messageManager->addComplexSuccessMessage(
+                        'successMessage',
+                        [
+                            'message' => $message
+                        ]
+                    );
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
@@ -195,26 +209,49 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         $installmentsString = '';
         if ($tipoCuotas != 'Sin cuotas') {
             $installmentsString = "
-                <b>N&uacute;mero de cuotas: </b>{$transactionResult['installmentsNumber']}<br>
-                <b>Monto Cuota: </b>{$transactionResult['installmentsAmount']}<br>
-        ";
+                <div>
+                    • N&uacute;mero de cuotas: <b>{$transactionResult['installmentsNumber']}</b>
+                </div>
+                <div>
+                    • Monto Cuota: <b>{$transactionResult['installmentsAmount']}</b>
+                </div>
+            ";
         }
 
-        $message = "<h2>Detalles del pago con Webpay</h2>
-        <p>
-            <br>
-            <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResponse}<br>
-            <b>C&oacute;digo de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
-            <b>Monto:</b> $ {$transactionResult['amount']}<br>
-            <b>Order de Compra: </b> {$transactionResult['buyOrder']}<br>
-            <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult['transactionDate'])).'<br>
-            <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult['transactionDate']))."<br>
-            <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['card_number']}<br>
-            <b>C&oacute;digo de autorizacion: </b>{$transactionResult['authorizationCode']}<br>
-            <b>Tipo de Pago: </b>{$paymentType}<br>
-            <b>Tipo de Cuotas: </b>{$tipoCuotas}<br>
-            {$installmentsString}
-        </p>";
+        $message = "
+        <b>Detalles del pago con Webpay</b>
+        <div>
+            • Respuesta de la Transacci&oacute;n: <b>{$transactionResponse}</b>
+        </div>
+        <div>
+            • C&oacute;digo de la Transacci&oacute;n: <b>{$transactionResult['responseCode']}</b>
+        </div>
+        <div>
+            • Monto: <b>$ {$transactionResult['amount']}</b>
+        </div>
+        <div>
+            • Order de Compra: <b>$ {$transactionResult['buyOrder']}</b>
+        </div>
+        <div>
+            • Fecha de la Transacci&oacute;n: <b>".date('d-m-Y', strtotime($transactionResult['transactionDate'])).'</b>
+        </div>
+        <div>
+            • Hora de la Transacci&oacute;n: <b>'.date('H:i:s', strtotime($transactionResult['transactionDate']))."</b>
+        </div>
+        <div>
+            • Tarjeta: <b>**** **** **** {$transactionResult['cardDetail']['card_number']}</b>
+        </div>
+        <div>
+            • C&oacute;digo de autorizacion: <b>{$transactionResult['authorizationCode']}</b>
+        </div>
+        <div>
+            • Tipo de Pago: <b>{$paymentType}</b>
+        </div>
+        <div>
+            • Tipo de Cuotas: <b>{$tipoCuotas}</b>
+        </div>
+        {$installmentsString}
+        ";
 
         return $message;
     }

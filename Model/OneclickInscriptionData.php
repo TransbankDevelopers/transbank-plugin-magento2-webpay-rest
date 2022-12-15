@@ -13,6 +13,7 @@ class OneclickInscriptionData extends AbstractModel implements \Magento\Framewor
     const PAYMENT_STATUS_FAILED = 'FAILED';
     const PAYMENT_STATUS_CANCELED_BY_USER = 'FAILED';
     const PAYMENT_STATUS_ERROR = 'ERROR';
+    const PAYMENT_STATUS_REVERSED = 'REVERSED';
 
     /**
      * @return void
