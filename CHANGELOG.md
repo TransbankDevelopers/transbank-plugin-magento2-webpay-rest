@@ -5,6 +5,10 @@ El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+# [2.1.1] - 2023-01-30
+## Added
+- Se agrega un servicio para recolectar datos que nos permitira darle mayor seguimiento a las versiones del plugin y las versiones de Magento mas usadas.
+
 # [2.1.0] - 2022-12-14
 ## Added
 - Capacidad para hacer reversas en Oneclick si el **Estado de Pago Exitoso** se cambia a proccesing.
