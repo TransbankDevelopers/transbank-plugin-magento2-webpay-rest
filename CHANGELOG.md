@@ -5,6 +5,10 @@ El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+# [2.1.2] - 2023-02-12
+## Added
+- Se mejora el log detallado para darle seguimiento a los errores.
+
 # [2.1.1] - 2023-01-30
 ## Added
 - Se agrega un servicio para recolectar datos que nos permitira darle mayor seguimiento a las versiones del plugin y las versiones de Magento mas usadas.

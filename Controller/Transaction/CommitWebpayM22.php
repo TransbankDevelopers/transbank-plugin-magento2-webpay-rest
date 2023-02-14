@@ -6,6 +6,7 @@ use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
+use Transbank\Webpay\Helper\InteractsWithFullLog;
 
 /**
  * Controller for commit transaction Webpay.
@@ -32,7 +33,8 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        InteractsWithFullLog $InteractsWithFullLog,
     ) {
         parent::__construct($context);
 
@@ -45,6 +47,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new LogHandler();
+        $this->interactsWithFullLog = $InteractsWithFullLog;
     }
 
     /**
@@ -58,10 +61,14 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
         try {
             $tokenWs = $_POST['token_ws'] ?? $_GET['token_ws'] ?? null;
+
+            $params = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
             if (isset($_POST['TBK_TOKEN'])) {
+                $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbkFujo2Error($_POST['TBK_ID_SESION']); // Logs
                 return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $_POST['TBK_ID_SESION'], $orderStatusCanceled);
             }
             if (isset($_GET['TBK_TOKEN'])) {
+                $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbkFujo2Error($_POST['TBK_ID_SESION']); // Logs
                 return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
             }
 
@@ -69,13 +76,19 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                 throw new \Exception('Token no encontrado');
             }
 
+            $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbk($_SERVER['REQUEST_METHOD'], $params); // Logs
+
             list($webpayOrderData, $order) = $this->getOrderByToken($tokenWs);
 
             $paymentStatus = $webpayOrderData->getPaymentStatus();
             if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_WATING) {
+                $this->interactsWithFullLog->logWebpayPlusAntesCommitTx($tokenWs, $webpayOrderData, $this->cart); // Logs
+
                 $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
-                $transactionResult = $transbankSdkWebpay->commitTransaction($tokenWs);
+                $transactionResult = $transbankSdkWebpay->commitTransaction($tokenWs); // Commit
                 $webpayOrderData->setMetadata(json_encode($transactionResult));
+
+                $this->interactsWithFullLog->logWebpayPlusDespuesObtenerTx($tokenWs, $webpayOrderData); // Logs
 
                 if (isset($transactionResult->buyOrder) && isset($transactionResult->responseCode) && $transactionResult->responseCode == 0) {
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_SUCCESS);
@@ -92,6 +105,8 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                     $order->addStatusToHistory($order->getStatus(), json_encode($transactionResult));
                     $order->save();
 
+                    $this->interactsWithFullLog->logWebpayPlusGuardandoCommitExitoso($tokenWs); // Logs
+
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
                     $message = $this->getSuccessMessage($this->commitResponseToArray($transactionResult));
@@ -103,10 +118,12 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                         ]
                     );
 
-                    // $this->messageManager->addSuccess(__($message));
+                    $this->interactsWithFullLog->logWebpayPlusTodoOk($tokenWs, $transactionResult); // Logs
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } else {
+                    $this->interactsWithFullLog->logWebpayPlusCommitFallidoError($tokenWs, $transactionResult); // Logs
+
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
                     $order->cancel();
                     $order->save();
@@ -117,7 +134,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
                     $this->checkoutSession->restoreQuote();
 
-                    $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
+                    $message = $this->getRejectMessage($transactionResult);
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
