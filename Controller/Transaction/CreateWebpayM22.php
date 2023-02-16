@@ -36,7 +36,7 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        InteractsWithFullLog $InteractsWithFullLog,
+        InteractsWithFullLog $InteractsWithFullLog
     ) {
         parent::__construct($context);
 
