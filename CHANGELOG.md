@@ -5,6 +5,10 @@ El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+# [2.1.5] - 2023-03-24
+## Added
+- Se corrige error en el archivo UpgradeSchema que no permitía actualizar la base de datos.
+
 # [2.1.4] - 2023-02-16
 ## Added
 - Se corrige error de sintaxis en los archivos CreateWebpayM22 y CommitWebpayM22.
