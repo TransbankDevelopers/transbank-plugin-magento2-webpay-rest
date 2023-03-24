@@ -22,11 +22,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
         $setup->startSetup();
-        if (version_compare($context->getVersion(), '3.3.0', '<')) {
-            $setup->endSetup();
-
-            return;
-        }
 
         $webPayTable = $setup->getTable(WebpayOrderData::TABLE_NAME);
         if ($setup->getConnection()->isTableExists($webPayTable) === false) {
