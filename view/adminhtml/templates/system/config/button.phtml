@@ -136,46 +136,6 @@
 
         <div id="modal_logs" class="tab-pane">
             <fieldset>
-                <h3 class="tbk_title_h3" style="display: none !important;">Configuración</h3>
-                <table class="tbk_table_info" style="display: none !important;">
-                    <tr>
-                        <td><div title="Al activar esta opción se habilita que se guarden los datos de cada compra mediante Webpay" class="label label-info">?</div> <strong>Activar Registro: </strong></td>
-                        <td class="tbk_table_td">
-                        <?php
-                            if ($this->tbk_data['lockfile']){
-                                echo '<input type="checkbox" id="action_check" name="action_check" checked data-size="small" value="activate">';
-                            } else {
-                                echo '<input type="checkbox" id="action_check" name="action_check" data-size="small" state="false">';
-                            }
-                        ?>
-                        </td>
-                    </tr>
-                </table>
-
-                <table class="tbk_table_info" style="display: none !important;">
-                    <tr>
-                        <td><div title="Cantidad de días que se conservan los datos de cada compra mediante Webpay" class="label label-info">?</div> <strong>Cantidad de Días a Registrar: </strong></td>
-                        <td class="tbk_table_td"><input id="days" name="days" type="number" min="1" max="30" value="<?php echo $this->tbk_data['log_days']?>"> días</td>
-                    </tr>
-                    <tr>
-                        <td><div title="Peso máximo (en Megabytes) de cada archivo que guarda los datos de las compras mediante Webpay" class="label label-info">?</div> <strong>Peso máximo de Registros:  </strong></td>
-                        <td class="tbk_table_td"><select style="width: 100px; display: initial;" id="size" name="size">
-                        <?php
-                            for ($c=1;$c<10;$c++){
-                            echo '<option value="'.$c.'"';
-                            if ($c == $this->tbk_data['log_size'])
-                                echo 'selected';
-                            echo '>'.$c.'</option>';
-                            }
-                        ?>
-                        </select> Mb</td>
-                    </tr>
-                </table>
-
-                <br>
-                <a id="btn-save-data-conf" class="tbk_btn tbk_danger_btn" href="javascript:void();" style="display: none !important;">
-                Actualizar Parametros
-                </a>
 
                 <h3 class="tbk_title_h3">Información de Registros</h3>
                 <table class="tbk_table_info">
@@ -303,29 +263,6 @@
             },'json');
         });
 
-        $('#btn-save-data-conf').click(function(evt) {
-            var action_check = $('#action_check').is(':checked');
-            var size = $('#size').val();
-            var days = $('#days').val();
-            var url = '<?php echo $this->tbk_data['url_call_log_handler']; ?>';
-            var params = {
-                'action_check': action_check,
-                'size': size,
-                'days': days
-            };
-            $.post(url, params, function(response) {
-                if (action_check){
-                    $('#action_txt').empty().text('Registro activado');
-                    $('#action_txt').addClass('label-success2');
-                    $('#action_txt').removeClass('label-warning');
-                } else {
-                    $('#action_txt').empty().text('Registro desactivado');
-                    $('#action_txt').addClass('label-warning');
-                    $('#action_txt').removeClass('label-success2');
-                }
-            },'json');
-            evt.preventDefault();
-        });
 	});
 
     function showModal() {

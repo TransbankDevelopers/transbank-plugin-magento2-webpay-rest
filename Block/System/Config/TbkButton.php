@@ -28,7 +28,6 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
 
         $this->tbk_data = [
             'url_request'             => $context->getUrlBuilder()->getUrl('admin_webpay/Request/index'),
-            'url_call_log_handler'    => $context->getUrlBuilder()->getUrl('admin_webpay/CallLogHandler/index'),
             'url_create_pdf_report'   => $context->getUrlBuilder()->getUrl('admin_webpay/CreatePdf/index').'?document=report',
             'url_create_pdf_php_info' => $context->getUrlBuilder()->getUrl('admin_webpay/CreatePdf/index').'?document=php_info',
             'init_status'             => null, //$datos_hc->validate_init_transaction->status->string,
