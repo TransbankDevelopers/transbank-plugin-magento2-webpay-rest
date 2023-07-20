@@ -1,17 +1,14 @@
-<a class ="tbk_btn tbk_danger_btn" data-toggle="modal" id="tbk_button_modal" onclick="showModal()" class="informationButton">Información</a>
+<a class ="tbk_btn tbk_danger_btn" data-toggle="modal" id="tbk_button_modal" class="informationButton">Información</a>
 
-<div id="popup-modal" style="display:none">
-    <div id="tbk_tabs_menu">
-        <ul class="nav nav-tabs">
-        <li class="active"> <a data-toggle="tab" href="#modal_info" class="tbk_tabs">Información</a></li>
-        <li> <a data-toggle="tab" href="#modal_php_info" class="tbk_tabs">PHP info</a></li>
-        <li> <a data-toggle="tab" href="#modal_logs" class="tbk_tabs">Registros</a></li>
-        </ul>
+<div id="popup-modal" class="tbk-modal-body" style="display:none">
+    <div class="tbk-tab">
+        <button id="tab_modal_info" class="tbk-tablinks" onclick="openInfoTab('tab_modal_info', 'modal_info')">Información</button>
+        <button id="tab_modal_php_info" class="tbk-tablinks" onclick="openInfoTab('tab_modal_php_info', 'modal_php_info')">PHP info</button>
+        <button id="tab_modal_logs" class="tbk-tablinks" onclick="openInfoTab('tab_modal_logs', 'modal_logs')">Registros</button>
     </div>
-    <div class="modal-body">
-        <div class="tab-content">
-            <div id="modal_info" class="tab-pane in active">
-            <div class="tbk-box">
+
+    <div id="modal_info" class="tbk-tab-content">
+        <div class="tbk-box">
             <div class="tbk-grid-title">Información de Plugin / Ambiente</div>
             <div class="tbk-grid-container">
                 <div class="tbk_column_title" >
@@ -179,23 +176,23 @@
             </div>
 
         </div>
-                
-            </div>
 
-        <div id="modal_php_info" class="tab-pane">
-            <a class="btn btn-sm btn-primary" href='<?php echo $this->tbk_data['url_create_pdf_php_info']; ?>' target="_blank">
-                Crear PHP info
-            </a>
-            <br>
-            <br>
-            <fieldset>
-                <span style="font-size: 10px; font-family:monospace; display: block; background: white;overflow: hidden; width: 90%;" >
-                    <?php echo $this->tbk_data['php_info']; ?>
-                </span>
-            </fieldset>
-        </div>
+    </div>
 
-        <div id="modal_logs" class="tab-pane">
+    <div id="modal_php_info" class="tbk-tab-content" >
+        <a class="btn btn-sm btn-primary" href='<?php echo $this->tbk_data['url_create_pdf_php_info']; ?>' target="_blank">
+            Crear PHP info
+        </a>
+        <br>
+        <br>
+        <fieldset>
+            <span style="font-size: 10px; font-family:monospace; display: block; background: white;overflow: hidden; width: 90%;" >
+                <?php echo $this->tbk_data['php_info']; ?>
+            </span>
+        </fieldset>
+    </div>
+
+    <div id="modal_logs" class="tbk-tab-content" >
         <div class="tbk-box">
             <div class="tbk-grid-title">Información de Registros</div>
             <div class="tbk-grid-container">
@@ -268,7 +265,7 @@
                 </span>
             </pre>
         </div>
-        </div>
+
     </div>
 </div>
 
@@ -302,17 +299,17 @@
                 $("#row_response_status").show();
 
                 if(response.success) {
-                    $(".status-label").removeClass("label-success2");
-                    $(".status-label").removeClass("label-danger2");
+                    $(".status-label").removeClass("tbk-label-success");
+                    $(".status-label").removeClass("tbk-label-danger");
                     if(response.msg.status.string == "OK") {
                         $(".status-label").text("OK");
-                        $(".status-label").addClass("label-success2");
+                        $(".status-label").addClass("tbk-label-success");
                         $(".content_url").append(response.msg.response.url);
                         $(".content_token").append('<pre>'+response.msg.response.token_ws+'</pre>');
                         $("#row_response_url").show();
                         $("#row_response_token").show();
                     } else {
-                        $(".status-label").addClass("label-danger2");
+                        $(".status-label").addClass("tbk-label-danger");
                         $(".status-label").text("ERROR");
                         $("#row_error_message").show();
                         $("#row_error_detail").show();
@@ -320,9 +317,9 @@
                         $(".error_detail_content").append('<pre><code>'+response.msg.response.detail+'</code></pre>');
                     }
                 } else {
-                    $(".status-label").removeClass("label-success2");
-                    $(".status-label").removeClass("label-danger2");
-                    $(".status-label").addClass("label-danger2");
+                    $(".status-label").removeClass("tbk-label-success");
+                    $(".status-label").removeClass("tbk-label-danger");
+                    $(".status-label").addClass("tbk-label-danger");
                     $(".status-label").append("ERROR");
                     $(".error_detail_content").append('<pre><code>'+response.msg+'</code></pre>');
                     $("#row_error_message").show();
@@ -333,15 +330,14 @@
 
 	});
 
-    function showModal() {
-        require(
+
+    require(
             [
                 'jquery',
-                'Magento_Ui/js/modal/modal',
-                'mage/tabs',
+                'Magento_Ui/js/modal/modal'
             ],
-            function($, modal, tabs, url) {
-                var options = {
+            function($, modal, url) {
+                let options = {
                     type: 'popup',
                     responsive: true,
                     buttons: [{
@@ -353,18 +349,32 @@
                     }]
                 };
 
-                var popup = modal(options, $('#popup-modal'));
-                $('#popup-modal').modal('openModal');
-                $("#row_response_url").hide();
-                $("#row_response_token").hide();
-                $("#row_error_message").hide();
-                $("#row_error_detail").hide();
-                $("#row_response_status").hide();
-            },
-            function($, tabs) {
-                $("#horizontal_tabs").tabs();
+                let popup = modal(options, $('#popup-modal'));
+
+                $("#tbk_button_modal").click(function() {
+                    $('#popup-modal').modal('openModal');
+                    $("#row_response_url").hide();
+                    $("#row_response_token").hide();
+                    $("#row_error_message").hide();
+                    $("#row_error_detail").hide();
+                    $("#row_response_status").hide();
+                });
             }
         );
-    }
+
+        function openInfoTab(tabLinkId, tabId) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tbk-tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tbk-tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabId).style.display = "block";
+            document.getElementById(tabLinkId).className += " active";
+        }
+        openInfoTab('tab_modal_info', 'modal_info');
 
 </script>
