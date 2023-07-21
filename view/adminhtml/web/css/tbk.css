@@ -59,3 +59,117 @@ div .modal-dialog {
 .nav {
 	display: block;
 }
+
+
+/* Table Style */
+
+.tbk-grid-container {
+    display: grid;
+    grid-template-columns: 30% auto;
+    padding: 10px;
+  }
+
+.tbk-grid3-container {
+  display: grid;
+  grid-template-columns: 30% auto auto;
+  padding: 10px;
+}
+
+.tbk-grid-title {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.tbk_column_title {
+  padding: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.tbk_column_value {
+  padding: 4px;
+  font-size: 11px;
+}
+
+.tbk-label-success {
+  background: #5cb85c;
+  border-radius: 5px;
+  padding: 5px;
+  color: #fff;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.tbk-label-danger {
+  background: red;
+  border-radius: 5px;
+  padding: 5px;
+  color: #fff;
+  font-weight: bold;
+  font-size: 10px;
+}
+  
+.tbk-label-info {
+    padding: 5px;
+    float: left;
+    margin-right: 5px;
+    background: #666;
+    border-radius: 5px;
+    width: 7px;
+    height: 7px;
+    color: #fff;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.tbk-modal-body {
+  background: white;
+}
+
+.tbk-box {
+  background: #f0f0f1;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.tbk-box-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Tab Style */
+.tbk-tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+.tbk-tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+.tbk-tab button:hover {
+  background-color: #ddd;
+}
+
+.tbk-tab button.active {
+  background-color: #ccc;
+}
+
+.tbk-tab-content {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
