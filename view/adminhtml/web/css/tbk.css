@@ -31,7 +31,8 @@
     text-align: center;
     padding: 0 10px 1px;
     width: fit-content;
-    font: bold 14px Arial;
+    font: bold 14px;
+    font-family: Arial, Verdana, Tahoma, sans-serif;
     border-radius: 4px;
     text-decoration: none;
     border-top: 1px solid #CCCCCC;

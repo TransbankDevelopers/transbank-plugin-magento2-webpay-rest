@@ -1,4 +1,4 @@
-body{	font-family: helvetica ;}
+body { font-family: Helvetica, Arial, Verdana, Tahoma, sans-serif; }
 tr { display:block; width:500px;}
 td {display: block; height: 11px;}
 ul { margin: 0px}
