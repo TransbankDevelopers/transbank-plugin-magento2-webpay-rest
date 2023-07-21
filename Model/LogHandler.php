@@ -2,12 +2,15 @@
 
 namespace Transbank\Webpay\Model;
 
+use Exception;
+
 class LogHandler
 {
     //constants for log handler
     const LOG_DEBUG_ENABLED = false; //enable or disable debug logs
     const LOG_INFO_ENABLED = true; //enable or disable info logs
     const LOG_ERROR_ENABLED = true; //enable or disable error logs
+    const DEFAULT_CONF_DAYS = 7;
 
     private $logFile;
     private $logDir;
@@ -77,7 +80,7 @@ class LogHandler
         if (!file_exists($this->lockfile)) {
             $file = fopen($this->lockfile, 'w') or exit('No se puede crear archivo de bloqueo');
             if (!is_numeric($this->confdays) or $this->confdays == null or $this->confdays == '' or $this->confdays === false) {
-                $this->confdays = $days;
+                $this->confdays = self::DEFAULT_CONF_DAYS;
             }
             $txt = "{$this->confdays}\n";
             fwrite($file, $txt);

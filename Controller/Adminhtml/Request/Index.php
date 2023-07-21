@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Controller\Adminhtml\Request;
 
+use Exception;
 use Transbank\Webpay\Model\HealthCheck;
 
 class Index extends \Magento\Backend\App\Action
