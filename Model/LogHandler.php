@@ -2,6 +2,8 @@
 
 namespace Transbank\Webpay\Model;
 
+use Exception;
+
 class LogHandler
 {
     //constants for log handler
