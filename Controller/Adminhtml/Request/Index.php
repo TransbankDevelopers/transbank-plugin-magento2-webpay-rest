@@ -24,7 +24,7 @@ class Index extends \Magento\Backend\App\Action
             try {
                 $config = $this->configProvider->getPluginConfig();
                 $healthcheck = new HealthCheck($config);
-                $response = $healthcheck->getInitTransaction();
+                $response = $healthcheck->getCreateTransaction();
 
                 echo json_encode(['success' => true, 'msg' => json_decode($response)]);
             } catch (Exception $e) {
