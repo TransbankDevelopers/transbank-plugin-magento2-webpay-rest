@@ -161,8 +161,6 @@ Puedes aceptar o rechazar la transacción
 ![demo10](img/demo10.png)
 
 ![demo11](img/demo11.png)
-
-![demo12](img/demo12.png)
   
 * Serás redirigido a Magento2 y podrás comprobar que el pago ha sido exitoso.
 
