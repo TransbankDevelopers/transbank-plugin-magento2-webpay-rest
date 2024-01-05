@@ -10,7 +10,6 @@ Este plugin oficial ha sido creado para que puedas integrar Webpay fácilmente e
 2. Tus credenciales de Magento Market a mano. Si no sabes cuales son tus credenciales puedes revisar esta guia: [https://devdocs.magento.com/guides/v2.2/install-gde/prereq/connect-auth.html](https://devdocs.magento.com/guides/v2.2/install-gde/prereq/connect-auth.html)
 
 Habilitar los siguientes módulos / extensiones para PHP:
-- Soap
 - OpenSSL 1.0.1 o superior
 - SimpleXML
 - DOM 2.7.8 o superior
@@ -162,8 +161,6 @@ Puedes aceptar o rechazar la transacción
 ![demo10](img/demo10.png)
 
 ![demo11](img/demo11.png)
-
-![demo12](img/demo12.png)
   
 * Serás redirigido a Magento2 y podrás comprobar que el pago ha sido exitoso.
 

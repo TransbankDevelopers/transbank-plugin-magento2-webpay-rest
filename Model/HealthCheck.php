@@ -127,14 +127,6 @@ class HealthCheck
         return $result;
     }
 
-    // arma array con informacion del ultimo plugin compatible con el ecommerce
-    /*
-    vers_product:
-    1 => WebPay Soap
-    2 => WebPay REST
-    3 => PatPass
-    4 => OnePay
-    */
     private function getPluginLastVersion($ecommerce, $currentversion)
     {
         return 'Indefinido';
@@ -188,13 +180,13 @@ class HealthCheck
         return $return;
     }
 
-    public function setInitTransaction()
+    public function setCreateTransaction()
     {
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
         $amount = 990;
         $buyOrder = '_Healthcheck_';
         $sessionId = uniqid();
-        $returnUrl = 'https://webpay3gint.transbank.cl/filtroUnificado/initTransaction';
+        $returnUrl = 'https://test_plugin_magento/return_url';
         $result = $transbankSdkWebpay->createTransaction($amount, $sessionId, $buyOrder, $returnUrl);
         if ($result) {
             if (!empty($result['error']) && isset($result['error'])) {
@@ -262,9 +254,9 @@ class HealthCheck
         return json_encode($this->getFullResume());
     }
 
-    public function getInitTransaction()
+    public function getCreateTransaction()
     {
-        return json_encode($this->setInitTransaction());
+        return json_encode($this->setCreateTransaction());
     }
 
     public function getpostinstallinfo()
