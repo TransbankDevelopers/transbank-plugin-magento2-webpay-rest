@@ -7,6 +7,7 @@ class AdditionalConfigVars implements ConfigProviderInterface
 {
     protected $getInscriptions;
     protected $configProvider;
+    protected $_getInscriptions;
 
     public function __construct(
         Inscriptions $getInscriptions,

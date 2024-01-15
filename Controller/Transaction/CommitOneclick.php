@@ -22,6 +22,12 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected $configProvider;
 
     protected $quoteRepository;
+    protected $cart;
+    protected $checkoutSession;
+    protected $resultJsonFactory;
+    protected $resultRawFactory;
+    protected $oneclickInscriptionDataFactory;
+    protected $log;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -31,7 +37,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory
+        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
     ) {
         parent::__construct($context);
 
@@ -42,7 +48,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
-        $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->log = new LogHandler();
     }
 
@@ -176,7 +182,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     private function getOrderByToken($tbkToken)
     {
-        $OneclickInscriptionDataModel = $this->OneclickInscriptionDataFactory->create();
+        $OneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         $OneclickInscriptionData = $OneclickInscriptionDataModel->load($tbkToken, 'token');
         $orderId = $OneclickInscriptionData->getOrderId();
         $order = $this->getOrder($orderId);

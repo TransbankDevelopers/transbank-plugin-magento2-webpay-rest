@@ -22,6 +22,15 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
     ];
 
+    protected $cart;
+    protected $checkoutSession;
+    protected $resultJsonFactory;
+    protected $quoteManagement;
+    protected $storeManager;
+    protected $oneclickInscriptionDataFactory;
+    protected $log;
+    protected $webpayOrderDataFactory;
+
     /**
      * AuthorizeOneclick constructor.
      *
@@ -32,7 +41,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
-     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $OneclickInscriptionDataFactory
+     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $oneclickInscriptionDataFactory
      * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
      */
     public function __construct(
@@ -43,7 +52,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
+        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
         \Magento\Framework\Message\ManagerInterface $messageManager
     ) {
@@ -56,7 +65,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
-        $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new LogHandler();
     }
@@ -244,7 +253,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
      */
     protected function getOneclickInscriptionData($inscriptionId)
     {
-        $OneclickInscriptionDataModel = $this->OneclickInscriptionDataFactory->create();
+        $OneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         $OneclickInscriptionData = $OneclickInscriptionDataModel->load($inscriptionId, 'id');
         $tbkUser = $OneclickInscriptionData->getTbkUser();
         $username = $OneclickInscriptionData->getUsername();
