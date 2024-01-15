@@ -14,6 +14,14 @@ use Transbank\Webpay\Helper\InteractsWithFullLog;
 class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
 {
     protected $configProvider;
+    protected $cart;
+    protected $checkoutSession;
+    protected $resultJsonFactory;
+    protected $quoteManagement;
+    protected $storeManager;
+    protected $webpayOrderDataFactory;
+    protected $log;
+    protected $interactsWithFullLog;
 
     /**
      * CreateWebpayM22 constructor.

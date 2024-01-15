@@ -24,6 +24,13 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     protected $configProvider;
 
     protected $quoteRepository;
+    protected $cart;
+    protected $checkoutSession;
+    protected $resultJsonFactory;
+    protected $resultRawFactory;
+    protected $webpayOrderDataFactory;
+    protected $log;
+    protected $interactsWithFullLog;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
