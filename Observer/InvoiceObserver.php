@@ -10,6 +10,10 @@ class InvoiceObserver implements ObserverInterface
     protected $orderSender;
     protected $invoiceSender;
     protected $_logger;
+    protected $order;
+    protected $invoiceService;
+    protected $transaction;
+    protected $configProvider;
 
 
     public function __construct (

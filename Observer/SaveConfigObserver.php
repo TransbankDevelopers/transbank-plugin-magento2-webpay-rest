@@ -21,6 +21,9 @@ class SaveConfigObserver implements ObserverInterface
     const TRANSBANK_ONECLICK_INVOICE_SETTINGS = 'payment/transbank_oneclick/general_parameters/invoice_settings';
     const TRANSBANK_WEBPAY_INVOICE_SETTINGS = 'payment/transbank_webpay/general_parameters/invoice_settings';
 
+    protected $request;
+    protected $configWriter;
+
     protected LoggerInterface $_logger;
     protected ScopeConfigInterface $scopeConfig;
     protected StoreManagerInterface $storeManager;

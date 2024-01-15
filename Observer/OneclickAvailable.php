@@ -6,7 +6,7 @@ use Magento\Framework\Event\ObserverInterface;
 
 class OneclickAvailable implements ObserverInterface
 {
-
+    protected $configProvider;
     protected $_logger;
     protected $shippingMethod;
 

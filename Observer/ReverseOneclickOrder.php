@@ -9,6 +9,7 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
 class ReverseOneclickOrder implements ObserverInterface
 {
 
+    protected $webpayOrderDataFactory;
     protected $_logger;
     protected $shippingMethod;
     protected $configProvider;
