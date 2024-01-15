@@ -7,6 +7,7 @@ use Transbank\Webpay\Model\LogHandler;
 
 class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
 {
+    public $tbk_data;
     /**
      * @var string
      */

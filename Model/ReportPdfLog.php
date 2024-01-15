@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model;
 
 class ReportPdfLog
 {
+    private $document;
     public function __construct($document)
     {
         $this->document = $document;

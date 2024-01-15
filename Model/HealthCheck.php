@@ -15,6 +15,7 @@ class HealthCheck
     public $fullResume;
     public $ecommerce;
     public $config;
+    public $resExtensions;
 
     public function __construct($config)
     {
@@ -141,7 +142,7 @@ class HealthCheck
 
         return $this->resExtensions;
     }
-
+  
     // crea resumen de informacion del servidor. NO incluye a PHP info
     private function getServerResume()
     {

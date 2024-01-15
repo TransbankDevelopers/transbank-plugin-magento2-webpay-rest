@@ -5,6 +5,7 @@ use Transbank\Webpay\Model\LogHandler;
  
 class InteractsWithFullLog extends AbstractHelper {
 
+    protected $log;
     public function __construct()
     {
         $this->log = new LogHandler();
