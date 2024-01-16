@@ -4,35 +4,8 @@ namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
 
-class InvoiceObserver implements ObserverInterface
+class InvoiceObserver extends SuccessObserver implements ObserverInterface
 {
-
-    protected $orderSender;
-    protected $invoiceSender;
-    protected $_logger;
-    protected $order;
-    protected $invoiceService;
-    protected $transaction;
-    protected $configProvider;
-
-
-    public function __construct (
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Sales\Model\Order $order,
-        \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
-        \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
-        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-        \Magento\Framework\DB\Transaction $transaction,
-        \Transbank\Webpay\Model\Config\ConfigProvider $configProvider)
-    {
-        $this->_logger = $logger;
-        $this->order = $order;
-        $this->orderSender = $orderSender;
-        $this->invoiceSender = $invoiceSender;
-        $this->invoiceService = $invoiceService;
-        $this->transaction = $transaction;
-        $this->configProvider = $configProvider;
-    }
 
     public function execute(\Magento\Framework\Event\Observer $observer) {
 
@@ -42,11 +15,8 @@ class InvoiceObserver implements ObserverInterface
         $invoiceOneclickSettings = $this->configProvider->getOneclickInvoiceSettings();
 
         if ($invoiceSettings == 'transbank' || $invoiceOneclickSettings == 'transbank') {
-
             $order->addStatusHistoryComment('Automatically Invoiced by Transbank', true);
-
-            $this->_logger->debug('Creating Invoice email.');
-
+            $this->logger->debug('Creating Invoice email.');
             $order->setCanSendNewEmailFlag(true);
             $order->save();
 
@@ -55,12 +25,11 @@ class InvoiceObserver implements ObserverInterface
                 $invoice->register();
                 $invoice->save();
                 
-                $transactionSave = $this->transaction->addObject($invoice)->addObject($invoice->getOrder());
+                $transactionSave = $this->transaction->addObject($invoice)
+                    ->addObject($invoice->getOrder());
                 $transactionSave->save();
             }
         }
-
     }
 
-    
 }
