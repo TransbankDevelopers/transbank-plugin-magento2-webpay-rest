@@ -15,6 +15,12 @@ class LogHandler
     private $logFile;
     private $logDir;
     private $ecommerce;
+    private $reponse;
+    private $lockfile;
+    private $confdays;
+    private $confweight;
+    private $logList;
+    private $lastLog;
 
     public function __construct($ecommerce = 'magento', $days = 7, $weight = '2MB')
     {

@@ -14,6 +14,14 @@ use Transbank\Webpay\Helper\Inscriptions;
 class CreateOneclick extends \Magento\Framework\App\Action\Action
 {
     protected $configProvider;
+    protected $cart;
+    protected $checkoutSession;
+    protected $resultJsonFactory;
+    protected $quoteManagement;
+    protected $storeManager;
+    protected $oneclickInscriptionDataFactory;
+    protected $log;
+    protected $_getInscriptions;
 
     /**
      * CreateOneclick constructor.
@@ -25,7 +33,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
-     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $OneclickInscriptionDataFactory
+     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $oneclickInscriptionDataFactory
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -35,7 +43,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
+        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         Inscriptions $getInscriptions
     ) {
         parent::__construct($context);
@@ -46,7 +54,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->quoteManagement = $quoteManagement;
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
-        $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->log = new LogHandler();
         $this->_getInscriptions = $getInscriptions;
     }
@@ -200,7 +208,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $commerce_code
     )
     {
-        $oneclickInscriptionData = $this->OneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
         $oneclickInscriptionData->setData([
             'status'          => $status,
             'token'          => $token,
