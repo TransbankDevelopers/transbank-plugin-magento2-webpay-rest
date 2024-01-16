@@ -72,11 +72,11 @@ class Delete extends Action
      */
     protected function getOneclickInscriptionData($inscriptionId)
     {
-        $OneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $OneclickInscriptionData = $OneclickInscriptionDataModel->load($inscriptionId, 'id');
-        $tbkUser = $OneclickInscriptionData->getTbkUser();
-        $username = $OneclickInscriptionData->getUsername();
+        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($inscriptionId, 'id');
+        $tbkUser = $oneclickInscriptionData->getTbkUser();
+        $username = $oneclickInscriptionData->getUsername();
 
-        return [$username, $tbkUser, $OneclickInscriptionDataModel];
+        return [$username, $tbkUser, $oneclickInscriptionDataModel];
     }
 }

@@ -182,12 +182,12 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     private function getOrderByToken($tbkToken)
     {
-        $OneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $OneclickInscriptionData = $OneclickInscriptionDataModel->load($tbkToken, 'token');
-        $orderId = $OneclickInscriptionData->getOrderId();
+        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($tbkToken, 'token');
+        $orderId = $oneclickInscriptionData->getOrderId();
         $order = $this->getOrder($orderId);
 
-        return [$OneclickInscriptionData, $order];
+        return [$oneclickInscriptionData, $order];
     }
 
     /**
