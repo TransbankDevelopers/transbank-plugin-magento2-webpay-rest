@@ -282,10 +282,15 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
     protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
     {
-        list($webpayOrderData, $order) = $this->getOrderByToken($token);
         $message = 'Orden cancelada por el usuario';
-        $this->checkoutSession->restoreQuote();
+        $this->messageManager->addError(__($message));
+        list($webpayOrderData, $order) = $this->getOrderByToken($token);
 
+        if ($order->getStatus() == $orderStatusCanceled){
+            return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+        }
+
+        $this->checkoutSession->restoreQuote();
         $getQuoteById = $this->quoteRepository->get($quoteId);
 
         if ($getQuoteById) {
@@ -297,8 +302,6 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                 $getQuoteById->save();
             }
         }
-
-        $this->messageManager->addError(__($message));
 
         if ($order != null) {
             $order->cancel();
