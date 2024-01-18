@@ -24,11 +24,12 @@ class OneclickAvailable implements ObserverInterface
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $objectManager->get('Magento\Customer\Model\Session');
-        $cart = $objectManager->get('\Magento\Checkout\Model\Cart'); 
+        $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
 
         $grandTotal = $cart->getQuote()->getGrandTotal();
 
-        if ($customerSession->isLoggedIn() == false || $grandTotal >= $oneclickMaxAmount) {
+        if ($customerSession->isLoggedIn() == false || ($oneclickMaxAmount > 0
+            && $grandTotal >= $oneclickMaxAmount)) {
             $this->_logger->debug("User is not logged in");
 
             if($observer->getEvent()->getMethodInstance()->getCode() == "transbank_oneclick"){
