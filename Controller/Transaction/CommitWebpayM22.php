@@ -75,7 +75,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                 return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $_POST['TBK_ID_SESION'], $orderStatusCanceled);
             }
             if (isset($_GET['TBK_TOKEN'])) {
-                $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbkFujo2Error($_POST['TBK_ID_SESION']); // Logs
+                $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbkFujo2Error($_GET['TBK_ID_SESION']); // Logs
                 return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
             }
 
