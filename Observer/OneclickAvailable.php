@@ -30,7 +30,7 @@ class OneclickAvailable implements ObserverInterface
 
         if ($customerSession->isLoggedIn() == false || ($oneclickMaxAmount > 0
             && $grandTotal >= $oneclickMaxAmount)) {
-            $this->logger->debug("User is not logged in");
+            $this->logger->debug("Onelick is not available");
 
             if($observer->getEvent()->getMethodInstance()->getCode() == "transbank_oneclick"){
                 $checkResult = $observer->getEvent()->getResult();
