@@ -163,7 +163,13 @@
                     <!-- Transaction Max Amount -->
                     <field id="transaction_max_amount" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Monto máximo de transacción permitido</label>
-                        <comment>El monto máximo por transacción para Transbank es ajeno al que se establezca en esta configuración.</comment>
+                        <comment>Define el monto máximo que un cliente puede pagar con Oneclick.
+                            Si un cliente va a realizar una compra superior a este monto, Oneclick no aparecerá como opción de
+                            pago en el proceso de checkout. Dejar en 0 si no se desea tener un límite (no recomendado). Recuerda que en
+                            Oneclick, al no contar con autentificación bancaria, es tu comercio el que asume el riesgo en caso de
+                            fraude o contracargo. Independiente del monto que definas en esta configuración, en tu
+                            contrato de Oneclick, existe un límite de cantidad de transacciones diarias, un monto máximo por
+                            transacción y monto acumulado diario. Si un cliente supera ese límite, su transacción será rechazada. </comment>
                     </field>
 
                     <!-- Api Key -->

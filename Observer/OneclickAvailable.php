@@ -7,14 +7,14 @@ use Magento\Framework\Event\ObserverInterface;
 class OneclickAvailable implements ObserverInterface
 {
     protected $configProvider;
-    protected $_logger;
+    protected $logger;
     protected $shippingMethod;
 
     public function __construct (
         \Psr\Log\LoggerInterface $logger,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider)
     {
-        $this->_logger = $logger;
+        $this->logger = $logger;
         $this->configProvider = $configProvider;
     }
 
@@ -24,12 +24,13 @@ class OneclickAvailable implements ObserverInterface
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $customerSession = $objectManager->get('Magento\Customer\Model\Session');
-        $cart = $objectManager->get('\Magento\Checkout\Model\Cart'); 
+        $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
 
         $grandTotal = $cart->getQuote()->getGrandTotal();
 
-        if ($customerSession->isLoggedIn() == false || $grandTotal >= $oneclickMaxAmount) {
-            $this->_logger->debug("User is not logged in");
+        if ($customerSession->isLoggedIn() == false || ($oneclickMaxAmount > 0
+            && $grandTotal >= $oneclickMaxAmount)) {
+            $this->logger->debug("Oneclick is not available");
 
             if($observer->getEvent()->getMethodInstance()->getCode() == "transbank_oneclick"){
                 $checkResult = $observer->getEvent()->getResult();
