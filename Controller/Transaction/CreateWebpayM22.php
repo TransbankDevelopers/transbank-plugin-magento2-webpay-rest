@@ -7,6 +7,8 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\InteractsWithFullLog;
+use Transbank\Webpay\Helper\RestoreQuoteWebpay;
+use Magento\Quote\Model\QuoteRepository;
 
 /**
  * Controller for create transaction Webpay.
@@ -22,6 +24,8 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
     protected $webpayOrderDataFactory;
     protected $log;
     protected $interactsWithFullLog;
+    protected $quoteFactory;
+    protected $quoteRepository;
 
     /**
      * CreateWebpayM22 constructor.
@@ -34,6 +38,8 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
      * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
+     * @param \Magento\Quote\Model\QuoteRepository             $quoteRepository,
+     * @param \Transbank\Webpay\Helper\RestoreQuoteWebpay      $restoreQuoteWebpay
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -44,7 +50,9 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        InteractsWithFullLog $InteractsWithFullLog
+        InteractsWithFullLog $InteractsWithFullLog,
+        \Magento\Quote\Model\QuoteRepository $quoteRepository,
+        \Transbank\Webpay\Helper\RestoreQuoteWebpay $restoreQuoteWebpay
     ) {
         parent::__construct($context);
 
@@ -57,6 +65,8 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new LogHandler();
         $this->interactsWithFullLog = $InteractsWithFullLog;
+        $this->quoteRepository = $quoteRepository;
+        $this->restoreQuoteWebpay = $restoreQuoteWebpay;
     }
 
     /**
@@ -80,8 +90,33 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
 
             $config = $this->configProvider->getPluginConfig();
 
+            $lastRealOrder = $this->checkoutSession->getLastRealOrder();
+
+            if($lastRealOrder->getId() && $lastRealOrder->getState() != \Magento\Sales\Model\Order::STATE_CANCELED ){
+                try {
+                    $quote = $this->quoteRepository->get($lastRealOrder->getQuoteId());
+                    $quote->setIsActive(1)->setReservedOrderId(null);
+                    $this->quoteRepository->save($quote);
+                    $this->checkoutSession->replaceQuote($quote)->unsLastRealOrderId();
+                    if($lastRealOrder->getCustomerId()){
+                        $this->restoreQuoteWebpay->setGuestData($quote);
+                    }
+                } catch (\Exception $e) {
+                    $message = 'Error al recuperar el carrito: '.$e->getMessage();
+                    $this->log->logError($message);
+                }
+            }else{
+                try {
+                    $this->quoteRepository->get($lastRealOrder->getQuoteId())->setIsActive(false)->save();
+                    $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($this->checkoutSession->getQuote());
+                }catch (\Exception $e) {
+                    $message = 'Error al recuperar el carrito: '.$e->getMessage();
+                    $this->log->logError($message);
+                }
+
+            }
+
             $tmpOrder = $this->getOrder();
-            $this->checkoutSession->restoreQuote();
 
             $quote = $this->cart->getQuote();
 
@@ -128,7 +163,7 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
                     $orderId,
                     $quoteId
                 );
-                
+
                 $this->interactsWithFullLog->logWebpayPlusDespuesCrearTx($response); // Logs
 
                 $order->setStatus($orderStatusPendingPayment);
