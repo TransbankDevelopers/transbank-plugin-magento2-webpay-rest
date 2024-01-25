@@ -146,7 +146,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                     $quote = $this->quoteRepository->get($order->getQuoteId());
                     $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote);
 
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -168,7 +168,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
                     $quote = $this->quoteRepository->get($order->getQuoteId());
                     $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote);
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
