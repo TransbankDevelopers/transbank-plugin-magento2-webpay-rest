@@ -26,6 +26,7 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
     protected $interactsWithFullLog;
     protected $quoteFactory;
     protected $quoteRepository;
+    protected $restoreQuoteWebpay;
 
     /**
      * CreateWebpayM22 constructor.
