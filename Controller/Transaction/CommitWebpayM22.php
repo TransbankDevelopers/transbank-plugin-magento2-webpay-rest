@@ -7,6 +7,7 @@ use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\InteractsWithFullLog;
+use Transbank\Webpay\Helper\RestoreQuoteWebpay;
 
 /**
  * Controller for commit transaction Webpay.
@@ -31,6 +32,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     protected $webpayOrderDataFactory;
     protected $log;
     protected $interactsWithFullLog;
+    protected $restoreQuoteWebpay;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -41,7 +43,8 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        InteractsWithFullLog $InteractsWithFullLog
+        InteractsWithFullLog $InteractsWithFullLog,
+        \Transbank\Webpay\Helper\RestoreQuoteWebpay $restoreQuoteWebpay
     ) {
         parent::__construct($context);
 
@@ -55,6 +58,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new LogHandler();
         $this->interactsWithFullLog = $InteractsWithFullLog;
+        $this->restoreQuoteWebpay = $restoreQuoteWebpay;
     }
 
     /**
@@ -139,10 +143,14 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                     $order->addStatusToHistory($order->getStatus(), json_encode($transactionResult));
                     $order->save();
 
-                    $this->checkoutSession->restoreQuote();
+                    $quote = $this->quoteRepository->get($order->getQuoteId());
+                    $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote);
 
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
+                    if($quote->getCustomerId()){
+                        $this->messageManager->addError(__('Para reintentar el pago debe actualizar el carrito.'));
+                    }
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -161,9 +169,13 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
-                    $this->checkoutSession->restoreQuote();
-                    $message = $this->getRejectMessage($transactionResult);
+                    $quote = $this->quoteRepository->get($order->getQuoteId());
+                    $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote);
+                    $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
+                    if($quote->getCustomerId()){
+                        $this->messageManager->addError(__('Para reintentar el pago debe actualizar el carrito.'));
+                    }
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -283,25 +295,21 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
     {
         $message = 'Orden cancelada por el usuario';
-        $this->messageManager->addError(__($message));
+
         list($webpayOrderData, $order) = $this->getOrderByToken($token);
 
+        if($order->getCustomerId()){
+            $message = 'Orden cancelada por el usuario. Para reintentar el pago debe actualizar el carrito.';
+        }
+
+        $this->messageManager->addError(__($message));
+
         if ($order->getStatus() == $orderStatusCanceled){
+            $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($this->checkoutSession->getQuote());
             return $this->resultRedirectFactory->create()->setPath('checkout/cart');
         }
 
-        $this->checkoutSession->restoreQuote();
-        $getQuoteById = $this->quoteRepository->get($quoteId);
-
-        if ($getQuoteById) {
-            $customerId = $getQuoteById->getCustomerId();
-            $isGuest = $getQuoteById->getCustomerIsGuest();
-
-            if ($customerId && $isGuest == 1) {
-                $getQuoteById->setCustomerIsGuest(false);
-                $getQuoteById->save();
-            }
-        }
+        $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($this->checkoutSession->getQuote());
 
         if ($order != null) {
             $order->cancel();
@@ -381,10 +389,15 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     private function errorOnConfirmation(\Exception $e, $order, $orderStatusCanceled)
     {
         $message = 'Error al confirmar transacción: '.$e->getMessage();
+
+        if($order->getCustomerId()){
+            $message = "Error al confirmar transacción: {$e->getMessage()}. Para reintentar el pago debe actualizar el carrito.";
+        }
+
         $this->log->logError($message);
-        $this->checkoutSession->restoreQuote();
         $this->messageManager->addError(__($message));
         if ($order != null && $order->getState() != Order::STATE_PROCESSING) {
+            $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($this->quoteRepository->get($order->getQuoteId()));
             $order->cancel();
             $order->save();
             $order->setStatus($orderStatusCanceled);
