@@ -299,7 +299,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         list($webpayOrderData, $order) = $this->getOrderByToken($token);
 
         if($order->getCustomerId()){
-            $message = 'Orden cancelada por el usuario. Para reintentar el pago debe actualizar el carrito.'
+            $message = 'Orden cancelada por el usuario. Para reintentar el pago debe actualizar el carrito.';
         }
 
         $this->messageManager->addError(__($message));
