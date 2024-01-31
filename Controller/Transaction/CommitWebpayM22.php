@@ -148,6 +148,9 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
 
                     $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
+                    if($quote->getCustomerId()){
+                        $this->messageManager->addError(__('Para reintentar el pago debe actualizar el carrito.'));
+                    }
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -170,6 +173,9 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
                     $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote);
                     $message = $this->getRejectMessage($this->commitResponseToArray($transactionResult));
                     $this->messageManager->addError(__($message));
+                    if($quote->getCustomerId()){
+                        $this->messageManager->addError(__('Para reintentar el pago debe actualizar el carrito.'));
+                    }
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -289,8 +295,14 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
     {
         $message = 'Orden cancelada por el usuario';
-        $this->messageManager->addError(__($message));
+
         list($webpayOrderData, $order) = $this->getOrderByToken($token);
+
+        if($order->getCustomerId()){
+            $message = 'Orden cancelada por el usuario. Para reintentar el pago debe actualizar el carrito.'
+        }
+
+        $this->messageManager->addError(__($message));
 
         if ($order->getStatus() == $orderStatusCanceled){
             $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($this->checkoutSession->getQuote());
@@ -377,6 +389,11 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
     private function errorOnConfirmation(\Exception $e, $order, $orderStatusCanceled)
     {
         $message = 'Error al confirmar transacción: '.$e->getMessage();
+
+        if($order->getCustomerId()){
+            $message = "Error al confirmar transacción: {$e->getMessage()}. Para reintentar el pago debe actualizar el carrito.";
+        }
+
         $this->log->logError($message);
         $this->messageManager->addError(__($message));
         if ($order != null && $order->getState() != Order::STATE_PROCESSING) {
