@@ -7,10 +7,12 @@ use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
+use Transbank\Webpay\WebpayPlus\Exceptions\TransactionRefundException;
 
 use Transbank\Webpay\Oneclick;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
+use Transbank\Webpay\Oneclick\Exceptions\MallRefundTransactiionException;
 
 /**
  * Class TransbankSdkWebpayRest.
@@ -285,18 +287,45 @@ class TransbankSdkWebpayRest
      *
      * @return array
      */
-    public function refundTransaction($buyOrder, $childCommerceCode, $childBuyOrder, $amount)
+    public function refundMallTransaction($buyOrder, $childCommerceCode, $childBuyOrder, $amount)
     {
         try {
             $refund = $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
-            $this->log->logInfo('refundTransaction: '.json_encode($refund));
+            $this->log->logInfo('Refund Oneclick Mall tx: '.json_encode($refund));
 
             return $refund;
 
-        } catch (InscriptionFinishException $e) {
+        } catch (MallRefundTransactiionException $e) {
             $result = [
-                'error'  => 'Error al hacer reversa en Oneclick',
+                'error'  => 'Error reembolsar la transacción Mall',
                 'detail' => $e->getMessage(),
+            ];
+            $this->log->logError(json_encode($result));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $token
+     * @param $amount
+     *
+     * @throws Exception
+     *
+     * @return array
+     */
+
+    public function refundTransaction($token, $amount)
+    {
+        try {
+            $refund = $this->transaction->refund($token, $amount);
+            $this->log->logInfo('Refund Webpay Plus tx: '.json_encode($refund));
+            return $refund;
+
+        }catch (TransactionRefundException $exception){
+            $result = [
+                'error'  => 'Error al intentar reembolsar la transacción',
+                'detail' => $exception->getMessage(),
             ];
             $this->log->logError(json_encode($result));
         }
