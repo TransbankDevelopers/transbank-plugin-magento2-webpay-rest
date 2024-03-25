@@ -7,12 +7,10 @@ use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
-use Transbank\Webpay\WebpayPlus\Exceptions\TransactionRefundException;
 
 use Transbank\Webpay\Oneclick;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
-use Transbank\Webpay\Oneclick\Exceptions\MallRefundTransactiionException;
 
 /**
  * Class TransbankSdkWebpayRest.
@@ -280,56 +278,41 @@ class TransbankSdkWebpayRest
     }
 
     /**
-     * @param $username
-     * @param $tbkUser
+     * @param string $buyOrder
+     * @param string $childCommerceCode
+     * @param string $childBuyOrder
+     * @param int $amount
      *
-     * @throws Exception
+     * @throws \Transbank\Webpay\Oneclick\Exceptions\MallRefundTransactionException
      *
-     * @return array
+     * @return \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse
      */
-    public function refundMallTransaction($buyOrder, $childCommerceCode, $childBuyOrder, $amount)
+    public function refundOneClickTransaction(
+        string $buyOrder,
+        string $childCommerceCode,
+        string $childBuyOrder,
+        int $amount
+        ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse
     {
-        try {
-            $refund = $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
-            $this->log->logInfo('Refund Oneclick Mall tx: '.json_encode($refund));
+        return $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
 
-            return $refund;
-
-        } catch (MallRefundTransactiionException $e) {
-            $result = [
-                'error'  => 'Error reembolsar la transacción Mall',
-                'detail' => $e->getMessage(),
-            ];
-            $this->log->logError(json_encode($result));
-        }
-
-        return $result;
     }
 
     /**
-     * @param $token
-     * @param $amount
+     * @param string $token
+     * @param int $amount
      *
-     * @throws Exception
+     * @throws \Transbank\Webpay\WebpayPlus\Exceptions\TransactionRefundException
      *
-     * @return array
+     * @return \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse
      */
 
-    public function refundTransaction($token, $amount)
+    public function refundWebpayPlusTransaction(
+        string $token,
+        int $amount
+        ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse
     {
-        try {
-            $refund = $this->transaction->refund($token, $amount);
-            $this->log->logInfo('Refund Webpay Plus tx: '.json_encode($refund));
-            return $refund;
+        return $this->transaction->refund($token, $amount);
 
-        }catch (TransactionRefundException $exception){
-            $result = [
-                'error'  => 'Error al intentar reembolsar la transacción',
-                'detail' => $exception->getMessage(),
-            ];
-            $this->log->logError(json_encode($result));
-        }
-
-        return $result;
     }
 }
