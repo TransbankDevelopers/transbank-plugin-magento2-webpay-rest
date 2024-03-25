@@ -69,6 +69,7 @@ class RefundObserver implements ObserverInterface
         catch (\Exception $exception) {
             $errorMessage = "Error en el reembolso: " . $exception->getMessage();
             $order->addStatusHistoryComment($errorMessage);
+            $order->save();
             $this->logger->logError($errorMessage);
             throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
         }
