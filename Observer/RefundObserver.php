@@ -8,7 +8,7 @@ use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\LogHandler;
-use Transbank\webpay\Model\Config\ConfigProvider;
+use Transbank\Webpay\Model\Config\ConfigProvider;
 
 class RefundObserver implements ObserverInterface
 {
