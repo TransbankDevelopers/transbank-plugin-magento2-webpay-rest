@@ -61,8 +61,7 @@ class RefundObserver implements ObserverInterface
                 $refundResponse->getResponseCode();
             $order->addStatusHistoryComment($errorMessage);
             $order->save();
-            $this->logger->logError('Error en el reembolso. Código de respuesta Transbank: ' .
-                $refundResponse->getResponseCode());
+            $this->logger->logError($errorMessage);
             throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
 
         }
