@@ -278,29 +278,41 @@ class TransbankSdkWebpayRest
     }
 
     /**
-     * @param $username
-     * @param $tbkUser
+     * @param string $buyOrder
+     * @param string $childCommerceCode
+     * @param string $childBuyOrder
+     * @param int $amount
      *
-     * @throws Exception
+     * @throws \Transbank\Webpay\Oneclick\Exceptions\MallRefundTransactionException
      *
-     * @return array
+     * @return \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse
      */
-    public function refundTransaction($buyOrder, $childCommerceCode, $childBuyOrder, $amount)
+    public function refundOneClickTransaction(
+        string $buyOrder,
+        string $childCommerceCode,
+        string $childBuyOrder,
+        int $amount
+        ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse
     {
-        try {
-            $refund = $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
-            $this->log->logInfo('refundTransaction: '.json_encode($refund));
+        return $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
 
-            return $refund;
+    }
 
-        } catch (InscriptionFinishException $e) {
-            $result = [
-                'error'  => 'Error al hacer reversa en Oneclick',
-                'detail' => $e->getMessage(),
-            ];
-            $this->log->logError(json_encode($result));
-        }
+    /**
+     * @param string $token
+     * @param int $amount
+     *
+     * @throws \Transbank\Webpay\WebpayPlus\Exceptions\TransactionRefundException
+     *
+     * @return \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse
+     */
 
-        return $result;
+    public function refundWebpayPlusTransaction(
+        string $token,
+        int $amount
+        ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse
+    {
+        return $this->transaction->refund($token, $amount);
+
     }
 }

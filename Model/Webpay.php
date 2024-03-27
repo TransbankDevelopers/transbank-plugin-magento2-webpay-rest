@@ -22,7 +22,7 @@ class Webpay extends \Magento\Payment\Model\Method\AbstractMethod
     protected $_canCapture = true;
     //protected $_canCapturePartial = true;
     protected $_canRefund = true;
-    //protected $_canRefundInvoicePartial = true;
+    protected $_canRefundInvoicePartial = true;
     protected $_canAuthorize = true;
 
     /**
