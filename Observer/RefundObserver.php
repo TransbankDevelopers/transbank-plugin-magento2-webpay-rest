@@ -9,6 +9,7 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\Config\ConfigProvider;
+use Transbank\Webpay\Helper\DateHelper;
 
 class RefundObserver implements ObserverInterface
 {
@@ -158,15 +159,17 @@ class RefundObserver implements ObserverInterface
     private function createHistoryComment(string $refundType, object $refundResponse, int $amount): string {
 
         $type = $refundType == 'REVERSED' ? 'REVERSA' : 'ANULACIÓN';
-        $message = 'Tipo: ' . $type . '<br>' .
-            'Monto: $' . $amount;
+        $message = '<strong>Reembolso exitoso</strong><br><br>'.
+            '<strong>Tipo</strong>: ' . $type . '<br>' .
+            '<strong>Monto</strong>: $' . $amount;
 
         if ($refundType == 'NULLIFIED'){
+            $transactionLocalDate = DateHelper::utcToLocalDate($refundResponse->getAuthorizationDate());
             $message .= '<br>
-                Saldo: $' . $refundResponse->getBalance() . '<br>
-                Fecha: ' . $refundResponse->getAuthorizationDate() . '<br>
-                Cod. autorización: ' . $refundResponse->getAuthorizationCode() . '<br>
-                Cod. respuesta: ' . $refundResponse->getResponseCode();
+                <strong>Saldo</strong>: $' . $refundResponse->getBalance() . '<br>
+                <strong>Fecha</strong>: ' . $transactionLocalDate . '<br>
+                <strong>Código autorización</strong>: ' . $refundResponse->getAuthorizationCode() . '<br>
+                <strong>Código respuesta</strong>: ' . $refundResponse->getResponseCode();
         }
 
         return $message;
