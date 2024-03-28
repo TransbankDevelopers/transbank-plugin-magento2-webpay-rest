@@ -40,7 +40,6 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
             'last_plugin_version'     => $datos_hc->server_resume->plugin_info->last_plugin_version,
             'dom_status'              => $datos_hc->php_extensions_status->dom->status,
             'dom_version'             => $datos_hc->php_extensions_status->dom->version,
-            'php_info'                => $datos_hc->php_info->string->content,
             'lockfile'                => isset($resume['lock_file']['status']) ? $resume['lock_file']['status'] : null,
             'logs'                    => isset($resume['last_log']['log_content']) ? $resume['last_log']['log_content'] : null,
             'log_file'                => isset($resume['last_log']['log_file']) ? $resume['last_log']['log_file'] : null,
