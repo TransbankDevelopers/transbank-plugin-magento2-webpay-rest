@@ -2,10 +2,11 @@
 
 namespace Transbank\Webpay\Helper;
 
-interface ILogger {
-    function logInfo($str);
-    function logError($str);
-    function logDebug($str);
-    function getInfo();
-    function getLogDetail($filename);
+interface ILogger
+{
+    function logInfo(string $str): void;
+    function logError(string $str): void;
+    function logDebug(string $str): void;
+    function getInfo(): array;
+    function getLogDetail(string $filename, bool $replaceNewline): array;
 }
