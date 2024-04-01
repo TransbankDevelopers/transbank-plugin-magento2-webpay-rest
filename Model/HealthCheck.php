@@ -2,6 +2,9 @@
 
 namespace Transbank\Webpay\Model;
 
+use Magento\Framework\Module\ModuleList;
+use Magento\Framework\App\ProductMetadataInterface;
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\WebpayPlus;
 
 class HealthCheck
@@ -98,14 +101,13 @@ class HealthCheck
     // funcion para obtener info de cada ecommerce, si el ecommerce es incorrecto o no esta seteado se escapa como respuesta "NO APLICA"
     private function getEcommerceInfo($ecommerce)
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $actualversion = $productMetadata->getVersion();
+        $productMetadata = ObjectManagerHelper::get(ProductMetadataInterface::class);
+        $magentoVersion = $productMetadata->getVersion();
         $lastversion = $this->getLastGitHubReleaseVersion('Magento/Magento2');
-        $plugininfo = $objectManager->get('Magento\Framework\Module\ModuleList')->getOne('Transbank_Webpay');
+        $plugininfo = ObjectManagerHelper::get(ModuleList::class)->getOne('Transbank_Webpay');
         $currentplugin = $plugininfo['setup_version'];
         $result = [
-            'current_ecommerce_version' => $actualversion,
+            'current_ecommerce_version' => $magentoVersion,
             'last_ecommerce_version'    => $lastversion,
             'current_plugin_version'    => $currentplugin,
         ];

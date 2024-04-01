@@ -2,7 +2,10 @@
 
 namespace Transbank\Webpay\Observer;
 
+use Magento\Checkout\Model\Cart;
+use Magento\Customer\Model\Session;
 use Magento\Framework\Event\ObserverInterface;
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 
 class OneclickAvailable implements ObserverInterface
 {
@@ -22,9 +25,8 @@ class OneclickAvailable implements ObserverInterface
         $config = $this->configProvider->getPluginConfigOneclick();
         $oneclickMaxAmount = $config['TRANSACTION_MAX_AMOUNT'];
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $customerSession = $objectManager->get('Magento\Customer\Model\Session');
-        $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
+        $customerSession = ObjectManagerHelper::get(Session::class);
+        $cart = ObjectManagerHelper::get(Cart::class);
 
         $grandTotal = $cart->getQuote()->getGrandTotal();
 
@@ -39,5 +41,5 @@ class OneclickAvailable implements ObserverInterface
         }
     }
 
-    
+
 }

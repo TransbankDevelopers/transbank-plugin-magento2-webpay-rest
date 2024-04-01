@@ -3,15 +3,17 @@
 namespace Transbank\Webpay\Observer;
 
 use GuzzleHttp\Client;
+use Magento\Framework\Module\ModuleList
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use \Psr\Log\LoggerInterface;
-
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 
 class SaveConfigObserver implements ObserverInterface
 {
@@ -42,7 +44,7 @@ class SaveConfigObserver implements ObserverInterface
         $this->storeManager = $storeManager;
     }
 
-    
+
     public function execute(EventObserver $observer)
     {
         $websiteId = $this->getWebsiteId();
@@ -97,9 +99,8 @@ class SaveConfigObserver implements ObserverInterface
         try {
             $this->_logger->info(':: Sending Metric');
 
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-            $moduleInfo =  $objectManager->get('Magento\Framework\Module\ModuleList')->getOne('Transbank_Webpay'); // SR_Learning is module name
+            $productMetadata = ObjectManagerHelper::get(ProductMetadataInterface::class);
+            $moduleInfo =  ObjectManagerHelper::get(ModuleList::class)->getOne('Transbank_Webpay'); // SR_Learning is module name
             $pluginVersion = $moduleInfo['setup_version'];
 
             $webpayEnviroment = $params['transbank_webpay']['groups']['security']['fields']['environment']['value'];
@@ -108,7 +109,7 @@ class SaveConfigObserver implements ObserverInterface
             $oneclickEnviroment = $params['transbank_oneclick']['groups']['security']['fields']['environment']['value'];
             $oneclickCommerceCode = $params['transbank_oneclick']['groups']['security']['fields']['commerce_code']['value'];
 
-            $webpayPayload = [    
+            $webpayPayload = [
                 'commerceCode' => 1,
                 'plugin' => 'magento',
                 'environment' => $webpayEnviroment,
@@ -119,7 +120,7 @@ class SaveConfigObserver implements ObserverInterface
                 'metadata' => json_encode(['magentoVersion' => $productMetadata->getVersion()]),
             ];
 
-            $oneclickPayload = [    
+            $oneclickPayload = [
                 'commerceCode' => 1,
                 'plugin' => 'magento',
                 'environment' => $oneclickEnviroment,
@@ -133,7 +134,7 @@ class SaveConfigObserver implements ObserverInterface
             $client = new Client();
 
             $client->request('POST', 'https://tbk-app-y8unz.ondigitalocean.app/records/newRecord', ['form_params' => $webpayPayload]);
-            
+
             $client->request('POST', 'https://tbk-app-y8unz.ondigitalocean.app/records/newRecord', ['form_params' => $oneclickPayload]);
 
             $this->_logger->info(':: Saved');

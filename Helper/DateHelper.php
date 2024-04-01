@@ -1,7 +1,7 @@
 <?php
 namespace Transbank\Webpay\Helper;
+
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\ObjectManager;
 
 use DateTime;
 use DateTimeZone;
@@ -15,8 +15,7 @@ class DateHelper {
      */
     public static function utcToLocalDate($utcDate): string {
         try {
-            $objectManager = ObjectManager::getInstance();
-            $scopeConfig = $objectManager->get(ScopeConfigInterface::class);
+            $scopeConfig = ObjectManagerHelper::get(ScopeConfigInterface::class);
             $timezone = $scopeConfig->getValue('general/locale/timezone');
 
             $utcDate = new DateTime($utcDate, new DateTimeZone('UTC'));
