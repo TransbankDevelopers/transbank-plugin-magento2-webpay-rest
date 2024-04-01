@@ -2,7 +2,7 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Model\LogHandler;
+use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
@@ -67,7 +67,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
     }
 
     /**
@@ -124,7 +124,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                     "amount" => $grandTotal,
                     "installments_number" => 1
                 ]
-            ]; 
+            ];
 
             $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, "100000".$orderId, $details);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
@@ -132,13 +132,13 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             if (isset($response->details) && $response->details[0]->responseCode == 0) {
 
                 $webpayOrderData = $this->saveWebpayData(
-                    $response->buyOrder, 
-                    $response->details[0]->buyOrder, 
-                    $response->details[0]->commerceCode, 
+                    $response->buyOrder,
+                    $response->details[0]->buyOrder,
+                    $response->details[0]->commerceCode,
                     $config['CHILD_COMMERCE_CODE'],
                     $grandTotal,
-                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS, 
-                    $orderId, 
+                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
+                    $orderId,
                     $quoteId,
                     $response
                 );
@@ -178,13 +178,13 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 
             } else {
                 $webpayOrderData = $this->saveWebpayData(
-                    '', 
-                    '', 
-                    '', 
                     '',
                     '',
-                    OneclickInscriptionData::PAYMENT_STATUS_FAILED, 
-                    $orderId, 
+                    '',
+                    '',
+                    '',
+                    OneclickInscriptionData::PAYMENT_STATUS_FAILED,
+                    $orderId,
                     $quoteId,
                     $response
                 );
@@ -316,7 +316,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $paymentType = 'Crédito';
         }
 
-        
+
         $message = "
         <b>Detalles del pago {$oneclickTitle}</b>
         <div>

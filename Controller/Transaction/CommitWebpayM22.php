@@ -3,10 +3,10 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
-use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\InteractsWithFullLog;
+use Transbank\Webpay\Helper\PluginLogger;
 
 /**
  * Controller for commit transaction Webpay.
@@ -53,7 +53,7 @@ class CommitWebpayM22 extends \Magento\Framework\App\Action\Action
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
         $this->interactsWithFullLog = $InteractsWithFullLog;
     }
 

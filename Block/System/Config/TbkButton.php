@@ -3,7 +3,7 @@
 namespace Transbank\Webpay\Block\System\Config;
 
 use Transbank\Webpay\Model\HealthCheck;
-use Transbank\Webpay\Model\LogHandler;
+use Transbank\Webpay\Helper\PluginLogger;
 
 class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
 {
@@ -24,8 +24,13 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
         $healthcheck = new HealthCheck($config);
         $datos_hc = json_decode($healthcheck->printFullResume());
 
-        $log = new LogHandler();
-        $resume = $log->getResume();
+        $logger = new PluginLogger();
+        $logInfo = $logger->getInfo();
+        $logDetail = [];
+
+        if (isset($logInfo['last'])) {
+            $logDetail = $logger->getLogDetail($logInfo['last']);
+        }
 
         $this->tbk_data = [
             'url_request'             => $context->getUrlBuilder()->getUrl('admin_webpay/Request/index'),
@@ -40,16 +45,13 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
             'last_plugin_version'     => $datos_hc->server_resume->plugin_info->last_plugin_version,
             'dom_status'              => $datos_hc->php_extensions_status->dom->status,
             'dom_version'             => $datos_hc->php_extensions_status->dom->version,
-            'lockfile'                => isset($resume['lock_file']['status']) ? $resume['lock_file']['status'] : null,
-            'logs'                    => isset($resume['last_log']['log_content']) ? $resume['last_log']['log_content'] : null,
-            'log_file'                => isset($resume['last_log']['log_file']) ? $resume['last_log']['log_file'] : null,
-            'log_weight'              => isset($resume['last_log']['log_weight']) ? $resume['last_log']['log_weight'] : null,
-            'log_regs_lines'          => isset($resume['last_log']['log_regs_lines']) ? $resume['last_log']['log_regs_lines'] : null,
-            'log_days'                => $resume['validate_lock_file']['max_logs_days'],
-            'log_size'                => $resume['validate_lock_file']['max_log_weight'],
-            'log_dir'                 => $resume['log_dir'],
-            'logs_count'              => $resume['logs_count']['log_count'],
-            'logs_list'               => isset($resume['logs_list']) ? $resume['logs_list'] : ['no hay archivos de registro'],
+            'logs'                    => isset($logDetail['content']) ? $logDetail['content'] : '',
+            'log_file'                => isset($logInfo['last']) ? $logInfo['last'] : '-',
+            'log_weight'              => isset($logDetail['size']) ? $logDetail['size'] : '-',
+            'log_regs_lines'          => isset($logDetail['lines']) ? $logDetail['lines'] : '-',
+            'log_dir'                 => $logInfo['dir'],
+            'logs_count'              => $logInfo['length'],
+            'logs_list'               => isset($logInfo['logs']) ? $logInfo['logs'] : ['no hay archivos de registro'],
         ];
     }
 

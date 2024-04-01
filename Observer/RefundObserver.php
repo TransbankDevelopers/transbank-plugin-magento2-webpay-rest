@@ -7,9 +7,9 @@ use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
-use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Helper\DateHelper;
+use Transbank\Webpay\Helper\PluginLogger;
 
 class RefundObserver implements ObserverInterface
 {
@@ -23,7 +23,7 @@ class RefundObserver implements ObserverInterface
         WebpayOrderDataFactory $webpayOrderDataFactory
     )
     {
-        $this->logger = new LogHandler();
+        $this->logger = new PluginLogger();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
     }

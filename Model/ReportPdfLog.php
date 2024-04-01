@@ -2,6 +2,8 @@
 
 namespace Transbank\Webpay\Model;
 
+use Transbank\Webpay\Helper\PluginLogger;
+
 class ReportPdfLog
 {
     private $document;
@@ -12,7 +14,7 @@ class ReportPdfLog
 
     public function getReport($myJSON)
     {
-        $log = new LogHandler();
+        $log = new PluginLogger();
         $data = $log->getLastLog();
         $obj = json_decode($myJSON, true);
         if (isset($data['log_content']) && $this->document == 'report') {

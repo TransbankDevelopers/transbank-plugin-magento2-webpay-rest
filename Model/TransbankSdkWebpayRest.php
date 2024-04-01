@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Model;
 
 use Exception;
+use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
@@ -22,7 +23,7 @@ class TransbankSdkWebpayRest
      */
     public $options;
     /**
-     * @var LogHandler
+     * @var PluginLogger
      */
     protected $log;
 
@@ -49,7 +50,7 @@ class TransbankSdkWebpayRest
      */
     public function __construct($config)
     {
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
         if (isset($config)) {
             $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
 

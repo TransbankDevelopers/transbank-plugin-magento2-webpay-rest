@@ -2,11 +2,11 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Helper\Inscriptions;
+use Transbank\Webpay\Helper\PluginLogger;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -55,7 +55,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
         $this->_getInscriptions = $getInscriptions;
     }
 

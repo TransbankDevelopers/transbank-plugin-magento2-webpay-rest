@@ -3,7 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
-use Transbank\Webpay\Model\LogHandler;
+use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 
@@ -49,7 +49,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
     }
 
     /**
@@ -71,7 +71,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             }
 
             list($OneclickInscriptionData, $order) = $this->getOrderByToken($tbkToken);
-            
+
             $status = $OneclickInscriptionData->getStatus();
             if ($status == OneclickInscriptionData::PAYMENT_STATUS_WATING) {
                 $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
@@ -244,5 +244,5 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             }
         }
     }
-    
+
 }
