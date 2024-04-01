@@ -100,7 +100,7 @@ class PluginLogger implements ILogger
                 'dir'      => $this->logDir,
                 'length'   => 0,
                 'logs'     => [],
-                'last'     => ''
+                'last'     => null
             ];
         }
         $files = array_combine($files, array_map('filemtime', $files));
