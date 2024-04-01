@@ -1,14 +1,13 @@
 <?php
 namespace Transbank\Webpay\Helper;
 use Magento\Framework\App\Helper\AbstractHelper;
-use Transbank\Webpay\Model\LogHandler;
- 
+
 class InteractsWithFullLog extends AbstractHelper {
 
     protected $log;
     public function __construct()
     {
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
     }
 
     public function logWebpayPlusInstallConfigLoad($webpayCommerceCode, $webpayDefaultOrderStateIdAfterPayment){
@@ -83,7 +82,7 @@ class InteractsWithFullLog extends AbstractHelper {
         $this->log->logInfo('C.1. Iniciando validación luego de redirección desde tbk => method: '.$method);
         $this->log->logInfo(json_encode($params));
     }
-    
+
     public function logWebpayPlusDespuesObtenerTx($token, $tx){
         $this->log->logInfo('C.2. Tx obtenido desde la tabla webpay_transactions => token: '.$token);
         $this->log->logInfo(json_encode($tx));
@@ -130,7 +129,7 @@ class InteractsWithFullLog extends AbstractHelper {
         $this->log->logError('C.3. El carro de compras ya fue pagado con otra Transacción => token: '.$token);
         $this->log->logError(json_encode($tx));
     }
-    
+
     public function logWebpayPlusDespuesCommitTx($token, $result){
         $this->log->logInfo('C.4. Transacción con commit en Transbank => token: '.$token);
         $this->log->logInfo(json_encode($result));

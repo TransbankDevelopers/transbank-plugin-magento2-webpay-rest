@@ -2,11 +2,11 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Model\LogHandler;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\InteractsWithFullLog;
+use Transbank\Webpay\Helper\PluginLogger;
 
 /**
  * Controller for create transaction Webpay.
@@ -55,7 +55,7 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
         $this->interactsWithFullLog = $InteractsWithFullLog;
     }
 
@@ -128,7 +128,7 @@ class CreateWebpayM22 extends \Magento\Framework\App\Action\Action
                     $orderId,
                     $quoteId
                 );
-                
+
                 $this->interactsWithFullLog->logWebpayPlusDespuesCrearTx($response); // Logs
 
                 $order->setStatus($orderStatusPendingPayment);
