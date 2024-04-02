@@ -3,7 +3,7 @@
 namespace Transbank\Webpay\Observer;
 
 use GuzzleHttp\Client;
-use Magento\Framework\Module\ModuleList
+use Magento\Framework\Module\ModuleList;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\App\RequestInterface;
