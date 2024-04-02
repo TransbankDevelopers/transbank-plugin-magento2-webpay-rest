@@ -215,7 +215,10 @@
                     <?php
                     $logs_list = $this->tbk_data['logs_list'];
                     foreach ($logs_list as $index){
-                    echo '<li>'.$index.'</li>';
+                        $item = <<<HTML
+                            <li>$index</li>
+                            HTML;
+                        echo $item;
                     }
                     ?>
                 </ul>
