@@ -76,7 +76,7 @@ define(
                                         window.location.href = 'onepage/success';
                                     });
                                 }
-                                
+
                             }
                         ).always(
                             function () {
@@ -95,7 +95,7 @@ define(
                     placeOrderAction(this.getData(), this.messageContainer)
                 );
             },
-    
+
             getCardList: function() {
                 const storedInscriptions = window.checkoutConfig.oneclick_inscriptions;
                 var inscriptions = [];
@@ -105,7 +105,7 @@ define(
 
                     return {
                         key: `${inscription.card_type} terminada en ${last_digits}`,
-                        value: inscription.id,
+                        value: inscription.id
                     }
                 });
 
@@ -121,8 +121,8 @@ define(
                 } else {
                     return false;
                 }
-            },
-    
+            }
+
 
         });
     }
