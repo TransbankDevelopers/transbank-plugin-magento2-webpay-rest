@@ -119,10 +119,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId];
             $message = '<h3>Esperando pago con Webpay</h3><br>'.json_encode($dataLog);
 
-            $params = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
-
             if (isset($response['token_ws'])) {
-                $webpayOrderData = $this->saveWebpayData(
+                $this->saveWebpayData(
                     $response['token_ws'],
                     WebpayOrderData::PAYMENT_STATUS_WATING,
                     $orderId,
@@ -133,7 +131,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
                 $order->setStatus($orderStatusPendingPayment);
             } else {
-                $webpayOrderData = $this->saveWebpayData('', WebpayOrderData::PAYMENT_STATUS_ERROR, $orderId, $quoteId);
+                $this->saveWebpayData('', WebpayOrderData::PAYMENT_STATUS_ERROR, $orderId, $quoteId);
                 $order->cancel();
                 $order->save();
                 $order->setStatus($orderStatusCanceled);

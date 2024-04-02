@@ -159,8 +159,6 @@ class TransbankSdkWebpayRest
         $result = [];
 
         try {
-            $txDate = date('d-m-Y');
-            $txTime = date('H:i:s');
             $this->log->logInfo('initInscription - Username: '.$username.', email: '.$email.
                 ', responseUrl: '.$responseUrl);
 
