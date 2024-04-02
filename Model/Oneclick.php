@@ -41,34 +41,4 @@ class Oneclick extends \Magento\Payment\Model\Method\AbstractMethod
         return true;
     }
 
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        if (!$this->canCapture()) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('The capture action is not available.'));
-        }
-
-        //$metadata = $payment->getData()['additional_information'][\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS];
-        //$payment->setTransactionId($metadata['externalUniqueNumber']);
-        //$payment->setIsTransactionClosed(0);
-
-        return $this;
-    }
-
-    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        if (!$this->canAuthorize()) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('The authorize action is not available.'));
-        }
-
-        return $this;
-    }
-
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        if (!$this->canRefund()) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
-        }
-
-        return $this;
-    }
 }
