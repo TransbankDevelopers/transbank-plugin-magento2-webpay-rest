@@ -9,6 +9,9 @@ use Transbank\Webpay\WebpayPlus;
 
 class HealthCheck
 {
+    const MAGENTO_REPOSITORY = 'Magento/Magento2';
+    const PLUGIN_REPOSITORY = 'TransbankDevelopers/transbank-plugin-magento2-webpay-rest';
+
     public $apiKey;
     public $commerceCode;
     public $environment;
