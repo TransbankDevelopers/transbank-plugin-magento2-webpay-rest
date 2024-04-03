@@ -178,7 +178,7 @@ class HealthCheck
         return ['data' => $result];
     }
 
-    public function setCreateTransaction()
+    public function createTestTransaction()
     {
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
         $amount = 990;

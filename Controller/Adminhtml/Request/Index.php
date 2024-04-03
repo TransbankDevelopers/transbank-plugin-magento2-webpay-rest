@@ -8,7 +8,7 @@ use Transbank\Webpay\Model\HealthCheck;
 class Index extends \Magento\Backend\App\Action
 {
     protected $configProvider;
-    
+
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
@@ -26,9 +26,9 @@ class Index extends \Magento\Backend\App\Action
             try {
                 $config = $this->configProvider->getPluginConfig();
                 $healthcheck = new HealthCheck($config);
-                $response = $healthcheck->getCreateTransaction();
+                $response = $healthcheck->createTestTransaction();
 
-                echo json_encode(['success' => true, 'msg' => json_decode($response)]);
+                echo json_encode(['success' => true, 'msg' => $response]);
             } catch (Exception $e) {
                 echo json_encode(['success' => false, 'msg' => $e->getMessage()]);
             }
