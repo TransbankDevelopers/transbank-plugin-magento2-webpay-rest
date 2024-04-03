@@ -39,7 +39,7 @@ class HealthCheck
     }
 
     // valida version de php
-    private function getValidatephp()
+    private function getValidatePHP()
     {
         if (version_compare(phpversion(), '7.2.1', '<=') and version_compare(phpversion(), '5.5.0', '>=')) {
             $this->versionInfo = [
@@ -157,7 +157,7 @@ class HealthCheck
     private function getServerResume()
     {
         $this->resume = [
-            'php_version'    => $this->getValidatephp(),
+            'php_version'    => $this->getValidatePHP(),
             'server_version' => ['server_software' => $_SERVER['SERVER_SOFTWARE']],
             'plugin_info'    => $this->getPluginInfo($this->ecommerce),
         ];
@@ -216,7 +216,7 @@ class HealthCheck
         return $this->fullResume;
     }
 
-    private function setpostinstall()
+    private function setPostInstall()
     {
         return false;
     }
@@ -252,6 +252,6 @@ class HealthCheck
 
     public function getpostinstallinfo()
     {
-        return json_encode($this->setpostinstall());
+        return json_encode($this->setPostInstall());
     }
 }
