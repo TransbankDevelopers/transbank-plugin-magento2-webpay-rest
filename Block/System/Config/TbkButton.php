@@ -22,7 +22,7 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
         $config = $configProvider->getPluginConfig();
 
         $healthcheck = new HealthCheck($config);
-        $datos_hc = json_decode($healthcheck->printFullResume());
+        $datos_hc = $healthcheck->getFullResume();
 
         $logger = new PluginLogger();
         $logInfo = $logger->getInfo();
@@ -36,15 +36,16 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
             'url_request'             => $context->getUrlBuilder()->getUrl('admin_webpay/Request/index'),
             'url_create_pdf_report'   => $context->getUrlBuilder()->getUrl('admin_webpay/CreatePdf/index').'?document=report',
             'url_create_pdf_php_info' => $context->getUrlBuilder()->getUrl('admin_webpay/CreatePdf/index').'?document=php_info',
-            'php_status'              => $datos_hc->server_resume->php_version->status,
-            'php_version'             => $datos_hc->server_resume->php_version->version,
-            'server_version'          => $datos_hc->server_resume->server_version->server_software,
-            'ecommerce'               => $datos_hc->server_resume->plugin_info->ecommerce,
-            'ecommerce_version'       => $datos_hc->server_resume->plugin_info->ecommerce_version,
-            'current_plugin_version'  => $datos_hc->server_resume->plugin_info->current_plugin_version,
-            'last_plugin_version'     => $datos_hc->server_resume->plugin_info->last_plugin_version,
-            'dom_status'              => $datos_hc->php_extensions_status->dom->status,
-            'dom_version'             => $datos_hc->php_extensions_status->dom->version,
+            'php_status'              => $datos_hc['server_resume']['php_version']['status'],
+            'php_version'             => $datos_hc['server_resume']['php_version']['version'],
+            'server_version'          => $datos_hc['server_resume']['server_version']['server_software'],
+            'ecommerce'               => $datos_hc['server_resume']['plugin_info']['ecommerce'],
+            'ecommerce_version'       => $datos_hc['server_resume']['plugin_info']['ecommerce_version'],
+            'last_ecommerce_version'  => $datos_hc['server_resume']['plugin_info']['last_ecommerce_version'],
+            'current_plugin_version'  => $datos_hc['server_resume']['plugin_info']['current_plugin_version'],
+            'last_plugin_version'     => $datos_hc['server_resume']['plugin_info']['last_plugin_version'],
+            'dom_status'              => $datos_hc['php_extensions_status']['dom']['status'],
+            'dom_version'             => $datos_hc['php_extensions_status']['dom']['version'],
             'logs'                    => isset($logDetail['content']) ? $logDetail['content'] : '',
             'log_file'                => isset($logInfo['last']) ? $logInfo['last'] : '-',
             'log_weight'              => isset($logDetail['size']) ? $logDetail['size'] : '-',
