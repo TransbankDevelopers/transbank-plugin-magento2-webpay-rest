@@ -52,9 +52,9 @@ define(
                         ).done(
                             function () {
                                 self.afterPlaceOrder();
-
+                                var url;
                                 if (!selected_inscription) {
-                                    var url = window.checkoutConfig.pluginConfigOneclick.createTransactionUrl;
+                                    url = window.checkoutConfig.pluginConfigOneclick.createTransactionUrl;
                                     $.getJSON(url, function (result) {
                                         if (result != undefined && result.token != undefined) {
                                             var form = $('<form action="' + result.urlWebpay + '?TBK_TOKEN=' + result.token + '" method="post">' +
@@ -66,7 +66,7 @@ define(
                                         }
                                     });
                                 } else {
-                                    var url = window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
+                                    url = window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
                                     console.log(`:: Charge ${selected_inscription}`);
 
                                     $.post(url, {
