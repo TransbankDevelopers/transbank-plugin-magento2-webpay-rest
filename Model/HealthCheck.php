@@ -222,9 +222,4 @@ class HealthCheck
     {
         return json_encode($this->getFullResume());
     }
-
-    public function getCreateTransaction()
-    {
-        return json_encode($this->setCreateTransaction());
-    }
 }
