@@ -12,17 +12,71 @@ class HealthCheck
     const MAGENTO_REPOSITORY = 'Magento/Magento2';
     const PLUGIN_REPOSITORY = 'TransbankDevelopers/transbank-plugin-magento2-webpay-rest';
 
+    /**
+     * Transbank API Key.
+     * @var string
+     */
     public $apiKey;
+
+    /**
+     * Transbank commerce code.
+     * @var string
+     */
     public $commerceCode;
+
+    /**
+     * The environment.
+     * @var string
+     */
     public $environment;
+
+    /**
+     * List of required PHP extension.
+     * @var array
+     */
     public $extensions;
+
+    /**
+     * PHP version support status.
+     * @var array
+     */
     public $versionInfo;
+
+    /**
+     * Summary of server information.
+     * @var array
+     */
     public $resume;
+
+    /**
+     * Summary for the all plugin information.
+     * @var array
+     */
     public $fullResume;
+
+    /**
+     * The name of the ecommerce platform.
+     * @var string
+     */
     public $ecommerce;
+
+    /**
+     * Configuration data.
+     * @var array
+     */
     public $config;
+
+    /**
+     * Results of extension validation.
+     * @var array
+     */
     public $resExtensions;
 
+    /**
+     * Initializes the HealthCheck instance with configuration data.
+     *
+     * @param array $config The configuration data.
+     */
     public function __construct($config)
     {
         $config['COMMERCE_CODE'] = WebpayPlus::DEFAULT_COMMERCE_CODE;
@@ -38,7 +92,13 @@ class HealthCheck
         ];
     }
 
-    // valida version de php
+    /**
+     * Validate PHP version.
+     *
+     * Checks if the PHP version is supported.
+     *
+     * @return array Information about PHP version validation.
+     */
     private function getValidatePHP()
     {
         if (version_compare(phpversion(), '7.2.1', '<=') and version_compare(phpversion(), '5.5.0', '>=')) {
@@ -56,7 +116,14 @@ class HealthCheck
         return $this->versionInfo;
     }
 
-    // verifica si existe la extension y cual es la version de esta
+    /**
+     * Check PHP extension.
+     *
+     * Checks if a PHP extension is loaded and retrieves its version.
+     *
+     * @param string $extension The name of the PHP extension to check.
+     * @return array Information about the PHP extension.
+     */
     private function getCheckExtension($extension)
     {
         if (extension_loaded($extension)) {
@@ -83,8 +150,14 @@ class HealthCheck
         return $result;
     }
 
-    //obtiene ultimas versiones
-    // permite un maximo de 60 consultas por hora
+    /**
+     * Get last release version from GitHub.
+     *
+     * Retrieves the latest release version of a repository from GitHub.
+     *
+     * @param string $string The GitHub repository name.
+     * @return string The latest release version.
+     */
     private function getLastGitHubReleaseVersion($string)
     {
         $baseurl = 'https://api.github.com/repos/' . $string . '/releases/latest';
@@ -101,17 +174,38 @@ class HealthCheck
         return $version;
     }
 
+    /**
+     * Get last Magento release version.
+     *
+     * Retrieves the latest release version of Magento from GitHub.
+     *
+     * @return string The latest Magento release version.
+     */
     private function getLastMagentoReleaseVersion()
     {
         return $this->getLastGitHubReleaseVersion(self::MAGENTO_REPOSITORY);
     }
 
+    /**
+     * Get last plugin release version.
+     *
+     * Retrieves the latest release version of the plugin from GitHub.
+     *
+     * @return string The latest plugin release version.
+     */
     private function getLastPluginReleaseVersion()
     {
         return $this->getLastGitHubReleaseVersion(self::PLUGIN_REPOSITORY);
     }
 
-    // funcion para obtener info de cada ecommerce, si el ecommerce es incorrecto o no esta seteado se escapa como respuesta "NO APLICA"
+    /**
+     * Get ecommerce info.
+     *
+     * Retrieves information about the ecommerce platform and the plugin.
+     *
+     * @param string $ecommerce The name of the ecommerce platform.
+     * @return array Information about the ecommerce and plugin versions.
+     */
     private function getEcommerceInfo()
     {
         $productMetadata = ObjectManagerHelper::get(ProductMetadataInterface::class);
@@ -128,8 +222,14 @@ class HealthCheck
         return $result;
     }
 
-    // creacion de retornos
-    // arma array que entrega informacion del ecommerce: nombre, version instalada, ultima version disponible
+    /**
+     * Get plugin info.
+     *
+     * Retrieves information about the plugin version.
+     *
+     * @param string $ecommerce The name of the ecommerce platform.
+     * @return array Information about the plugin version.
+     */
     private function getPluginInfo()
     {
         $data = $this->getEcommerceInfo();
@@ -144,7 +244,13 @@ class HealthCheck
         return $result;
     }
 
-    // lista y valida extensiones/ modulos de php en servidor ademas mostrar version
+    /**
+     * Validate PHP extensions.
+     *
+     * Checks if required PHP extensions are loaded and retrieves their versions.
+     *
+     * @return array Information about PHP extensions.
+     */
     private function getExtensionsValidate()
     {
         foreach ($this->extensions as $value) {
@@ -154,7 +260,13 @@ class HealthCheck
         return $this->resExtensions;
     }
 
-    // crea resumen de informacion del servidor. NO incluye a PHP info
+    /**
+     * Get server resume.
+     *
+     * Retrieves a summary of server information.
+     *
+     * @return array Summary of server information.
+     */
     private function getServerResume()
     {
         $this->resume = [
@@ -166,7 +278,13 @@ class HealthCheck
         return $this->resume;
     }
 
-    // crea array con la informacion de comercio para posteriormente exportarla via json
+    /**
+     * Get commerce info.
+     *
+     * Retrieves information about the commerce configuration.
+     *
+     * @return array Information about commerce configuration.
+     */
     private function getCommerceInfo()
     {
         $result = [
@@ -178,6 +296,13 @@ class HealthCheck
         return ['data' => $result];
     }
 
+    /**
+     * Create transaction.
+     *
+     * Creates a transaction using Transbank SDK.
+     *
+     * @return array Information about the transaction.
+     */
     public function createTestTransaction()
     {
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
@@ -205,6 +330,13 @@ class HealthCheck
         return $response;
     }
 
+    /**
+     * Get full resume.
+     *
+     * Retrieves a full summary of server information.
+     *
+     * @return array Full summary of server information.
+     */
     public function getFullResume()
     {
         $this->fullResume = [
