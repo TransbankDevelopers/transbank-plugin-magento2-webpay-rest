@@ -189,7 +189,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      *
      * @throws \Exception
      *
-     * @return WebpayOrderData
      */
     protected function saveWebpayData($token_ws, $payment_status, $order_id, $quote_id)
     {
@@ -202,8 +201,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             'metadata'       => json_encode($this->checkoutSession->getData()),
         ]);
         $webpayOrderData->save();
-
-        return $webpayOrderData;
     }
 
     /**

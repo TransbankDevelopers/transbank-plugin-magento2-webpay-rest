@@ -217,7 +217,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         ]);
         $oneclickInscriptionData->save();
 
-        return $oneclickInscriptionData;
     }
 
     /**
