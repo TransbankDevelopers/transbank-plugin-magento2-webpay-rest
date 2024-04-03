@@ -106,6 +106,10 @@ class HealthCheck
         return $this->getLastGitHubReleaseVersion(self::MAGENTO_REPOSITORY);
     }
 
+    private function getLastPluginReleaseVersion()
+    {
+        return $this->getLastGitHubReleaseVersion(self::PLUGIN_REPOSITORY);
+    }
 
     // funcion para obtener info de cada ecommerce, si el ecommerce es incorrecto o no esta seteado se escapa como respuesta "NO APLICA"
     private function getEcommerceInfo($ecommerce)
@@ -133,15 +137,10 @@ class HealthCheck
             'ecommerce'              => $ecommerce,
             'ecommerce_version'      => $data['current_ecommerce_version'],
             'current_plugin_version' => $data['current_plugin_version'],
-            'last_plugin_version'    => $this->getPluginLastVersion($ecommerce, $data['current_ecommerce_version']), // ultimo declarado
+            'last_plugin_version'    => $this->getLastPluginReleaseVersion(),
         ];
 
         return $result;
-    }
-
-    private function getPluginLastVersion($ecommerce, $currentversion)
-    {
-        return 'Indefinido';
     }
 
     // lista y valida extensiones/ modulos de php en servidor ademas mostrar version
