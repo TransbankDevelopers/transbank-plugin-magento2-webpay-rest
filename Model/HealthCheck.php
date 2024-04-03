@@ -112,7 +112,7 @@ class HealthCheck
     }
 
     // funcion para obtener info de cada ecommerce, si el ecommerce es incorrecto o no esta seteado se escapa como respuesta "NO APLICA"
-    private function getEcommerceInfo($ecommerce)
+    private function getEcommerceInfo()
     {
         $productMetadata = ObjectManagerHelper::get(ProductMetadataInterface::class);
         $magentoVersion = $productMetadata->getVersion();
@@ -130,11 +130,11 @@ class HealthCheck
 
     // creacion de retornos
     // arma array que entrega informacion del ecommerce: nombre, version instalada, ultima version disponible
-    private function getPluginInfo($ecommerce)
+    private function getPluginInfo()
     {
-        $data = $this->getEcommerceInfo($ecommerce);
+        $data = $this->getEcommerceInfo();
         $result = [
-            'ecommerce'              => $ecommerce,
+            'ecommerce'              => $this->ecommerce,
             'ecommerce_version'      => $data['current_ecommerce_version'],
             'last_ecommerce_version' => $data['last_ecommerce_version'],
             'current_plugin_version' => $data['current_plugin_version'],
@@ -160,7 +160,7 @@ class HealthCheck
         $this->resume = [
             'php_version'    => $this->getValidatePHP(),
             'server_version' => ['server_software' => $_SERVER['SERVER_SOFTWARE']],
-            'plugin_info'    => $this->getPluginInfo($this->ecommerce),
+            'plugin_info'    => $this->getPluginInfo(),
         ];
 
         return $this->resume;
