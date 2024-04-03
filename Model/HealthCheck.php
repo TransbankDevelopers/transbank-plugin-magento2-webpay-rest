@@ -65,7 +65,7 @@ class HealthCheck
             } else {
                 $version = phpversion($extension);
                 if (empty($version) or $version == null or $version === false or $version == ' ' or $version == '') {
-                    $version = 'PHP Extension Compiled. ver:'.phpversion();
+                    $version = 'PHP Extension Compiled. ver:' . phpversion();
                 }
             }
             $status = 'OK';
@@ -87,7 +87,7 @@ class HealthCheck
     // permite un maximo de 60 consultas por hora
     private function getLastGitHubReleaseVersion($string)
     {
-        $baseurl = 'https://api.github.com/repos/'.$string.'/releases/latest';
+        $baseurl = 'https://api.github.com/repos/' . $string . '/releases/latest';
         $agent = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)';
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $baseurl);
