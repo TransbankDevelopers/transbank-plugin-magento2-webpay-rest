@@ -5,7 +5,6 @@ namespace Transbank\Webpay\Model;
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
@@ -19,10 +18,7 @@ use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
  */
 class TransbankSdkWebpayRest
 {
-    /**
-     * @var Options
-     */
-    public $options;
+
     /**
      * @var PluginLogger
      */
@@ -62,13 +58,13 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('Environment: '.json_encode($environment));
 
             if ($environment != 'TEST') {
-                $this->options = $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->options = $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->options = $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
             } else {
-                $this->options = $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
-                $this->options = $this->mallInscription->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
-                $this->options = $this->mallTransaction->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
+                $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
+                $this->mallInscription->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
+                $this->mallTransaction->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
             }
 
         }
