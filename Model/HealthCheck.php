@@ -101,12 +101,18 @@ class HealthCheck
         return $version;
     }
 
+    private function getLastMagentoReleaseVersion()
+    {
+        return $this->getLastGitHubReleaseVersion(self::MAGENTO_REPOSITORY);
+    }
+
+
     // funcion para obtener info de cada ecommerce, si el ecommerce es incorrecto o no esta seteado se escapa como respuesta "NO APLICA"
     private function getEcommerceInfo($ecommerce)
     {
         $productMetadata = ObjectManagerHelper::get(ProductMetadataInterface::class);
         $magentoVersion = $productMetadata->getVersion();
-        $lastversion = $this->getLastGitHubReleaseVersion('Magento/Magento2');
+        $lastversion = $this->getLastMagentoReleaseVersion();
         $plugininfo = ObjectManagerHelper::get(ModuleList::class)->getOne('Transbank_Webpay');
         $currentplugin = $plugininfo['setup_version'];
         $result = [
