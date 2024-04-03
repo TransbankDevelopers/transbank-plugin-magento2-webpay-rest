@@ -85,7 +85,7 @@ define(
                 return $.when(
                     placeOrderAction(this.getData(), this.messageContainer)
                 );
-            },
+            }
 
         })
     }
