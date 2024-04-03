@@ -136,6 +136,7 @@ class HealthCheck
         $result = [
             'ecommerce'              => $ecommerce,
             'ecommerce_version'      => $data['current_ecommerce_version'],
+            'last_ecommerce_version' => $data['last_ecommerce_version'],
             'current_plugin_version' => $data['current_plugin_version'],
             'last_plugin_version'    => $this->getLastPluginReleaseVersion(),
         ];

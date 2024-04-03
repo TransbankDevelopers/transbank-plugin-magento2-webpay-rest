@@ -41,6 +41,7 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
             'server_version'          => $datos_hc->server_resume->server_version->server_software,
             'ecommerce'               => $datos_hc->server_resume->plugin_info->ecommerce,
             'ecommerce_version'       => $datos_hc->server_resume->plugin_info->ecommerce_version,
+            'last_ecommerce_version'  => $datos_hc->server_resume->plugin_info->last_ecommerce_version,
             'current_plugin_version'  => $datos_hc->server_resume->plugin_info->current_plugin_version,
             'last_plugin_version'     => $datos_hc->server_resume->plugin_info->last_plugin_version,
             'dom_status'              => $datos_hc->php_extensions_status->dom->status,
