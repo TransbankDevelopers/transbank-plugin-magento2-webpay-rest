@@ -205,8 +205,7 @@ class HealthCheck
         return $response;
     }
 
-    //compila en solo un metodo toda la informacion obtenida, lista para imprimir
-    private function getFullResume()
+    public function getFullResume()
     {
         $this->fullResume = [
             'server_resume'          => $this->getServerResume(),
@@ -215,11 +214,5 @@ class HealthCheck
         ];
 
         return $this->fullResume;
-    }
-
-    // imprime en formato json el resumen completo
-    public function printFullResume()
-    {
-        return json_encode($this->getFullResume());
     }
 }
