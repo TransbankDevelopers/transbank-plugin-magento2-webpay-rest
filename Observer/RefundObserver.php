@@ -71,7 +71,7 @@ class RefundObserver implements ObserverInterface
             $order->addStatusHistoryComment($errorMessage);
             $order->save();
             $this->logger->logError($errorMessage);
-            throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
+            throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage, $exception));
         }
 
     }
