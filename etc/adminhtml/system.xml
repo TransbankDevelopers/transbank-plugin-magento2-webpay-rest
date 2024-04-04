@@ -70,7 +70,7 @@
                     </field>
 
                     <!-- Api Key -->
-                    <field id="api_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="api_key" translate="label" type="password" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>API Key</label>
                         <comment>Llave secreta utilizada para conectarse a la API ¡asegúrate de no compartir su contenido!</comment>
                     </field>
@@ -173,7 +173,7 @@
                     </field>
 
                     <!-- Api Key -->
-                    <field id="api_key" translate="label" type="textarea" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="api_key" translate="label" type="password" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>API Key</label>
                         <comment>Llave secreta utilizada para conectarse a la API ¡asegúrate de no compartir su contenido!</comment>
                     </field>
