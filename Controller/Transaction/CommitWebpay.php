@@ -5,7 +5,6 @@ namespace Transbank\Webpay\Controller\Transaction;
 use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
-use Transbank\Webpay\Helper\InteractsWithFullLog;
 use Transbank\Webpay\Helper\PluginLogger;
 
 /**
@@ -30,7 +29,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $resultRawFactory;
     protected $webpayOrderDataFactory;
     protected $log;
-    protected $interactsWithFullLog;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -40,8 +38,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        InteractsWithFullLog $InteractsWithFullLog
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
         parent::__construct($context);
 
@@ -54,7 +51,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
-        $this->interactsWithFullLog = $InteractsWithFullLog;
     }
 
     /**
@@ -71,31 +67,33 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
             $params = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
             if (isset($_POST['TBK_TOKEN'])) {
-                $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbkFujo2Error($_POST['TBK_ID_SESION']); // Logs
+                $this->log->logError('C.2. Error tipo Flujo 2: El pago fue anulado por tiempo de espera => tbkIdSesion: '. $_POST['TBK_ID_SESION']);
                 return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $_POST['TBK_ID_SESION'], $orderStatusCanceled);
             }
             if (isset($_GET['TBK_TOKEN'])) {
-                $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbkFujo2Error($_GET['TBK_ID_SESION']); // Logs
+                $this->log->logError('C.2. Error tipo Flujo 2: El pago fue anulado por tiempo de espera => tbkIdSesion: '. $_GET['TBK_ID_SESION']); // Logs
                 return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
             }
 
             if (is_null($tokenWs)) {
                 throw new \Exception('Token no encontrado');
             }
-
-            $this->interactsWithFullLog->logWebpayPlusRetornandoDesdeTbk($_SERVER['REQUEST_METHOD'], $params); // Logs
+            $this->log->logInfo('C.1. Iniciando validación luego de redirección desde tbk => method: '.$_SERVER['REQUEST_METHOD']);
+            $this->log->logInfo(json_encode($params));
 
             list($webpayOrderData, $order) = $this->getOrderByToken($tokenWs);
 
             $paymentStatus = $webpayOrderData->getPaymentStatus();
             if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_WATING) {
-                $this->interactsWithFullLog->logWebpayPlusAntesCommitTx($tokenWs, $webpayOrderData, $this->cart); // Logs
+                $this->log->logInfo('C.3. Transaccion antes del commit  => token: '.$tokenWs);
+                $this->log->logInfo(json_encode($webpayOrderData));
 
                 $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
                 $transactionResult = $transbankSdkWebpay->commitTransaction($tokenWs); // Commit
                 $webpayOrderData->setMetadata(json_encode($transactionResult));
 
-                $this->interactsWithFullLog->logWebpayPlusDespuesObtenerTx($tokenWs, $webpayOrderData); // Logs
+                $this->log->logInfo('C.2. Tx obtenido desde la tabla webpay_transactions => token: '.$tokenWs);
+                $this->log->logInfo(json_encode($webpayOrderData));
 
                 if (isset($transactionResult->buyOrder) && isset($transactionResult->responseCode) && $transactionResult->responseCode == 0) {
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_SUCCESS);
@@ -112,7 +110,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->addStatusToHistory($order->getStatus(), json_encode($transactionResult));
                     $order->save();
 
-                    $this->interactsWithFullLog->logWebpayPlusGuardandoCommitExitoso($tokenWs); // Logs
+                    $this->log->logInfo('C.5. Transacción con commit exitoso en Transbank y guardado => token: '.$tokenWs);
 
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
@@ -125,11 +123,13 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                         ]
                     );
 
-                    $this->interactsWithFullLog->logWebpayPlusTodoOk($tokenWs, $transactionResult); // Logs
+                    $this->log->logInfo('TRANSACCION VALIDADA POR MAGENTO Y POR TBK EN ESTADO STATUS_APPROVED => TOKEN: '.$tokenWs);
+                    $this->log->logInfo(json_encode($transactionResult));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } else {
-                    $this->interactsWithFullLog->logWebpayPlusCommitFallidoError($tokenWs, $transactionResult); // Logs
+                    $this->log->logError('C.5. Respuesta de tbk commit fallido => token: '.$tokenWs);
+                    $this->log->logError(json_encode($transactionResult));
 
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
                     $order->cancel();
