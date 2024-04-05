@@ -33,52 +33,7 @@ define(
             },
 
             placeOrder: function (data, event) {
-                var self = this;
-
-                if (event) {
-                    event.preventDefault();
-                }
-
-                if (this.validate() && additionalValidators.validate()) {
-                    this.isPlaceOrderActionAllowed(false);
-
-                    this.getPlaceOrderDeferredObject()
-                        .fail(
-                            function () {
-                                self.isPlaceOrderActionAllowed(true);
-                            }
-                        ).done(
-                            function () {
-                                self.afterPlaceOrder();
-
-                                var url = window.checkoutConfig.pluginConfigWebpay.createTransactionUrl;
-
-                                if (quote.guestEmail) {
-                                    url += '?guestEmail=' + encodeURIComponent(quote.guestEmail);
-                                }
-
-                                $.getJSON(url, function (result) {
-                                    if (result != undefined && result.token_ws != undefined) {
-                                        var form = $('<form action="' + result.url + '" method="post">' +
-                                            '<input type="text" name="token_ws" value="' + result.token_ws + '" />' +
-                                            '</form>');
-                                        $('body').append(form);
-                                        form.submit();
-                                    } else {
-                                        alert('Error al crear transacción');
-                                    }
-                                });
-                            }
-                        ).always(
-                            function () {
-                                self.isPlaceOrderActionAllowed(true);
-                                $('body').loader('show');
-                            }
-                        );
-                    return true;
-                }
-                return false;
-
+                placeOrderFunction(event, additionalValidators, this, quote);
             },
 
             getPlaceOrderDeferredObject: function () {
@@ -90,3 +45,58 @@ define(
         })
     }
 );
+
+function submitForm (result) {
+    if (result != undefined && result.token_ws != undefined) {
+        let form = jQuery('<form action="' + result.url + '" method="post">' +
+            '<input type="text" name="token_ws" value="' + result.token_ws + '" />' +
+            '</form>');
+        jQuery('body').append(form);
+        form.submit();
+    } else {
+        alert('Error al crear transacción');
+    }
+}
+
+function handleTransaction(self, quote){
+    self.afterPlaceOrder();
+
+    let url = window.checkoutConfig.pluginConfigWebpay.createTransactionUrl;
+
+    if (quote.guestEmail) {
+        url += '?guestEmail=' + encodeURIComponent(quote.guestEmail);
+    }
+
+    jQuery.getJSON(url, submitForm);
+}
+
+function placeOrderFunction(event, additionalValidators, context, quote) {
+    let self = context;
+
+    if (event) {
+        event.preventDefault();
+    }
+
+    if (!context.validate() || !additionalValidators.validate()) {
+        return false;
+    }
+
+    context.isPlaceOrderActionAllowed(false);
+
+    context.getPlaceOrderDeferredObject()
+        .fail(
+            function () {
+                self.isPlaceOrderActionAllowed(true);
+            }
+        ).done(
+            function () {
+                handleTransaction(self, quote);
+            }
+        ).always(
+            function () {
+                self.isPlaceOrderActionAllowed(true);
+                jQuery('body').loader('show');
+            }
+        );
+    return true;
+}
