@@ -5,7 +5,6 @@ namespace Transbank\Webpay\Controller\Transaction;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
-use Transbank\Webpay\Helper\InteractsWithFullLog;
 use Transbank\Webpay\Helper\PluginLogger;
 
 /**
@@ -21,7 +20,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     protected $storeManager;
     protected $webpayOrderDataFactory;
     protected $log;
-    protected $interactsWithFullLog;
 
     /**
      * CreateWebpayM22 constructor.
@@ -43,8 +41,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        InteractsWithFullLog $InteractsWithFullLog
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
         parent::__construct($context);
 
@@ -56,7 +53,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
-        $this->interactsWithFullLog = $InteractsWithFullLog;
     }
 
     /**
@@ -67,7 +63,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     public function execute()
     {
 
-        $this->interactsWithFullLog->logWebpayPlusIniciando();
+        $this->log->logInfo('B.1. Iniciando medio de pago Webpay Plus');
 
         $response = null;
         $order = null;
@@ -113,7 +109,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             $quote->save();
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
-            $this->interactsWithFullLog->logWebpayPlusAntesCrearTx($grandTotal, $quoteId, $orderId, $returnUrl); // Logs
+            $this->log->logInfo('B.2. Preparando datos antes de crear la transacción en Transbank');
+            $this->log->logInfo('amount: '.$grandTotal.', sessionId: '.$quoteId.', buyOrder: '.$orderId.', returnUrl: '.$returnUrl);
             $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $orderId, $returnUrl);
 
             $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId];
@@ -127,7 +124,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
                     $quoteId
                 );
 
-                $this->interactsWithFullLog->logWebpayPlusDespuesCrearTx($response); // Logs
+                $this->log->logInfo('B.3. Transacción creada en Transbank');
+                $this->log->logInfo(json_encode($response));
 
                 $order->setStatus($orderStatusPendingPayment);
             } else {
@@ -136,7 +134,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
                 $order->save();
                 $order->setStatus($orderStatusCanceled);
                 $message = '<h3>Error en pago con Webpay</h3><br>'.json_encode($response);
-                $this->interactsWithFullLog->logWebpayPlusDespuesCrearTxError($response); // Logs
+                $this->log->logError('B.3. Transacción creada con error en Transbank');
+                $this->log->logError(json_encode($response));
             }
 
             $order->addStatusToHistory($order->getStatus(), $message);
