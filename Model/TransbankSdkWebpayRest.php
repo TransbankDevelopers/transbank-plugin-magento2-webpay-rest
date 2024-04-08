@@ -2,9 +2,9 @@
 
 namespace Transbank\Webpay\Model;
 
-use Exception;
+use Transbank\Webpay\Exceptions\MissingArgumentException;
+use Transbank\Webpay\Exceptions\TransbankCreateException;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
@@ -18,10 +18,7 @@ use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
  */
 class TransbankSdkWebpayRest
 {
-    /**
-     * @var Options
-     */
-    public $options;
+
     /**
      * @var PluginLogger
      */
@@ -61,13 +58,9 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('Environment: '.json_encode($environment));
 
             if ($environment != 'TEST') {
-                $this->options = $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->options = $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->options = $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-            } else {
-                $this->options = $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
-                $this->options = $this->mallInscription->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
-                $this->options = $this->mallTransaction->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
+                $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
             }
 
         }
@@ -79,7 +72,7 @@ class TransbankSdkWebpayRest
      * @param $buyOrder
      * @param $returnUrl
      *
-     * @throws Exception
+     * @throws TransbankCreateException
      *
      * @return array
      */
@@ -102,7 +95,7 @@ class TransbankSdkWebpayRest
                     'token_ws' => $createResult->token,
                 ];
             } else {
-                throw new Exception('No se ha creado la transacción para, amount: '.$amount.', sessionId: '.$sessionId.', buyOrder: '.$buyOrder);
+                throw new TransbankCreateException('No se ha creado la transacción para, amount: '.$amount.', sessionId: '.$sessionId.', buyOrder: '.$buyOrder);
             }
         } catch (TransactionCreateException $e) {
             $result = [
@@ -118,7 +111,7 @@ class TransbankSdkWebpayRest
     /**
      * @param $tokenWs
      *
-     * @throws Exception
+     * @throws MissingArgumentException
      *
      * @return array|WebpayPlus\Transaction
      */
@@ -126,7 +119,7 @@ class TransbankSdkWebpayRest
     {
         try {
             if ($tokenWs == null) {
-                throw new Exception('El token webpay es requerido');
+                throw new MissingArgumentException('El token webpay es requerido');
             }
 
             $transaction = $this->transaction->commit($tokenWs);
@@ -149,7 +142,7 @@ class TransbankSdkWebpayRest
      * @param $email
      * @param $responseUrl
      *
-     * @throws Exception
+     * @throws TransbankCreateException
      *
      * @return array
      */
@@ -158,8 +151,6 @@ class TransbankSdkWebpayRest
         $result = [];
 
         try {
-            $txDate = date('d-m-Y');
-            $txTime = date('H:i:s');
             $this->log->logInfo('initInscription - Username: '.$username.', email: '.$email.
                 ', responseUrl: '.$responseUrl);
 
@@ -172,7 +163,7 @@ class TransbankSdkWebpayRest
                     'urlWebpay' => $initResult->urlWebpay,
                 ];
             } else {
-                throw new Exception('No se ha creado la inscripción para, username: '.$username.', email: '.$email.', responseUrl: '.$responseUrl);
+                throw new TransbankCreateException('No se ha creado la inscripción para, username: '.$username.', email: '.$email.', responseUrl: '.$responseUrl);
             }
         } catch (InscriptionStartException $e) {
             $result = [
@@ -188,7 +179,7 @@ class TransbankSdkWebpayRest
     /**
      * @param $tbkToken
      *
-     * @throws Exception
+     * @throws MissingArgumentException
      *
      * @return array
      */
@@ -197,7 +188,7 @@ class TransbankSdkWebpayRest
         try {
             $this->log->logInfo('getInscriptonResult - tokenWs: '.$tbkToken);
             if ($tbkToken == null) {
-                throw new Exception('El token tokenWs es requerido');
+                throw new MissingArgumentException('El token tokenWs es requerido');
             }
 
             $inscription = $this->mallInscription->finish($tbkToken);
@@ -220,7 +211,7 @@ class TransbankSdkWebpayRest
      * @param $tbkUser
      * @param $total
      *
-     * @throws Exception
+     * @throws MissingArgumentException
      *
      * @return array
      */
@@ -228,7 +219,7 @@ class TransbankSdkWebpayRest
     {
         try {
             if ($username == null || $tbkUser == null) {
-                throw new Exception('El token tbkUser y el username son requerido');
+                throw new MissingArgumentException('El token tbkUser y el username son requerido');
             }
 
             $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
@@ -251,7 +242,7 @@ class TransbankSdkWebpayRest
      * @param $username
      * @param $tbkUser
      *
-     * @throws Exception
+     * @throws MissingArgumentException
      *
      * @return array
      */
@@ -259,7 +250,7 @@ class TransbankSdkWebpayRest
     {
         try {
             if ($username == null || $tbkUser == null) {
-                throw new Exception('El token tbkUser y el username son requerido');
+                throw new MissingArgumentException('El token tbkUser y el username son requerido');
             }
 
             $delInscription = $this->mallInscription->delete($tbkUser, $username);

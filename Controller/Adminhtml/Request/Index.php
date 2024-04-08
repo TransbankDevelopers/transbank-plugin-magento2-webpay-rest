@@ -2,8 +2,8 @@
 
 namespace Transbank\Webpay\Controller\Adminhtml\Request;
 
-use Exception;
 use Transbank\Webpay\Model\HealthCheck;
+use Transbank\Webpay\Exceptions\TransbankCreateException;
 
 class Index extends \Magento\Backend\App\Action
 {
@@ -29,7 +29,7 @@ class Index extends \Magento\Backend\App\Action
                 $response = $healthcheck->createTestTransaction();
 
                 echo json_encode(['success' => true, 'msg' => $response]);
-            } catch (Exception $e) {
+            } catch (TransbankCreateException $e) {
                 echo json_encode(['success' => false, 'msg' => $e->getMessage()]);
             }
         }

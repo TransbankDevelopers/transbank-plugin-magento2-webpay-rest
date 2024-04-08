@@ -33,61 +33,7 @@ define(
             },
 
             placeOrder: function (data, event) {
-                var self = this;
-
-                const selected_inscription = jQuery('#'+this.getCode()+'_payment_profile_id').val();
-
-                if (event) {
-                    event.preventDefault();
-                }
-
-                if (this.validate() && additionalValidators.validate()) {
-                    this.isPlaceOrderActionAllowed(false);
-
-                    this.getPlaceOrderDeferredObject()
-                        .fail(
-                            function () {
-                                self.isPlaceOrderActionAllowed(true);
-                            }
-                        ).done(
-                            function () {
-                                self.afterPlaceOrder();
-
-                                if (!selected_inscription) {
-                                    var url = window.checkoutConfig.pluginConfigOneclick.createTransactionUrl;
-                                    $.getJSON(url, function (result) {
-                                        if (result != undefined && result.token != undefined) {
-                                            var form = $('<form action="' + result.urlWebpay + '?TBK_TOKEN=' + result.token + '" method="post">' +
-                                                '</form>');
-                                            $('body').append(form);
-                                            form.submit();
-                                        } else {
-                                            alert('Error al crear transacción');
-                                        }
-                                    });
-                                } else {
-                                    var url = window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
-                                    console.log(`:: Charge ${selected_inscription}`);
-
-                                    $.post(url, {
-                                        inscription: selected_inscription
-                                    }, function (result) {
-                                        console.log(result);
-                                        window.location.href = 'onepage/success';
-                                    });
-                                }
-                                
-                            }
-                        ).always(
-                            function () {
-                                self.isPlaceOrderActionAllowed(true);
-                                $('body').loader('show');
-                            }
-                        );
-                    return true;
-                }
-                return false;
-
+                placeOneclickOrderFunction(event, additionalValidators, this);
             },
 
             getPlaceOrderDeferredObject: function () {
@@ -95,17 +41,17 @@ define(
                     placeOrderAction(this.getData(), this.messageContainer)
                 );
             },
-    
+
             getCardList: function() {
                 const storedInscriptions = window.checkoutConfig.oneclick_inscriptions;
-                var inscriptions = [];
+                let inscriptions = [];
 
                 inscriptions = storedInscriptions.map(inscription => {
-                    var last_digits = inscription.card_number.substr(inscription.card_number.length - 4);
+                    let last_digits = inscription.card_number.substr(inscription.card_number.length - 4);
 
                     return {
                         key: `${inscription.card_type} terminada en ${last_digits}`,
-                        value: inscription.id,
+                        value: inscription.id
                     }
                 });
 
@@ -121,9 +67,77 @@ define(
                 } else {
                     return false;
                 }
-            },
-    
+            }
+
 
         });
     }
 );
+
+function checkTransaction(result) {
+    if (result != undefined && result.token != undefined) {
+        let form = jQuery('<form action="' + result.urlWebpay + '?TBK_TOKEN=' + result.token + '" method="post">' +
+            '</form>');
+            jQuery('body').append(form);
+        form.submit();
+    } else {
+        alert('Error al crear transacción');
+    }
+}
+
+function authorizeTransaction(selected_inscription) {
+    let url = window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
+
+    jQuery.post(url, {
+        inscription: selected_inscription
+    }, function (result) {
+        console.log(result);
+        window.location.href = 'onepage/success';
+    });
+}
+
+function handleOneclickTransaction(self, selectedInscription) {
+    self.afterPlaceOrder();
+    if (!selectedInscription) {
+        let url = window.checkoutConfig.pluginConfigOneclick.createTransactionUrl;
+        console.log(url);
+        jQuery.getJSON(url, checkTransaction);
+    } else {
+        authorizeTransaction(selectedInscription);
+    }
+}
+
+function placeOneclickOrderFunction(event, additionalValidators, context) {
+    let self = context;
+
+    const selected_inscription = jQuery('#'+context.getCode()+'_payment_profile_id').val();
+
+    if (event) {
+        event.preventDefault();
+    }
+
+    if (!context.validate() || !additionalValidators.validate()) {
+        return false;
+    }
+    context.isPlaceOrderActionAllowed(false);
+
+    context.getPlaceOrderDeferredObject()
+        .fail(
+            function () {
+                self.isPlaceOrderActionAllowed(true);
+            }
+        )
+        .done(
+            function () {
+                handleOneclickTransaction(self, selected_inscription)
+            }
+
+        )
+        .always(
+            function () {
+                self.isPlaceOrderActionAllowed(true);
+                jQuery('body').loader('show');
+            }
+        );
+    return true;
+}

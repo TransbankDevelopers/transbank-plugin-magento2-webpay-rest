@@ -101,7 +101,7 @@ class HealthCheck
      */
     private function getValidatePHP()
     {
-        if (version_compare(phpversion(), '7.2.1', '<=') and version_compare(phpversion(), '5.5.0', '>=')) {
+        if (version_compare(phpversion(), '7.2.1', '<=') && version_compare(phpversion(), '5.5.0', '>=')) {
             $this->versionInfo = [
                 'status'  => 'OK',
                 'version' => phpversion(),
@@ -131,7 +131,7 @@ class HealthCheck
                 $version = OPENSSL_VERSION_TEXT;
             } else {
                 $version = phpversion($extension);
-                if (empty($version) or $version == null or $version === false or $version == ' ' or $version == '') {
+                if (empty($version) || $version == null || $version === false || $version == ' ' || $version == '') {
                     $version = 'PHP Extension Compiled. ver:' . phpversion();
                 }
             }
