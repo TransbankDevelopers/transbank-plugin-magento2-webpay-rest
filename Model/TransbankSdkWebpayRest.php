@@ -61,10 +61,6 @@ class TransbankSdkWebpayRest
                 $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
                 $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
                 $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-            } else {
-                $this->transaction->configureForIntegration(WebpayPlus::DEFAULT_COMMERCE_CODE, WebpayPlus::DEFAULT_API_KEY);
-                $this->mallInscription->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
-                $this->mallTransaction->configureForIntegration(Oneclick::DEFAULT_COMMERCE_CODE, Oneclick::DEFAULT_API_KEY);
             }
 
         }
