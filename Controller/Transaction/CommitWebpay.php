@@ -418,20 +418,28 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         if ( $commitResponse instanceof TransactionCommitResponse ) {
             $transactionLocalDate = DateHelper::utcToLocalDate($commitResponse->getTransactionDate());
             $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
-            return '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
-            '<strong>VCI</strong>: ' . $commitResponse->getVci() . '<br>' .
-            '<strong>Estado</strong>: ' . $commitResponse->getStatus() . '<br>' .
-            '<strong>Código de respuesta</strong>: ' . $commitResponse->getResponseCode() . '<br>' .
-            '<strong>Monto</strong>: ' . $commitResponse->getAmount() . '<br>' .
-            '<strong>Código de autorización</strong>: ' . $commitResponse->getAuthorizationCode() . '<br>' .
-            '<strong>Tipo de pago</strong>: ' . $commitResponse->getPaymentTypeCode() . '<br>' .
-            '<strong>Cuotas</strong>: ' . $commitResponse->getInstallmentsNumber() . '<br>' .
-            '<strong>Monto cuotas</strong>: ' . $commitResponse->getInstallmentsAmount() . '<br>' .
-            '<strong>ID de sesión</strong>: ' . $commitResponse->getSessionId() . '<br>' .
-            '<strong>Orden de compra</strong>: ' . $commitResponse->getBuyOrder() . '<br>' .
-            '<strong>Número de tarjeta</strong>: ' . $commitResponse->getCardNumber() . '<br>' .
-            '<strong>Fecha de transacción</strong>: ' . $transactionLocalDate . '<br>' .
-            '<strong>Saldo</strong>: ' . $commitResponse->getBalance() . '<br>';
+            $installmentsAmount = $commitResponse->getInstallmentsAmount();
+            $balance = $commitResponse->getBalance();
+            $historyComment =  '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
+                '<strong>VCI</strong>: ' . $commitResponse->getVci() . '<br>' .
+                '<strong>Estado</strong>: ' . $commitResponse->getStatus() . '<br>' .
+                '<strong>Código de respuesta</strong>: ' . $commitResponse->getResponseCode() . '<br>' .
+                '<strong>Monto</strong>: ' . $commitResponse->getAmount() . '<br>' .
+                '<strong>Código de autorización</strong>: ' . $commitResponse->getAuthorizationCode() . '<br>' .
+                '<strong>Tipo de pago</strong>: ' . $commitResponse->getPaymentTypeCode() . '<br>' .
+                '<strong>Cuotas</strong>: ' . $commitResponse->getInstallmentsNumber() . '<br>';
+            if ($installmentsAmount != null) {
+                $historyComment .= '<strong>Monto cuotas</strong>: ' . $installmentsAmount . '<br>';
+            }
+            $historyComment .= '<strong>ID de sesión</strong>: ' . $commitResponse->getSessionId() . '<br>' .
+                '<strong>Orden de compra</strong>: ' . $commitResponse->getBuyOrder() . '<br>' .
+                '<strong>Número de tarjeta</strong>: ' . $commitResponse->getCardNumber() . '<br>' .
+                '<strong>Fecha de transacción</strong>: ' . $transactionLocalDate . '<br>';
+            if ($balance != null) {
+                $historyComment .= '<strong>Saldo</strong>: ' . $balance . '<br>';
+            }
+
+            return $historyComment;
         }
 
         $message = '<strong>Transacción fallida con Webpay</strong>';
