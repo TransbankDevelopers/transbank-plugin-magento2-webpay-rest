@@ -2,18 +2,14 @@
 
 namespace Transbank\Webpay\Observer;
 
-use GuzzleHttp\Client;
-use Magento\Framework\Module\ModuleList;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use \Psr\Log\LoggerInterface;
-use Transbank\Webpay\Helper\ObjectManagerHelper;
 
 class SaveConfigObserver implements ObserverInterface
 {
