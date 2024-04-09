@@ -6,6 +6,7 @@ use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\DateHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -144,7 +145,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->cancel();
                     $order->save();
                     $order->setStatus($orderStatusCanceled);
-                    $order->addStatusToHistory($order->getStatus(), json_encode($transactionResult));
+                    $commitHistoryComment = $this->createCommitHistoryComment($transactionResult);
+                    $order->addStatusToHistory($order->getStatus(), $commitHistoryComment);
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
@@ -409,5 +411,35 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         }
 
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+    }
+
+    private function createCommitHistoryComment($commitResponse): string {
+        if ( $commitResponse instanceof TransactionCommitResponse ) {
+            $transactionLocalDate = DateHelper::utcToLocalDate($commitResponse->getTransactionDate());
+            $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
+            return '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
+            '<strong>VCI</strong>: ' . $commitResponse->getVci() . '<br>' .
+            '<strong>Estado</strong>: ' . $commitResponse->getStatus() . '<br>' .
+            '<strong>Código de respuesta</strong>: ' . $commitResponse->getResponseCode() . '<br>' .
+            '<strong>Monto</strong>: ' . $commitResponse->getAmount() . '<br>' .
+            '<strong>Código de autorización</strong>: ' . $commitResponse->getAuthorizationCode() . '<br>' .
+            '<strong>Tipo de pago</strong>: ' . $commitResponse->getPaymentTypeCode() . '<br>' .
+            '<strong>Cuotas</strong>: ' . $commitResponse->getInstallmentsNumber() . '<br>' .
+            '<strong>Monto cuotas</strong>: ' . $commitResponse->getInstallmentsAmount() . '<br>' .
+            '<strong>ID de sesión</strong>: ' . $commitResponse->getSessionId() . '<br>' .
+            '<strong>Orden de compra</strong>: ' . $commitResponse->getBuyOrder() . '<br>' .
+            '<strong>Número de tarjeta</strong>: ' . $commitResponse->getCardNumber() . '<br>' .
+            '<strong>Fecha de transacción</strong>: ' . $transactionLocalDate . '<br>' .
+            '<strong>Saldo</strong>: ' . $commitResponse->getBalance() . '<br>';
+        }
+
+        $message = '<strong>Transacción fallida con Webpay</strong>';
+        if (isset($commitResponse['error'])) {
+            $detail = isset($commitResponse['detail']) ? $commitResponse['detail'] : 'Sin detalles';
+            $message .= '<br><br>' .
+            '<strong>Respuesta</strong>: ' . $commitResponse['error'] . '<br>' .
+            '<strong>Mensaje</strong>: ' . $detail . '<br>';
+        }
+        return $message;
     }
 }
