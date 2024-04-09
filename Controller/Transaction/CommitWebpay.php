@@ -6,6 +6,7 @@ use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
  * Controller for commit transaction Webpay.
@@ -85,7 +86,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $this->log->logInfo(json_encode($params));
 
             list($webpayOrderData, $order) = $this->getOrderByToken($tokenWs);
-
             $paymentStatus = $webpayOrderData->getPaymentStatus();
             if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_WATING) {
                 $this->log->logInfo('C.3. Transaccion antes del commit  => token: '.$tokenWs);
@@ -144,12 +144,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->cancel();
                     $order->save();
                     $order->setStatus($orderStatusCanceled);
-
                     $order->addStatusToHistory($order->getStatus(), json_encode($transactionResult));
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
-
                     $message = $this->getRejectMessage($transactionResult);
                     $this->messageManager->addError(__($message));
 
@@ -321,36 +319,41 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
-    protected function getRejectMessage(array $transactionResult)
+    /**
+     * @param array|TransactionCommitResponse $transactionResult
+     * @return string
+     */
+    protected function getRejectMessage( $transactionResult ): string
     {
-        if (isset($transactionResult)) {
+        if (isset($transactionResult) && $transactionResult instanceof TransactionCommitResponse) {
             return "<h2>Transacci&oacute;n rechazada con Webpay</h2>
                 <p>
                     <br>
-                    <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult['responseCode']}<br>
-                    <b>Monto:</b> $ {$transactionResult['amount']}<br>
-                    <b>Order de Compra: </b> {$transactionResult['buyOrder']}<br>
+                    <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult->getResponseCode()}<br>
+                    <b>Monto:</b> $ {$transactionResult->getAmount()}<br>
+                    <b>Order de Compra: </b> {$transactionResult->getBuyOrder()}<br>
                     <b>Fecha de la Transacci&oacute;n: </b>"
-                        .date('d-m-Y', strtotime($transactionResult['transactionDate'])).'<br>
+                        .date('d-m-Y', strtotime($transactionResult->getTransactionDate())).'<br>
                     <b>Hora de la Transacci&oacute;n: </b>'
-                        .date('H:i:s', strtotime($transactionResult['transactionDate']))."<br>
-                    <b>Tarjeta: </b>**** **** **** {$transactionResult['cardDetail']['card_number']}<br>
+                        .date('H:i:s', strtotime($transactionResult->getTransactionDate()))."<br>
+                    <b>Tarjeta: </b>**** **** **** {$transactionResult->getCardNumber()}<br>
                 </p>";
 
-        } else {
-            if (isset($transactionResult['error'])) {
-                $error = $transactionResult['error'];
-                $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                return "<h2>Transacci&oacute;n fallida con Webpay</h2>
-                    <p>
-                        <br>
-                        <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
-                        <b>Mensaje: </b>{$detail}
-                    </p>";
-            } else {
-                return '<h2>Transacci&oacute;n Fallida</h2>';
-            }
         }
+
+        if (isset($transactionResult['error'])) {
+            $error = $transactionResult['error'];
+            $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
+            return "<h2>Transacci&oacute;n fallida con Webpay</h2>
+                <p>
+                    <br>
+                    <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
+                    <b>Mensaje: </b>{$detail}
+                </p>";
+        }
+
+        return '<h2>Transacci&oacute;n Fallida</h2>';
+
     }
 
     protected function getOrder($orderId)
