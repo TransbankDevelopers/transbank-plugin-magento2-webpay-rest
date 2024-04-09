@@ -355,12 +355,13 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         if (isset($transactionResult['error'])) {
             $error = $transactionResult['error'];
             $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-            return "<h2>Transacci&oacute;n fallida con Webpay</h2>
-                <p>
-                    <br>
-                    <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
-                    <b>Mensaje: </b>{$detail}
-                </p>";
+            return "<b>Transacci&oacute;n fallida con Webpay</b>
+                <div>
+                    • Respuesta de la Transacci&oacute;n: <b>{$error}</b>
+                </div>
+                <div>
+                    • Mensaje: <b>{$detail}</b>
+                </div>";
         }
 
         return '<h2>Transacci&oacute;n Fallida</h2>';
