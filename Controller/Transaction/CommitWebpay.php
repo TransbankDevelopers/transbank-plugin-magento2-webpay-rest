@@ -326,18 +326,27 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected function getRejectMessage( $transactionResult ): string
     {
         if (isset($transactionResult) && $transactionResult instanceof TransactionCommitResponse) {
-            return "<h2>Transacci&oacute;n rechazada con Webpay</h2>
-                <p>
-                    <br>
-                    <b>Respuesta de la Transacci&oacute;n: </b>{$transactionResult->getResponseCode()}<br>
-                    <b>Monto:</b> $ {$transactionResult->getAmount()}<br>
-                    <b>Order de Compra: </b> {$transactionResult->getBuyOrder()}<br>
-                    <b>Fecha de la Transacci&oacute;n: </b>"
-                        .date('d-m-Y', strtotime($transactionResult->getTransactionDate())).'<br>
-                    <b>Hora de la Transacci&oacute;n: </b>'
-                        .date('H:i:s', strtotime($transactionResult->getTransactionDate()))."<br>
-                    <b>Tarjeta: </b>**** **** **** {$transactionResult->getCardNumber()}<br>
-                </p>";
+            return "<b>Transacci&oacute;n rechazada por Webpay</b>
+                <div>
+                    • Respuesta de la Transacci&oacute;n: <b>{$transactionResult->getResponseCode()}</b>
+                </div>
+                <div>
+                    • Monto: <b>$ {$transactionResult->getAmount()}</b>
+                </div>
+                <div>
+                    • Orden de Compra: <b>{$transactionResult->getBuyOrder()}</b>
+                </div>
+                <div>
+                    • Fecha de la Transacci&oacute;n: <b>"
+                        . date('d-m-Y', strtotime($transactionResult->getTransactionDate())) ."</b>
+                </div>
+                <div>
+                    • Hora de la Transacci&oacute;n: <b>"
+                        . date('H:i:s', strtotime($transactionResult->getTransactionDate())) ."</b>
+                </div>
+                <div>
+                    • Tarjeta: <b>**** **** **** {$transactionResult->getCardNumber()}</b>
+                </div>";
 
         }
 
