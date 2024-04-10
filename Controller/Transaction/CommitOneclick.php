@@ -12,6 +12,12 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
  */
 class CommitOneclick extends \Magento\Framework\App\Action\Action
 {
+    private const REJECT_MESSAGE = "
+        <b>Inscripción rechazada por Oneclick</b>
+        <div>
+            No ha sido posible realizar la inscripción, por favor reintenta con otro medio de pago.
+        </div>
+        ";
     protected $responseCodeArray = [
         '-96' => 'Cancelaste la inscripción durante el formulario de Oneclick.',
         '-97' => 'La transacción ha sido rechazada porque se superó el monto máximo diario de pago.',
@@ -97,12 +103,9 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
                     if (isset($inscriptionResult->responseCode)) {
                         $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
-                        $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult), $oneclickTitle);
-                    } else {
-                        $message = "Cancelaste la inscripción durante el formulario de {$oneclickTitle}.";
                     }
 
-                    $this->messageManager->addError(__($message));
+                    $this->messageManager->addError(__(self::REJECT_MESSAGE));
 
                     $OneclickInscriptionData->save();
 
