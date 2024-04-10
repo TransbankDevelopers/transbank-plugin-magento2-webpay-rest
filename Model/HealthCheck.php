@@ -79,8 +79,6 @@ class HealthCheck
      */
     public function __construct($config)
     {
-        $config['COMMERCE_CODE'] = WebpayPlus::DEFAULT_COMMERCE_CODE;
-        $config['API_KEY'] = WebpayPlus::DEFAULT_API_KEY;
         $this->config = $config;
         $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];
