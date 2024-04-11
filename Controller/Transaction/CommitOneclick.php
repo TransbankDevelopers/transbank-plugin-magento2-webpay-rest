@@ -6,17 +6,32 @@ use Magento\Sales\Model\Order;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Oneclick\Responses\InscriptionFinishResponse;
 
 /**
  * Controller for commit transaction Oneclick.
  */
 class CommitOneclick extends \Magento\Framework\App\Action\Action
 {
+    private const REJECT_MESSAGE = "
+        <b>Inscripción rechazada por Oneclick</b>
+        <div>
+            No ha sido posible realizar la inscripción, por favor reintenta con otro medio de pago.
+        </div>
+        ";
     protected $responseCodeArray = [
         '-96' => 'Cancelaste la inscripción durante el formulario de Oneclick.',
         '-97' => 'La transacción ha sido rechazada porque se superó el monto máximo diario de pago.',
         '-98' => 'La transacción ha sido rechazada porque se superó el monto máximo de pago.',
         '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
+    ];
+
+    private $responseFieldDescription = [
+        'responseCode' => 'Código de respuesta',
+        'tbkUser' => 'TBK User',
+        'authorizationCode' => 'Código de autorización',
+        'cardType' => 'Tipo de tarjeta',
+        'cardNumber' => 'Número de tarjeta'
     ];
 
     protected $configProvider;
@@ -97,12 +112,9 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
                     if (isset($inscriptionResult->responseCode)) {
                         $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
-                        $message = $this->getRejectMessage($this->commitResponseToArray($inscriptionResult), $oneclickTitle);
-                    } else {
-                        $message = "Cancelaste la inscripción durante el formulario de {$oneclickTitle}.";
                     }
 
-                    $this->messageManager->addError(__($message));
+                    $this->messageManager->addError(__(self::REJECT_MESSAGE));
 
                     $OneclickInscriptionData->save();
 
@@ -110,7 +122,14 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $order->save();
                     $order->setStatus($orderStatusCanceled);
 
-                    $order->addStatusToHistory($order->getStatus(), json_encode($inscriptionResult));
+                    $statusFields = $this->getInscriptionResponseFields($inscriptionResult);
+                    $historyComment = $this->createHistoryComment(
+                        'Inscripción rechazada',
+                        $statusFields,
+                        true
+                    );
+
+                    $order->addStatusToHistory($order->getStatus(), $historyComment);
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
@@ -217,7 +236,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
         if (isset($transactionResult['responseCode'])) {
-            // $message = $this->responseCodeArray[$transactionResult['responseCode']];
             $message = "<h2>Transacci&oacute;n rechazada con {$oneclickTitle}</h2>
             <p>
                 <br>
@@ -243,6 +261,44 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                 return $message;
             }
         }
+    }
+
+    /**
+     * @param string $commentTitle An string used as comment title
+     * @param array $data An array of key => value to add on comment body
+     * @param bool $skipNullValues indicates if null values should be skipped
+     *
+     * @return string
+     */
+    private function createHistoryComment( $commentTitle, $data, $skipNullValues = false ): string {
+        $title = '<strong>' . $commentTitle . '</strong><br><br>';
+        $items = '';
+        foreach ($data as $key => $value) {
+            if ($skipNullValues && $value == null) {
+                continue;
+            }
+            $fieldDescription = $this->responseFieldDescription[$key] ?? $key;
+            $items .= '<strong>' . $fieldDescription . '</strong>: ' . $value . '<br>';
+        }
+        return $title . $items;
+    }
+
+    /**
+     * @param array|InscriptionFinishResponse $inscriptionResponse
+     *
+     * @return array
+     */
+    private function getInscriptionResponseFields( $inscriptionResponse ): array {
+        if ( $inscriptionResponse instanceof InscriptionFinishResponse ){
+            return [
+                'responseCode' => $inscriptionResponse->getResponseCode(),
+                'tbkUser' => $inscriptionResponse->getTbkUser(),
+                'authorizationCode' => $inscriptionResponse->getAuthorizationCode(),
+                'cardType' => $inscriptionResponse->getCardType(),
+                'cardNumber' => $inscriptionResponse->getCardNumber()
+            ];
+        }
+        return $inscriptionResponse;
     }
 
 }
