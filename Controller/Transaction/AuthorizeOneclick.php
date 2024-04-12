@@ -2,7 +2,7 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Model\LogHandler;
+use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
@@ -22,6 +22,15 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
     ];
 
+    protected $cart;
+    protected $checkoutSession;
+    protected $resultJsonFactory;
+    protected $quoteManagement;
+    protected $storeManager;
+    protected $oneclickInscriptionDataFactory;
+    protected $log;
+    protected $webpayOrderDataFactory;
+
     /**
      * AuthorizeOneclick constructor.
      *
@@ -32,7 +41,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
-     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $OneclickInscriptionDataFactory
+     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $oneclickInscriptionDataFactory
      * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
      */
     public function __construct(
@@ -43,7 +52,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
+        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
         \Magento\Framework\Message\ManagerInterface $messageManager
     ) {
@@ -56,9 +65,9 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
-        $this->OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
-        $this->log = new LogHandler();
+        $this->log = new PluginLogger();
     }
 
     /**
@@ -108,30 +117,29 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $this->log->logError($orderId);
             $this->log->logError($grandTotal);
 
+            $buyOrder = "100000".$orderId;
+            $childBuyOrder = "200000".$orderId;
+
             $details = [
                 [
                     "commerce_code" => $config['CHILD_COMMERCE_CODE'],
-                    "buy_order" => "200000".$orderId,
+                    "buy_order" => $childBuyOrder,
                     "amount" => $grandTotal,
                     "installments_number" => 1
                 ]
-            ]; 
+            ];
 
-            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, "100000".$orderId, $details);
+            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
 
             if (isset($response->details) && $response->details[0]->responseCode == 0) {
 
                 $webpayOrderData = $this->saveWebpayData(
-                    $response->buyOrder, 
-                    $response->details[0]->buyOrder, 
-                    $response->details[0]->commerceCode, 
-                    $config['CHILD_COMMERCE_CODE'],
+                    $response,
                     $grandTotal,
-                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS, 
-                    $orderId, 
-                    $quoteId,
-                    $response
+                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
+                    $orderId,
+                    $quoteId
                 );
 
 
@@ -169,15 +177,11 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 
             } else {
                 $webpayOrderData = $this->saveWebpayData(
-                    '', 
-                    '', 
-                    '', 
-                    '',
-                    '',
-                    OneclickInscriptionData::PAYMENT_STATUS_FAILED, 
-                    $orderId, 
+                    $config['CHILD_COMMERCE_CODE'],
+                    $grandTotal,
+                    OneclickInscriptionData::PAYMENT_STATUS_FAILED,
+                    $orderId,
                     $quoteId,
-                    $response
                 );
 
                 $order->setStatus($orderStatusCanceled);
@@ -244,10 +248,10 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
      */
     protected function getOneclickInscriptionData($inscriptionId)
     {
-        $OneclickInscriptionDataModel = $this->OneclickInscriptionDataFactory->create();
-        $OneclickInscriptionData = $OneclickInscriptionDataModel->load($inscriptionId, 'id');
-        $tbkUser = $OneclickInscriptionData->getTbkUser();
-        $username = $OneclickInscriptionData->getUsername();
+        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($inscriptionId, 'id');
+        $tbkUser = $oneclickInscriptionData->getTbkUser();
+        $username = $oneclickInscriptionData->getUsername();
 
         return [$username, $tbkUser];
     }
@@ -272,19 +276,19 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
      *
      * @return WebpayOrderData
      */
-    protected function saveWebpayData($buyOrder, $childBuyOrder, $commerceCode, $childCommerceCode, $amount, $payment_status, $order_id, $quote_id, $response)
+    protected function saveWebpayData($authorizeResponse, $amount, $payment_status, $order_id, $quote_id)
     {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
-            'buy_order'       => $buyOrder,
-            'child_buy_order' => $childBuyOrder,
-            'commerce_code'   => $commerceCode,
-            'child_commerce_code'   => $childCommerceCode,
+            'buy_order'       => $authorizeResponse->getBuyOrder(),
+            'child_buy_order' => $authorizeResponse->getDetails()[0]->getBuyOrder(),
+            'commerce_code'   => $authorizeResponse->getDetails()[0]->getCommerceCode(),
+            'child_commerce_code'   => $authorizeResponse->getDetails()[0]->getCommerceCode(),
             'payment_status'  => $payment_status,
             'order_id'        => $order_id,
             'quote_id'        => $quote_id,
             'amount'          => $amount,
-            'metadata'        => json_encode($response),
+            'metadata'        => json_encode($authorizeResponse),
         ]);
         $webpayOrderData->save();
 
@@ -307,7 +311,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $paymentType = 'Crédito';
         }
 
-        
+
         $message = "
         <b>Detalles del pago {$oneclickTitle}</b>
         <div>

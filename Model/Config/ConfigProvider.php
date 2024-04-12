@@ -12,6 +12,8 @@ class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
 
     const CC_VAULT_CODE = 'transbank_oneclick_cc_vault';
 
+    private $scopeConfigInterface;
+
     public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface)
     {
         $this->scopeConfigInterface = $scopeConfigInterface;

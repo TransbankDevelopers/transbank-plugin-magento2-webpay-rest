@@ -7,24 +7,27 @@ use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData;
 
 
 class Inscriptions extends AbstractHelper {
-    protected $_session;
+    protected $oneclickInscriptionDataFactory;
+    protected $resourceConnection;
+    protected $session;
+    protected $scopeConfig;
 
     public function __construct(
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $OneclickInscriptionDataFactory,
-        \Magento\Customer\Model\Session $Session,
+        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        \Magento\Customer\Model\Session $session,
         Context $context,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         ResourceConnection $resourceConnection)
     {
-        $this->_OneclickInscriptionDataFactory = $OneclickInscriptionDataFactory;
-        $this->_session = $Session;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->session = $session;
         $this->resourceConnection = $resourceConnection;
-        $this->_scopeConfig = $scopeConfig;
+        $this->scopeConfig = $scopeConfig;
         parent::__construct($context);
     }
     public function getInscriptions()
     {
-        $customerId = $this->_session->getCustomer()->getId();
+        $customerId = $this->session->getCustomer()->getId();
 
         if (isset($customerId)) {
             //Create Connection

@@ -5,24 +5,22 @@ use Transbank\Webpay\Helper\Inscriptions;
 
 class AdditionalConfigVars implements ConfigProviderInterface
 {
-    protected $getInscriptions;
+    protected $inscriptions;
     protected $configProvider;
 
     public function __construct(
-        Inscriptions $getInscriptions,
+        Inscriptions $inscriptions,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
     ){
-        $this->_getInscriptions = $getInscriptions;
+        $this->inscriptions = $inscriptions;
         $this->configProvider = $configProvider;
     }
 
     public function getConfig()
     {
         $config = $this->configProvider->getPluginConfigOneclick();
-        $inscriptions = $this->_getInscriptions->getInscriptions();
-
         $additionalVariables['oneclick_max_amount'] = $config['TRANSACTION_MAX_AMOUNT'];
-        $additionalVariables['oneclick_inscriptions'] = $inscriptions;
+        $additionalVariables['oneclick_inscriptions'] = $this->inscriptions->getInscriptions();
         return $additionalVariables;
     }
 }

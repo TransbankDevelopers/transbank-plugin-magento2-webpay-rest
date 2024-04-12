@@ -6,6 +6,8 @@ use Magento\Framework\Event\ObserverInterface;
 
 class SubmitObserver implements ObserverInterface
 {
+    protected $configProvider;
+    protected $_current_order;
     /**
      * @param Observer $observer
      * @return void
