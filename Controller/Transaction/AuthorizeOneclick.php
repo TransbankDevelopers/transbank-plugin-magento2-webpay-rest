@@ -8,11 +8,9 @@ use Transbank\Webpay\Model\Oneclick;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ObjectManager;
-use Magento\Quote\Model\QuoteManagement;
 use Transbank\Webpay\Helper\PluginLogger;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
-use Magento\Store\Model\StoreManagerInterface;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\ResultInterface;
@@ -41,8 +39,6 @@ class AuthorizeOneclick extends Action
     private $cart;
     private $checkoutSession;
     private $resultJsonFactory;
-    private $quoteManagement;
-    private $storeManager;
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
@@ -55,8 +51,6 @@ class AuthorizeOneclick extends Action
      * @param Cart $cart
      * @param Session $checkoutSession
      * @param JsonFactory $resultJsonFactory
-     * @param QuoteManagement $quoteManagement
-     * @param StoreManagerInterface $storeManager
      * @param ConfigProvider $configProvider
      * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
@@ -67,8 +61,6 @@ class AuthorizeOneclick extends Action
         Cart $cart,
         Session $checkoutSession,
         JsonFactory $resultJsonFactory,
-        QuoteManagement $quoteManagement,
-        StoreManagerInterface $storeManager,
         ConfigProvider $configProvider,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
@@ -79,8 +71,6 @@ class AuthorizeOneclick extends Action
         $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
         $this->resultJsonFactory = $resultJsonFactory;
-        $this->quoteManagement = $quoteManagement;
-        $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
