@@ -2,16 +2,31 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Model\TransbankSdkWebpayRest;
+use Magento\Checkout\Model\Cart;
+use Magento\Checkout\Model\Session;
 use Transbank\Webpay\Model\Oneclick;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\ObjectManager;
+use Magento\Quote\Model\QuoteManagement;
+use Transbank\Webpay\Helper\PluginLogger;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Store\Model\StoreManagerInterface;
+use Transbank\Webpay\Model\Config\ConfigProvider;
+use Magento\Framework\Controller\ResultInterface;
+use Transbank\Webpay\Model\TransbankSdkWebpayRest;
+use Transbank\Webpay\Model\WebpayOrderDataFactory;
+use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Magento\Framework\Controller\Result\JsonFactory;
+use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 
 
 /**
  * Controller for create Oneclick Inscription.
  */
-class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
+class AuthorizeOneclick extends Action
 {
     protected $configProvider;
 
@@ -34,27 +49,27 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
     /**
      * AuthorizeOneclick constructor.
      *
-     * @param \Magento\Framework\App\Action\Context            $context
-     * @param \Magento\Checkout\Model\Cart                     $cart
-     * @param \Magento\Checkout\Model\Session                  $checkoutSession
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
-     * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
-     * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
-     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $oneclickInscriptionDataFactory
-     * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
+     * @param Context $context
+     * @param Cart $cart
+     * @param Session $checkoutSession
+     * @param JsonFactory $resultJsonFactory
+     * @param QuoteManagement $quoteManagement
+     * @param StoreManagerInterface $storeManager
+     * @param ConfigProvider $configProvider
+     * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
+     * @param WebpayOrderDataFactory $webpayOrderDataFactory
      */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Cart $cart,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-        \Magento\Quote\Model\QuoteManagement $quoteManagement,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        \Magento\Framework\Message\ManagerInterface $messageManager
+        Context $context,
+        Cart $cart,
+        Session $checkoutSession,
+        JsonFactory $resultJsonFactory,
+        QuoteManagement $quoteManagement,
+        StoreManagerInterface $storeManager,
+        ConfigProvider $configProvider,
+        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        WebpayOrderDataFactory $webpayOrderDataFactory,
+        ManagerInterface $messageManager
     ) {
         parent::__construct($context);
 
@@ -73,7 +88,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
     /**
      * @throws \Exception
      *
-     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Json|\Magento\Framework\Controller\ResultInterface
+     * @return ResponseInterface|Json|ResultInterface
      */
     public function execute()
     {
@@ -157,7 +172,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
 
                 $payment->setLastTransId($response->details[0]->authorizationCode);
                 $payment->setTransactionId($response->details[0]->authorizationCode);
-                $payment->setAdditionalInformation([\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $response->details[0]]);
+                $payment->setAdditionalInformation([Transaction::RAW_DETAILS => (array) $response->details[0]]);
 
                 $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
                 $order->addStatusToHistory($order->getStatus(), $orderLogs);
@@ -226,7 +241,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 return null;
             }
 
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $objectManager = ObjectManager::getInstance();
 
             return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
         } catch (\Exception $e) {
