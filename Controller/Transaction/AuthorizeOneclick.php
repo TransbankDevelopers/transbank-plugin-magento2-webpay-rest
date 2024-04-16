@@ -43,6 +43,7 @@ class AuthorizeOneclick extends Action
     private $log;
     private $webpayOrderDataFactory;
     protected $messageManager;
+    private $oneclickConfig;
 
     /**
      * AuthorizeOneclick constructor.
@@ -76,6 +77,7 @@ class AuthorizeOneclick extends Action
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
+        $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
     }
 
     /**
@@ -103,8 +105,6 @@ class AuthorizeOneclick extends Action
             $username = $inscription->getUsername();
             $tbkUser = $inscription->getTbkUser();
 
-            $config = $this->configProvider->getPluginConfigOneclick();
-
             $this->checkoutSession->restoreQuote();
 
             $quote = $this->cart->getQuote();
@@ -119,11 +119,11 @@ class AuthorizeOneclick extends Action
 
             $quote->save();
 
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
 
             $this->log->logError(json_encode($order));
 
-            $this->log->logError($config['CHILD_COMMERCE_CODE']);
+            $this->log->logError($this->oneclickConfig['CHILD_COMMERCE_CODE']);
             $this->log->logError($orderId);
             $this->log->logError($grandTotal);
 
@@ -132,7 +132,7 @@ class AuthorizeOneclick extends Action
 
             $details = [
                 [
-                    "commerce_code" => $config['CHILD_COMMERCE_CODE'],
+                    "commerce_code" => $this->oneclickConfig['CHILD_COMMERCE_CODE'],
                     "buy_order" => $childBuyOrder,
                     "amount" => $grandTotal,
                     "installments_number" => 1
@@ -185,7 +185,7 @@ class AuthorizeOneclick extends Action
                 return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
             } else {
                 $webpayOrderData = $this->saveWebpayData(
-                    $config['CHILD_COMMERCE_CODE'],
+                    $this->oneclickConfig['CHILD_COMMERCE_CODE'],
                     $grandTotal,
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
                     $orderId,
