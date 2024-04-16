@@ -99,7 +99,9 @@ class AuthorizeOneclick extends Action
                 return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción', 'flag' => 0]);
             }
 
-            list($username, $tbkUser) = $this->getOneclickInscriptionData($inscriptionId);
+            $inscription = $this->getOneclickInscriptionData($inscriptionId);
+            $username = $inscription->getUsername();
+            $tbkUser = $inscription->getTbkUser();
 
             $config = $this->configProvider->getPluginConfigOneclick();
 
@@ -249,14 +251,10 @@ class AuthorizeOneclick extends Action
      *
      * @return OneclickInscriptionData
      */
-    protected function getOneclickInscriptionData($inscriptionId)
+    protected function getOneclickInscriptionData($inscriptionId): OneclickInscriptionData
     {
         $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($inscriptionId, 'id');
-        $tbkUser = $oneclickInscriptionData->getTbkUser();
-        $username = $oneclickInscriptionData->getUsername();
-
-        return [$username, $tbkUser];
+        return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
     }
 
     /**
