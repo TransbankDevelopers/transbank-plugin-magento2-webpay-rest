@@ -117,8 +117,8 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $this->log->logError($orderId);
             $this->log->logError($grandTotal);
 
-            $buyOrder = "100000".$orderId;
-            $childBuyOrder = "200000".$orderId;
+            $buyOrder = "100000" . $orderId;
+            $childBuyOrder = "200000" . $orderId;
 
             $details = [
                 [
@@ -152,7 +152,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 $this->checkoutSession->getQuote()->setIsActive(true)->save();
                 $this->cart->getQuote()->setIsActive(true)->save();
 
-                $orderLogs = '<h3>Pago autorizado exitosamente con '.$oneclickTitle.'</h3><br>'.json_encode($dataLog);
+                $orderLogs = '<h3>Pago autorizado exitosamente con ' . $oneclickTitle . '</h3><br>' . json_encode($dataLog);
                 $payment = $order->getPayment();
 
                 $payment->setLastTransId($response->details[0]->authorizationCode);
@@ -172,9 +172,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                         'message' => $message
                     ]
                 );
-
                 return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
-
             } else {
                 $webpayOrderData = $this->saveWebpayData(
                     $config['CHILD_COMMERCE_CODE'],
@@ -185,7 +183,7 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 );
 
                 $order->setStatus($orderStatusCanceled);
-                $message = '<h3>Error en Inscripción con Oneclick</h3><br>'.json_encode($response);
+                $message = '<h3>Error en Inscripción con Oneclick</h3><br>' . json_encode($response);
 
                 $order->addStatusToHistory($order->getStatus(), $message);
                 $order->cancel();
@@ -199,9 +197,8 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 // return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 1]);
             }
-
         } catch (\Exception $e) {
-            $message = 'Error al crear transacción: '.$e->getMessage();
+            $message = 'Error al crear transacción: ' . $e->getMessage();
 
             $this->log->logError($message);
             $response = ['error' => $message];
@@ -216,7 +213,6 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $this->messageManager->addErrorMessage($e->getMessage());
             return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 2]);
         }
-
     }
 
     /**
@@ -233,7 +229,6 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
             return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
-
         } catch (\Exception $e) {
             return null;
         }
@@ -327,10 +322,10 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
             • Order de Compra: <b>{$transactionResult->details[0]->buyOrder}</b>
         </div>
         <div>
-            • Fecha de la Transacci&oacute;n: <b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'</b>
+            • Fecha de la Transacci&oacute;n: <b>" . date('d-m-Y', strtotime($transactionResult->transactionDate)) . '</b>
         </div>
         <div>
-            • Hora de la Transacci&oacute;n: <b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."</b>
+            • Hora de la Transacci&oacute;n: <b>' . date('H:i:s', strtotime($transactionResult->transactionDate)) . "</b>
         </div>
         <div>
             • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
@@ -355,8 +350,8 @@ class AuthorizeOneclick extends \Magento\Framework\App\Action\Action
                 <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult->details[0]->responseCode]}<br>
                 <b>Monto:</b> $ {$transactionResult->details[0]->amount}<br>
                 <b>Order de Compra: </b> {$transactionResult->details[0]->buyOrder}<br>
-                <b>Fecha de la Transacci&oacute;n: </b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'<br>
-                <b>Hora de la Transacci&oacute;n: </b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."<br>
+                <b>Fecha de la Transacci&oacute;n: </b>" . date('d-m-Y', strtotime($transactionResult->transactionDate)) . '<br>
+                <b>Hora de la Transacci&oacute;n: </b>' . date('H:i:s', strtotime($transactionResult->transactionDate)) . "<br>
                 <b>Tarjeta: </b>**** **** **** {$transactionResult->cardNumber}<br>
             </p>";
 
