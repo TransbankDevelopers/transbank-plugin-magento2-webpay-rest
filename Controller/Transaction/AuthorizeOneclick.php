@@ -121,12 +121,6 @@ class AuthorizeOneclick extends Action
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
 
-            $this->log->logError(json_encode($order));
-
-            $this->log->logError($this->oneclickConfig['CHILD_COMMERCE_CODE']);
-            $this->log->logError($orderId);
-            $this->log->logError($grandTotal);
-
             $buyOrder = "100000" . $orderId;
             $childBuyOrder = "200000" . $orderId;
 
