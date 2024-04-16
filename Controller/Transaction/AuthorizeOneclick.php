@@ -283,7 +283,7 @@ class AuthorizeOneclick extends Action
         $webpayOrderData->setData([
             'buy_order'       => $authorizeResponse->getBuyOrder(),
             'child_buy_order' => $authorizeResponse->getDetails()[0]->getBuyOrder(),
-            'commerce_code'   => $authorizeResponse->getDetails()[0]->getCommerceCode(),
+            'commerce_code'   => $this->oneclickConfig['COMMERCE_CODE'],
             'child_commerce_code'   => $authorizeResponse->getDetails()[0]->getCommerceCode(),
             'payment_status'  => $payment_status,
             'order_id'        => $order_id,
