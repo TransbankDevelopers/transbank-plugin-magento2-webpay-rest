@@ -290,6 +290,7 @@ class AuthorizeOneclick extends Action
             'quote_id'        => $quote_id,
             'amount'          => $amount,
             'metadata'        => json_encode($authorizeResponse),
+            'environment'     => $this->oneclickConfig['ENVIRONMENT'],
         ]);
         $webpayOrderData->save();
 
