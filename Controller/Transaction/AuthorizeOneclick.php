@@ -37,14 +37,14 @@ class AuthorizeOneclick extends Action
         '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
     ];
 
-    protected $cart;
-    protected $checkoutSession;
-    protected $resultJsonFactory;
-    protected $quoteManagement;
-    protected $storeManager;
-    protected $oneclickInscriptionDataFactory;
-    protected $log;
-    protected $webpayOrderDataFactory;
+    private $cart;
+    private $checkoutSession;
+    private $resultJsonFactory;
+    private $quoteManagement;
+    private $storeManager;
+    private $oneclickInscriptionDataFactory;
+    private $log;
+    private $webpayOrderDataFactory;
     private $messageManager;
 
     /**
