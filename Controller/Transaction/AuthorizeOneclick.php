@@ -14,6 +14,7 @@ use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Store\Model\StoreManagerInterface;
 use Transbank\Webpay\Model\Config\ConfigProvider;
+use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\ResultInterface;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
