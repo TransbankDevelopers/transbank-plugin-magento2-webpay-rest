@@ -5,6 +5,7 @@ namespace Transbank\Webpay\Model;
 class Oneclick extends \Magento\Payment\Model\Method\AbstractMethod
 {
     const CODE = 'transbank_oneclick';
+    const PRODUCT_NAME = 'webpay_oneclick';
 
     /**
      * Payment code.
