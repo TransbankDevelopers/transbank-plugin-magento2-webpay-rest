@@ -291,6 +291,7 @@ class AuthorizeOneclick extends Action
             'amount'          => $amount,
             'metadata'        => json_encode($authorizeResponse),
             'environment'     => $this->oneclickConfig['ENVIRONMENT'],
+            'product'         => Oneclick::PRODUCT_NAME
         ]);
         $webpayOrderData->save();
 
