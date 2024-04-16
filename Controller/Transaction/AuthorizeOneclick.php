@@ -46,7 +46,7 @@ class AuthorizeOneclick extends Action
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
-    private $messageManager;
+    protected $messageManager;
 
     /**
      * AuthorizeOneclick constructor.
