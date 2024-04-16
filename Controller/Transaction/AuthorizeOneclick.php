@@ -45,6 +45,7 @@ class AuthorizeOneclick extends Action
     protected $oneclickInscriptionDataFactory;
     protected $log;
     protected $webpayOrderDataFactory;
+    private $messageManager;
 
     /**
      * AuthorizeOneclick constructor.
@@ -58,6 +59,7 @@ class AuthorizeOneclick extends Action
      * @param ConfigProvider $configProvider
      * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
+     * @param ManagerInterface $messageManager
      */
     public function __construct(
         Context $context,
