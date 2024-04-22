@@ -99,7 +99,7 @@ class HealthCheck
      */
     private function getValidatePHP()
     {
-        if (version_compare(phpversion(), '7.2.1', '<=') && version_compare(phpversion(), '5.5.0', '>=')) {
+        if (version_compare(phpversion(), '7.4.33', '<=') && version_compare(phpversion(), '5.5.0', '>=')) {
             $this->versionInfo = [
                 'status'  => 'OK',
                 'version' => phpversion(),
