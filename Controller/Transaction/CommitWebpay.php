@@ -144,7 +144,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                     $this->messageManager->addError(__($message));
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+                    return $this->redirectWithErrorMessage($message);
                 }
             } else {
                 $transactionResult = json_decode($webpayOrderData->getMetadata());
@@ -163,7 +163,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                     $this->messageManager->addError(__($message));
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+                    return $this->redirectWithErrorMessage($message);
                 }
             }
         } catch (\Exception $e) {
@@ -185,6 +185,13 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $response->setContents($content);
 
         return $response;
+    }
+
+    private function redirectWithErrorMessage(string $message)
+    {
+        $this->checkoutSession->restoreQuote();
+        $this->messageManager->addErrorMessage(__($message));
+        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
     protected function commitResponseToArray($response)
