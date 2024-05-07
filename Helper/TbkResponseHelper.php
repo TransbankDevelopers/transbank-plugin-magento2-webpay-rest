@@ -79,7 +79,7 @@ class TbkResponseHelper {
                     • N&uacute;mero de cuotas: <b>{$transactionResult->installmentsNumber}</b>
                 </div>
                 <div>
-                    • Monto Cuota: <b>{$transactionResult->installmentsNumber}</b>
+                    • Monto Cuota: <b>{$transactionResult->installmentsAmount}</b>
                 </div>
             ";
         }
