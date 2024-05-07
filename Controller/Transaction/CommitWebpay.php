@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
@@ -260,9 +261,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     protected function getOrder($orderId)
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
-        return $objectManager->create('\Magento\Sales\Model\Order')->loadByIncrementId($orderId);
+        $order = ObjectManagerHelper::get(Order::class);
+        return $order->loadByIncrementId($orderId);
     }
 
     /**
