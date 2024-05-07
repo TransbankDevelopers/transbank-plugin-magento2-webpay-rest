@@ -77,7 +77,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 . $_SERVER['REQUEST_METHOD']);
             $this->log->logInfo(json_encode($params));
 
-            list($webpayOrderData, $order) = $this->getOrderByToken($tokenWs);
+            $webpayOrderData = $this->getWebpayOrderData($tokenWs);
+            $orderId = $webpayOrderData->getOrderId();
+            $order = $this->getOrder($orderId);
+
             $paymentStatus = $webpayOrderData->getPaymentStatus();
             if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_WATING) {
                 $this->log->logInfo('C.3. Transaccion antes del commit  => token: ' . $tokenWs);
@@ -227,14 +230,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
     {
         $message = 'Orden cancelada por el usuario';
-        $this->messageManager->addError(__($message));
-        list($webpayOrderData, $order) = $this->getOrderByToken($token);
 
-        if ($order->getStatus() == $orderStatusCanceled) {
-            return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-        }
+        $webpayOrderData = $this->getWebpayOrderData($token);
+        $orderId = $webpayOrderData->getOrderId();
+        $order = $this->getOrder($orderId);
 
-        $this->checkoutSession->restoreQuote();
         $getQuoteById = $this->quoteRepository->get($quoteId);
 
         if ($getQuoteById) {
@@ -255,7 +255,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $order->save();
         }
 
-        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+        return $this->redirectWithErrorMessage($message);
     }
 
     protected function getOrder($orderId)
@@ -268,16 +268,12 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     /**
      * @param $tokenWs
      *
-     * @return array
+     * @return WebpayOrderData
      */
-    private function getOrderByToken($tokenWs)
+    private function getWebpayOrderData($tokenWs): WebpayOrderData
     {
         $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        $webpayOrderData = $webpayOrderDataModel->load($tokenWs, 'token');
-        $orderId = $webpayOrderData->getOrderId();
-        $order = $this->getOrder($orderId);
-
-        return [$webpayOrderData, $order];
+        return $webpayOrderDataModel->load($tokenWs, 'token');
     }
 
     /**
