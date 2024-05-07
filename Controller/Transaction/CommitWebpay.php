@@ -261,7 +261,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->redirectWithErrorMessage($message);
     }
 
-    protected function getOrder($orderId)
+    protected function getOrder($orderId): Order
     {
         $order = ObjectManagerHelper::get(Order::class);
         return $order->loadByIncrementId($orderId);
