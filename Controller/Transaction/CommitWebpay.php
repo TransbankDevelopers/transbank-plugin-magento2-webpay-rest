@@ -137,12 +137,9 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $this->log->logError(json_encode($transactionResult));
 
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
-                    $order->cancel();
-                    $order->save();
-                    $order->setStatus($orderStatusCanceled);
                     $commitHistoryComment = $this->createCommitHistoryComment($transactionResult);
-                    $order->addStatusToHistory($order->getStatus(), $commitHistoryComment);
-                    $order->save();
+
+                    $this->cancelOrder($order, $commitHistoryComment);
 
                     $this->checkoutSession->restoreQuote();
                     $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
@@ -208,6 +205,15 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
+    private function cancelOrder(Order $order, string $message)
+    {
+        $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
+        $order->cancel();
+        $order->setStatus($orderStatusCanceled);
+        $order->addStatusToHistory($order->getStatus(), $message);
+        $order->save();
+    }
+
     protected function commitResponseToArray($response)
     {
         return [
@@ -249,11 +255,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         }
 
         if ($order != null) {
-            $order->cancel();
-            $order->save();
-            $order->setStatus($orderStatusCanceled);
-            $order->addStatusToHistory($order->getStatus(), $message);
-            $order->save();
+            $this->cancelOrder($order, $message);
         }
 
         return $this->redirectWithErrorMessage($message);
@@ -290,11 +292,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->checkoutSession->restoreQuote();
         $this->messageManager->addError(__($message));
         if ($order != null && $order->getState() != Order::STATE_PROCESSING) {
-            $order->cancel();
-            $order->save();
-            $order->setStatus($orderStatusCanceled);
-            $order->addStatusToHistory($order->getStatus(), $message);
-            $order->save();
+            $this->cancelOrder($order, $message);
         }
 
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
