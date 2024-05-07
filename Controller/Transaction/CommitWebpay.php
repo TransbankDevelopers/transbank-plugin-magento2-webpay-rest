@@ -187,6 +187,16 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $response;
     }
 
+    private function redirectToSuccess(string $message)
+    {
+        $this->checkoutSession->getQuote()->setIsActive(false)->save();
+        $this->messageManager->addComplexSuccessMessage(
+            'successMessage',
+            ['message' => $message]
+        );
+        return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+    }
+
     private function redirectWithErrorMessage(string $message)
     {
         $this->checkoutSession->restoreQuote();
