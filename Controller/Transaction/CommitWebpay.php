@@ -68,7 +68,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $_POST['TBK_ID_SESION'], $orderStatusCanceled);
             }
             if (isset($_GET['TBK_TOKEN'])) {
-                $this->log->logError('C.2. Error tipo Flujo 2: El pago fue anulado por tiempo de espera => tbkIdSesion: '.
+                $this->log->logError('C.2. Error tipo Flujo 2: El pago fue anulado por tiempo de espera => tbkIdSesion: ' .
                     $_GET['TBK_ID_SESION']); // Logs
                 return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
             }
@@ -77,26 +77,27 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 throw new \Exception('Token no encontrado');
             }
             $this->log->logInfo('C.1. Iniciando validación luego de redirección desde tbk => method: '
-                .$_SERVER['REQUEST_METHOD']);
+                . $_SERVER['REQUEST_METHOD']);
             $this->log->logInfo(json_encode($params));
 
             list($webpayOrderData, $order) = $this->getOrderByToken($tokenWs);
             $paymentStatus = $webpayOrderData->getPaymentStatus();
             if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_WATING) {
-                $this->log->logInfo('C.3. Transaccion antes del commit  => token: '.$tokenWs);
+                $this->log->logInfo('C.3. Transaccion antes del commit  => token: ' . $tokenWs);
                 $this->log->logInfo(json_encode($webpayOrderData));
 
                 $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
                 $transactionResult = $transbankSdkWebpay->commitTransaction($tokenWs); // Commit
                 $webpayOrderData->setMetadata(json_encode($transactionResult));
 
-                $this->log->logInfo('C.2. Tx obtenido desde la tabla webpay_transactions => token: '.$tokenWs);
+                $this->log->logInfo('C.2. Tx obtenido desde la tabla webpay_transactions => token: ' . $tokenWs);
                 $this->log->logInfo(json_encode($webpayOrderData));
 
-                if (isset($transactionResult->buyOrder) &&
+                if (
+                    isset($transactionResult->buyOrder) &&
                     isset($transactionResult->responseCode) &&
                     $transactionResult->responseCode == 0
-                    ) {
+                ) {
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_SUCCESS);
                     $webpayOrderData->save();
 
@@ -105,7 +106,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $payment->setLastTransId($authorizationCode);
                     $payment->setTransactionId($authorizationCode);
                     $payment->setAdditionalInformation(
-                        [\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $transactionResult]);
+                        [\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS => (array) $transactionResult]
+                    );
 
                     $orderStatus = $this->configProvider->getOrderSuccessStatus();
                     $order->setState($orderStatus)->setStatus($orderStatus);
@@ -113,14 +115,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->save();
 
                     $this->log->logInfo('C.5. Transacción con commit exitoso en Transbank y guardado => token: '
-                        .$tokenWs);
+                        . $tokenWs);
 
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
                     $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($transactionResult);
 
                     $this->log->logInfo('TRANSACCION VALIDADA POR MAGENTO Y POR TBK EN ESTADO STATUS_APPROVED => TOKEN: '
-                        .$tokenWs);
+                        . $tokenWs);
                     $this->log->logInfo(json_encode($transactionResult));
 
                     $resultPage = $this->resultPageFactory->create();
@@ -130,7 +132,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     return $resultPage;
 
                 } else {
-                    $this->log->logError('C.5. Respuesta de tbk commit fallido => token: '.$tokenWs);
+                    $this->log->logError('C.5. Respuesta de tbk commit fallido => token: ' . $tokenWs);
                     $this->log->logError(json_encode($transactionResult));
 
                     $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
@@ -179,7 +181,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $response = $this->resultRawFactory->create();
         $content = "<form action='$url' method='POST' name='webpayForm'>";
         foreach ($data as $name => $value) {
-            $content .= "<input type='hidden' name='".htmlentities($name)."' value='".htmlentities($value)."'>";
+            $content .= "<input type='hidden' name='" . htmlentities($name) . "' value='" . htmlentities($value) . "'>";
         }
         $content .= '</form>';
         $content .= "<script language='JavaScript'>document.webpayForm.submit();</script>";
@@ -214,7 +216,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->messageManager->addError(__($message));
         list($webpayOrderData, $order) = $this->getOrderByToken($token);
 
-        if ($order->getStatus() == $orderStatusCanceled){
+        if ($order->getStatus() == $orderStatusCanceled) {
             return $this->resultRedirectFactory->create()->setPath('checkout/cart');
         }
 
@@ -273,7 +275,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
      */
     private function errorOnConfirmation(\Exception $e, $order, $orderStatusCanceled)
     {
-        $message = 'Error al confirmar transacción: '.$e->getMessage();
+        $message = 'Error al confirmar transacción: ' . $e->getMessage();
         $this->log->logError($message);
         $this->checkoutSession->restoreQuote();
         $this->messageManager->addError(__($message));
@@ -288,8 +290,9 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
-    private function createCommitHistoryComment($commitResponse): string {
-        if ( $commitResponse instanceof TransactionCommitResponse ) {
+    private function createCommitHistoryComment($commitResponse): string
+    {
+        if ($commitResponse instanceof TransactionCommitResponse) {
             $transactionLocalDate = TbkResponseHelper::utcToLocalDate($commitResponse->getTransactionDate());
             $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
             $installmentsAmount = $commitResponse->getInstallmentsAmount();
@@ -320,8 +323,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         if (isset($commitResponse['error'])) {
             $detail = isset($commitResponse['detail']) ? $commitResponse['detail'] : 'Sin detalles';
             $message .= '<br><br>' .
-            '<strong>Respuesta</strong>: ' . $commitResponse['error'] . '<br>' .
-            '<strong>Mensaje</strong>: ' . $detail . '<br>';
+                '<strong>Respuesta</strong>: ' . $commitResponse['error'] . '<br>' .
+                '<strong>Mensaje</strong>: ' . $detail . '<br>';
         }
         return $message;
     }
