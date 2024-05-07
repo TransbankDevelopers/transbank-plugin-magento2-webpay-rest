@@ -59,18 +59,13 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $transactionResult = [];
 
         try {
-            $tokenWs = $_POST['token_ws'] ?? $_GET['token_ws'] ?? null;
-
             $params = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
-            if (isset($_POST['TBK_TOKEN'])) {
+            $tokenWs = $params['token_ws'] ?? null;
+
+            if (isset($params['TBK_TOKEN'])) {
                 $this->log->logError('C.2. Error tipo Flujo 2: El pago fue anulado por tiempo de espera => tbkIdSesion: '
-                    . $_POST['TBK_ID_SESION']);
-                return $this->orderCanceledByUser($_POST['TBK_TOKEN'], $_POST['TBK_ID_SESION'], $orderStatusCanceled);
-            }
-            if (isset($_GET['TBK_TOKEN'])) {
-                $this->log->logError('C.2. Error tipo Flujo 2: El pago fue anulado por tiempo de espera => tbkIdSesion: ' .
-                    $_GET['TBK_ID_SESION']); // Logs
-                return $this->orderCanceledByUser($_GET['TBK_TOKEN'], $_GET['TBK_ID_SESION'], $orderStatusCanceled);
+                    . $params['TBK_ID_SESION']);
+                return $this->orderCanceledByUser($params['TBK_TOKEN'], $params['TBK_ID_SESION'], $orderStatusCanceled);
             }
 
             if (is_null($tokenWs)) {
