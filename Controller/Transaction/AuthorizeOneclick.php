@@ -218,7 +218,7 @@ class AuthorizeOneclick extends Action
             }
 
             $this->messageManager->addErrorMessage($e->getMessage());
-            return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 2]);
+            return $this->resultRedirectFactory->create()->setPath('checkout/cart');
         }
     }
 
