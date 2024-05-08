@@ -141,7 +141,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = TbkResponseHelper::getRejectMessage($transactionResult, "Webpay Plus");
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -162,7 +162,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
                     $this->checkoutSession->restoreQuote();
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = TbkResponseHelper::getRejectMessage($transactionResult, "Webpay Plus");
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
