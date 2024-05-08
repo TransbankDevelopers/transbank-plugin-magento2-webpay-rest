@@ -7,7 +7,6 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
-use Transbank\Webpay\Helper\DateHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
