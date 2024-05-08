@@ -170,14 +170,16 @@ class AuthorizeOneclick extends Action
 
                 $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                $message = $this->getSuccessMessage($response, $oneclickTitle);
+                $message = TbkResponseHelper::getSuccessMessage($response, "Oneclick Mall");
+
                 $this->messageManager->addComplexSuccessMessage(
                     'successMessage',
                     [
                         'message' => $message
                     ]
                 );
-                return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
+
+                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
             } else {
                 $webpayOrderData = $this->saveWebpayData(
                     $response,
