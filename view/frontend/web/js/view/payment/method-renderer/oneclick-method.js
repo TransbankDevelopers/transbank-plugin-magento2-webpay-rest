@@ -92,7 +92,7 @@ function authorizeTransaction(selected_inscription) {
         inscription: selected_inscription
     }, function (result) {
         console.log(result);
-        window.location.href = 'onepage/success';
+        window.location.href = 'cart';
     });
 }
 
