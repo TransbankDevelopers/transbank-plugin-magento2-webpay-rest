@@ -126,6 +126,14 @@ class TbkResponseHelper {
     {
         if (strpos($product, 'click')) {
             $transactionResult = self::getOneclickDetails($transactionResult);
+            $message = 'Transacción rechazada con Oneclick Mall' .
+                nl2br('• Respuesta de la Transacción: ' . $transactionResult->responseCode . ' ') .
+                nl2br('• Monto:$ ' . $transactionResult->amount . ' ') .
+                nl2br('• Order de Compra: ' . $transactionResult->buyOrder . ' ') .
+                nl2br('• Fecha de la Transacción: ' . date('d-m-Y', strtotime($transactionResult->transactionDate)) . ' ') .
+                nl2br('• Hora de la Transacción: ' . date('H:i:s', strtotime($transactionResult->transactionDate)) . ' ') .
+                nl2br('• Tarjeta: **** **** **** ' . $transactionResult->cardNumber . '');
+            return $message;
         }
 
         if (isset($transactionResult)) {
