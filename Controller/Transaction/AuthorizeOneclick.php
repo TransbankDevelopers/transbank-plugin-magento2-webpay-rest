@@ -9,6 +9,7 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ObjectManager;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\TbkResponseHelper;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Transbank\Webpay\Model\Config\ConfigProvider;
@@ -187,7 +188,7 @@ class AuthorizeOneclick extends Action
                 );
 
                 $order->setStatus($orderStatusCanceled);
-                $message = '<h3>Error en Inscripción con Oneclick</h3><br>' . json_encode($response);
+                $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($response);
 
                 $order->addStatusToHistory($order->getStatus(), $message);
                 $order->cancel();
@@ -195,11 +196,11 @@ class AuthorizeOneclick extends Action
 
                 $this->checkoutSession->restoreQuote();
 
-                $message = $this->getRejectMessage($response, $oneclickTitle);
+                $message = TbkResponseHelper::getRejectMessage($response, "Oneclick Mall");
                 $this->messageManager->addErrorMessage(__($message));
 
-                // return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-                return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 1]);
+                return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+
             }
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: ' . $e->getMessage();
