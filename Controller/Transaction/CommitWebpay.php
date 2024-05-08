@@ -6,6 +6,7 @@ use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\DateHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
@@ -15,7 +16,6 @@ use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 class CommitWebpay extends \Magento\Framework\App\Action\Action
 {
     protected $configProvider;
-
     protected $quoteRepository;
     protected $cart;
     protected $checkoutSession;
@@ -115,7 +115,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                    $message = $this->getSuccessMessage($this->commitResponseToArray($transactionResult));
+                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, "Webpay Plus");
 
                     $this->messageManager->addComplexSuccessMessage(
                         'successMessage',
@@ -148,10 +148,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
             } else {
-                $transactionResult = json_decode($webpayOrderData->getMetadata(), true);
+                $transactionResult = json_decode($webpayOrderData->getMetadata());
 
                 if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
-                    $message = $this->getSuccessMessage($transactionResult);
+                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, "Webpay Plus");
 
                     $this->messageManager->addComplexSuccessMessage(
                         'successMessage',
