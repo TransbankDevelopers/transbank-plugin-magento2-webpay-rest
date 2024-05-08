@@ -180,7 +180,7 @@ class AuthorizeOneclick extends Action
                 return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
             } else {
                 $webpayOrderData = $this->saveWebpayData(
-                    $this->oneclickConfig['CHILD_COMMERCE_CODE'],
+                    $response,
                     $grandTotal,
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
                     $orderId,
