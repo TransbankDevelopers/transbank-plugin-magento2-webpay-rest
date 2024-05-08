@@ -129,7 +129,7 @@ class TbkResponseHelper {
         }
 
         if (isset($transactionResult)) {
-            $message = "<h2>Autorizaci&oacute;n de transacci&oacute;n rechazada con {$product}</h2>
+            $message = "<h2>Transacci&oacute;n rechazada con {$product}</h2>
                 <div>
                     • Respuesta de la Transacci&oacute;n: <b>{$transactionResult->responseCode}</b>
                 </div>
