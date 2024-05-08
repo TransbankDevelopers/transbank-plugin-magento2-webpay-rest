@@ -292,7 +292,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function createCommitHistoryComment($commitResponse): string {
         if ( $commitResponse instanceof TransactionCommitResponse ) {
-            $transactionLocalDate = DateHelper::utcToLocalDate($commitResponse->getTransactionDate());
+            $transactionLocalDate = TbkResponseHelper::utcToLocalDate($commitResponse->getTransactionDate());
             $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
             $installmentsAmount = $commitResponse->getInstallmentsAmount();
             $balance = $commitResponse->getBalance();
