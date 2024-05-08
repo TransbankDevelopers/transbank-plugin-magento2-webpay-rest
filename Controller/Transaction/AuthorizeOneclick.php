@@ -30,13 +30,6 @@ class AuthorizeOneclick extends Action
 {
     protected $configProvider;
 
-    protected $responseCodeArray = [
-        '-96' => 'Cancelaste la inscripción durante el formulario de Oneclick.',
-        '-97' => 'La transacción ha sido rechazada porque se superó el monto máximo diario de pago.',
-        '-98' => 'La transacción ha sido rechazada porque se superó el monto máximo de pago.',
-        '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
-    ];
-
     private $cart;
     private $checkoutSession;
     private $resultJsonFactory;
