@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Exception;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
@@ -73,8 +74,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $request = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
 
             return $this->handleRequest($request);
-        } catch (\Exception $e) {
-            return $this->handleException($e->getMessage());
+        } catch (Exception $exception) {
+            return $this->handleException($exception);
         }
     }
 
@@ -138,6 +139,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleNormalFlow(string $token)
     {
+        $this->log->logInfo('Procesando transacción por flujo Normal => token: ' . $token);
+
         $config = $this->configProvider->getPluginConfig();
         $webpayOrderData = $this->getWebpayOrderData($token);
         $orderId = $webpayOrderData->getOrderId();
@@ -157,16 +160,17 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleFlowTimeout(string $buyOrder)
     {
-        $message = 'Orden cancelada por inactividad del usuario en el formulario de pago';
+        $this->log->logInfo('Procesando transacción por flujo timeout => Orden de compra: ' . $buyOrder);
 
-        $this->log->logInfo('Transacción con error => Orden de compra: ' . $buyOrder);
-        $this->log->logInfo('Detalle: ' . $message);
+        $message = 'Orden cancelada por inactividad del usuario en el formulario de pago';
 
         return $this->redirectWithErrorMessage($message);
     }
 
     private function handleFlowAborted(string $token)
     {
+        $this->log->logInfo('Procesando transacción por flujo de pago abortado => Token: ' . $token);
+
         $message = 'Orden cancelada por el usuario';
 
         return $this->handleAbortedTransaction($token, $message, WebpayOrderData::PAYMENT_STATUS_CANCELED_BY_USER);
@@ -174,6 +178,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleFlowError(string $token)
     {
+        $this->log->logInfo('Procesando transacción por flujo de error en formulario de pago => Token: ' . $token);
+
         $message = 'Orden cancelada por un error en el formulario de pago';
 
         return $this->handleAbortedTransaction($token, $message, WebpayOrderData::PAYMENT_STATUS_ERROR);
@@ -184,7 +190,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         WebpayOrderData $webpayOrderData,
         TransactionCommitResponse $commitResponse
     ) {
+
         $token = $webpayOrderData->getToken();
+        $this->log->logInfo('Transacción autorizada por Transbank, procesando orden => Token: ' . $token);
+
         $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_SUCCESS);
         $webpayOrderData->save();
 
@@ -202,7 +211,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->addStatusToHistory($order->getStatus(), $commitHistoryComment);
         $order->save();
 
-        $this->log->logInfo('Transacción aprobada => token: ' . $token);
+        $this->log->logInfo('Orden aprobada => Token: ' . $token);
 
         $message = $this->getSuccessMessage($this->commitResponseToArray($commitResponse));
 
@@ -214,7 +223,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         WebpayOrderData $webpayOrderData,
         TransactionCommitResponse $commitResponse
     ) {
-        $this->log->logInfo('Transacción rechazada => token: ' . $webpayOrderData->getToken());
+        $token = $webpayOrderData->getToken();
+        $this->log->logInfo('Transacción rechazada por Transbank, cancelando orden => token: ' . $token);
 
         $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
 
@@ -224,12 +234,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $commitHistoryComment = $this->createCommitHistoryComment($commitResponse);
         $this->cancelOrder($order, $commitHistoryComment);
 
+        $this->log->logInfo('Orden cancelada => Token: ' . $token);
+
         return $this->redirectWithErrorMessage($message);
     }
 
     private function handleAbortedTransaction(string $token, string $message, string $webpayStatus)
     {
-        $this->log->logInfo('Transacción con error => token: ' . $token);
+        $this->log->logInfo('Error al procesar transacción por Transbank => token: ' . $token);
         $this->log->logInfo('Detalle: ' . $message);
 
         $webpayOrderData = $this->getWebpayOrderData($token);
@@ -241,15 +253,19 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         if ($order != null) {
             $this->cancelOrder($order, $message);
+            $this->log->logInfo('Orden cancelada => Token: ' . $token);
         }
 
         return $this->redirectWithErrorMessage($message);
     }
 
-    private function handleException(string $exceptionMessage)
+    private function handleException(Exception $exception)
     {
         $message = 'No se pudo procesar el pago ';
-        $this->log->logError($message . $exceptionMessage);
+
+        $this->log->logError('Error al procesar el pago: ');
+        $this->log->logError($exception->getMessage());
+        $this->log->logError($exception->getTraceAsString());
 
         return $this->redirectWithErrorMessage($message);
     }
