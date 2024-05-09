@@ -134,7 +134,7 @@ class TbkResponseHelper {
         }
 
         if (isset($transactionResult)) {
-            return "<h2>Transacci&oacute;n rechazada con {$product}</h2>
+            $message = "<h2>Transacci&oacute;n rechazada con {$product}</h2>
                 <div>
                     • Respuesta de la Transacci&oacute;n: <b>{$transactionResult->responseCode}</b>
                 </div>
@@ -159,7 +159,7 @@ class TbkResponseHelper {
             if ($transactionResult->status == 'ERROR') {
                 $error = $transactionResult->status;
                 $detail = isset($transactionResult->details[0]) ? $transactionResult->details[0] : 'Sin detalles';
-                return "<h2>Transacci&oacute;n fallida con {$product}</h2>
+                $message = "<h2>Transacci&oacute;n fallida con {$product}</h2>
                 <div>
                     <b>• Respuesta de la Transacci&oacute;n: </b>{$error}
                 </div>
@@ -167,9 +167,11 @@ class TbkResponseHelper {
                     <b>• Mensaje: </b>{$detail}
                 </div>";
             } else {
-                return '<h2>Transacci&oacute;n Fallida</h2>';
+                $message = '<h2>Transacci&oacute;n Fallida</h2>';
             }
         }
+
+        return $message;
     }
 
 
