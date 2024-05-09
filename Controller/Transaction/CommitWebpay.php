@@ -54,6 +54,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $config = $this->configProvider->getPluginConfig();
         $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
         $transactionResult = [];
+        $product = 'Webpay Plus';
 
         try {
             $tokenWs = $_POST['token_ws'] ?? $_GET['token_ws'] ?? null;
@@ -114,7 +115,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, "Webpay Plus");
+                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, $product);
 
                     $this->messageManager->addComplexSuccessMessage(
                         'successMessage',
@@ -141,7 +142,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
-                    $message = TbkResponseHelper::getRejectMessage($transactionResult, "Webpay Plus");
+                    $message = TbkResponseHelper::getRejectMessage($transactionResult, $product);
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -150,7 +151,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 $transactionResult = json_decode($webpayOrderData->getMetadata());
 
                 if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
-                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, "Webpay Plus");
+                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, $product);
 
                     $this->messageManager->addComplexSuccessMessage(
                         'successMessage',
@@ -162,7 +163,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
                     $this->checkoutSession->restoreQuote();
-                    $message = TbkResponseHelper::getRejectMessage($transactionResult, "Webpay Plus");
+                    $message = TbkResponseHelper::getRejectMessage($transactionResult, $product);
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
