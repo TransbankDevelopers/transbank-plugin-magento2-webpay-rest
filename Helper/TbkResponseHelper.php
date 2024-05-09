@@ -126,7 +126,7 @@ class TbkResponseHelper {
             return 'Transacción rechazada con Oneclick Mall' .
                 nl2br('• Respuesta de la Transacción: ' . $transactionResult->responseCode . ' ') .
                 nl2br('• Monto:$ ' . $transactionResult->amount . ' ') .
-                nl2br('• Order de Compra: ' . $transactionResult->buyOrder . ' ') .
+                nl2br('• Orden de Compra: ' . $transactionResult->buyOrder . ' ') .
                 nl2br('• Fecha de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10) . ' ') .
                 nl2br('• Hora de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8). ' ') .
                 nl2br('• Tarjeta: **** **** **** ' . $transactionResult->cardNumber . '');
@@ -141,7 +141,7 @@ class TbkResponseHelper {
                     • Monto:<b>$ {$transactionResult->amount}</b>
                 </div>
                 <div>
-                    • Order de Compra:<b> {$transactionResult->buyOrder}</b>
+                    • Orden de Compra:<b> {$transactionResult->buyOrder}</b>
                 </div>
                 <div>
                     • Fecha de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10)."</b>
