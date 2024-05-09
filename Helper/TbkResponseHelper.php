@@ -185,10 +185,6 @@ class TbkResponseHelper {
             $transactionResult->responseCode = $detail->responseCode;
             $transactionResult->status = $detail->status;
         }
-        $transactionResult->authorizationCode;
-        $transactionResult->cardNumber;
-        $transactionResult->transactionDate;
-        $transactionResult->installmentsNumber;
 
         return $transactionResult;
     }
