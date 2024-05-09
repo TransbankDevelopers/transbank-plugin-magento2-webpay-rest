@@ -95,7 +95,7 @@ class TbkResponseHelper {
                 • Monto: <b>$ {$transactionResult->amount}</b>
             </div>
             <div>
-                • Order de Compra: <b>$ {$transactionResult->buyOrder}</b>
+                • Order de Compra: <b> {$transactionResult->buyOrder}</b>
             </div>
             <div>
                 • Fecha de la Transacci&oacute;n: <b>".substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10).'</b>
