@@ -10,7 +10,7 @@ class WebpayOrderData extends AbstractModel implements \Magento\Framework\DataOb
     const PAYMENT_STATUS_WATING = 'WAITING';
     const PAYMENT_STATUS_SUCCESS = 'SUCCESS';
     const PAYMENT_STATUS_FAILED = 'FAILED';
-    const PAYMENT_STATUS_CANCELED_BY_USER = 'FAILED';
+    const PAYMENT_STATUS_CANCELED_BY_USER = 'CANCELED_BY_USER';
     const PAYMENT_STATUS_ERROR = 'ERROR';
 
     /**
