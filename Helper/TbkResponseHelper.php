@@ -84,7 +84,7 @@ class TbkResponseHelper {
             ";
         }
 
-        $message = "
+        return "
             <b>Detalles del pago con {$product}</b>
             <div>
                 • Respuesta de la Transacci&oacute;n: <b>{$transactionResponse}</b>
@@ -118,26 +118,23 @@ class TbkResponseHelper {
             </div>
             {$installmentsString}
             ";
-
-        return $message;
     }
 
     public static function getRejectMessage($transactionResult, $product)
     {
         if (strpos($product, 'click')) {
             $transactionResult = self::getOneclickDetails($transactionResult);
-            $message = 'Transacción rechazada con Oneclick Mall' .
+            return 'Transacción rechazada con Oneclick Mall' .
                 nl2br('• Respuesta de la Transacción: ' . $transactionResult->responseCode . ' ') .
                 nl2br('• Monto:$ ' . $transactionResult->amount . ' ') .
                 nl2br('• Order de Compra: ' . $transactionResult->buyOrder . ' ') .
                 nl2br('• Fecha de la Transacción: ' . date('d-m-Y', strtotime($transactionResult->transactionDate)) . ' ') .
                 nl2br('• Hora de la Transacción: ' . date('H:i:s', strtotime($transactionResult->transactionDate)) . ' ') .
                 nl2br('• Tarjeta: **** **** **** ' . $transactionResult->cardNumber . '');
-            return $message;
         }
 
         if (isset($transactionResult)) {
-            $message = "<h2>Transacci&oacute;n rechazada con {$product}</h2>
+            return "<h2>Transacci&oacute;n rechazada con {$product}</h2>
                 <div>
                     • Respuesta de la Transacci&oacute;n: <b>{$transactionResult->responseCode}</b>
                 </div>
@@ -157,25 +154,20 @@ class TbkResponseHelper {
                     • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
                 </div>
            ";
-            return $message;
 
         } else {
             if ($transactionResult->status == 'ERROR') {
                 $error = $transactionResult->status;
                 $detail = isset($transactionResult->details[0]) ? $transactionResult->details[0] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con {$product}</h2>
+                return "<h2>Transacci&oacute;n fallida con {$product}</h2>
                 <div>
                     <b>• Respuesta de la Transacci&oacute;n: </b>{$error}
                 </div>
                 <div>
                     <b>• Mensaje: </b>{$detail}
                 </div>";
-
-                return $message;
             } else {
-                $message = '<h2>Transacci&oacute;n Fallida</h2>';
-
-                return $message;
+                return '<h2>Transacci&oacute;n Fallida</h2>';
             }
         }
     }
