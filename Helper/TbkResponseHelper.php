@@ -99,10 +99,10 @@ class TbkResponseHelper {
                 • Order de Compra: <b>$ {$transactionResult->buyOrder}</b>
             </div>
             <div>
-                • Fecha de la Transacci&oacute;n: <b>".date('d-m-Y', strtotime($transactionResult->transactionDate)).'</b>
+                • Fecha de la Transacci&oacute;n: <b>".substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10).'</b>
             </div>
             <div>
-                • Hora de la Transacci&oacute;n: <b>'.date('H:i:s', strtotime($transactionResult->transactionDate))."</b>
+                • Hora de la Transacci&oacute;n: <b>'.substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8)."</b>
             </div>
             <div>
                 • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
@@ -128,8 +128,8 @@ class TbkResponseHelper {
                 nl2br('• Respuesta de la Transacción: ' . $transactionResult->responseCode . ' ') .
                 nl2br('• Monto:$ ' . $transactionResult->amount . ' ') .
                 nl2br('• Order de Compra: ' . $transactionResult->buyOrder . ' ') .
-                nl2br('• Fecha de la Transacción: ' . date('d-m-Y', strtotime($transactionResult->transactionDate)) . ' ') .
-                nl2br('• Hora de la Transacción: ' . date('H:i:s', strtotime($transactionResult->transactionDate)) . ' ') .
+                nl2br('• Fecha de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10) . ' ') .
+                nl2br('• Hora de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8). ' ') .
                 nl2br('• Tarjeta: **** **** **** ' . $transactionResult->cardNumber . '');
         }
 
@@ -145,10 +145,10 @@ class TbkResponseHelper {
                     • Order de Compra:<b> {$transactionResult->buyOrder}</b>
                 </div>
                 <div>
-                    • Fecha de la Transacci&oacute;n: <b>" . date('d-m-Y', strtotime($transactionResult->transactionDate)) ."</b>
+                    • Fecha de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10)."</b>
                 </div>
                 <div>
-                    • Hora de la Transacci&oacute;n: <b>" . date('H:i:s', strtotime($transactionResult->transactionDate)) ."</b>
+                    • Hora de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8)."</b>
                 </div>
                 <div>
                     • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
