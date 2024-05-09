@@ -34,7 +34,7 @@ class TbkResponseHelper {
             return $utcDate->format('d-m-Y H:i:s P');
         }
         catch (\Exception $e) {
-            return $e;
+            return null;
         }
     }
 
@@ -43,7 +43,6 @@ class TbkResponseHelper {
      *
      * @param object|array $transactionResult
      * @param string $product
-     * @param $paymentTypeCodearray
      * @return string success message
      */
     public static function getSuccessMessage($transactionResult, string $product)
