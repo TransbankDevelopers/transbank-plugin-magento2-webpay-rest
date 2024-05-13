@@ -1,4 +1,5 @@
 <?php
+
 namespace Transbank\Webpay\Helper;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -6,7 +7,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use DateTime;
 use DateTimeZone;
 
-class TbkResponseHelper {
+class TbkResponseHelper
+{
 
     protected static $paymentTypeCodearray = [
         'VD' => 'Venta Debito',
@@ -23,7 +25,8 @@ class TbkResponseHelper {
      *
      * @return string|null date string in localtime representation, `null` if input cannot be transformed
      */
-    public static function utcToLocalDate($utcDate): string {
+    public static function utcToLocalDate($utcDate): string
+    {
         try {
             $scopeConfig = ObjectManagerHelper::get(ScopeConfigInterface::class);
             $timezone = $scopeConfig->getValue('general/locale/timezone');
@@ -32,8 +35,7 @@ class TbkResponseHelper {
             $utcDate->setTimezone(new DateTimeZone($timezone));
 
             return $utcDate->format('d-m-Y H:i:s P');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return null;
         }
     }
@@ -52,7 +54,7 @@ class TbkResponseHelper {
             $transactionResult = self::getOneclickDetails($transactionResult);
         }
 
-        if ( in_array($transactionResult->paymentTypeCode, ['SI', 'S2', 'NC', 'VC']) ) {
+        if (in_array($transactionResult->paymentTypeCode, ['SI', 'S2', 'NC', 'VC'])) {
             $tipoCuotas = self::$paymentTypeCodearray[$transactionResult->paymentTypeCode];
         } else {
             $tipoCuotas = 'Sin cuotas';
@@ -98,10 +100,10 @@ class TbkResponseHelper {
                 • Order de Compra: <b> {$transactionResult->buyOrder}</b>
             </div>
             <div>
-                • Fecha de la Transacci&oacute;n: <b>".substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10).'</b>
+                • Fecha de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate), 0, 10) . '</b>
             </div>
             <div>
-                • Hora de la Transacci&oacute;n: <b>'.substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8)."</b>
+                • Hora de la Transacci&oacute;n: <b>' . substr(self::utcToLocalDate($transactionResult->transactionDate), 11, 8) . "</b>
             </div>
             <div>
                 • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
@@ -127,8 +129,8 @@ class TbkResponseHelper {
                 nl2br('• Respuesta de la Transacción: ' . $transactionResult->responseCode . ' ') .
                 nl2br('• Monto:$ ' . $transactionResult->amount . ' ') .
                 nl2br('• Orden de Compra: ' . $transactionResult->buyOrder . ' ') .
-                nl2br('• Fecha de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10) . ' ') .
-                nl2br('• Hora de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8). ' ') .
+                nl2br('• Fecha de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate), 0, 10) . ' ') .
+                nl2br('• Hora de la Transacción: ' . substr(self::utcToLocalDate($transactionResult->transactionDate), 11, 8) . ' ') .
                 nl2br('• Tarjeta: **** **** **** ' . $transactionResult->cardNumber . '');
         }
 
@@ -144,16 +146,15 @@ class TbkResponseHelper {
                     • Orden de Compra:<b> {$transactionResult->buyOrder}</b>
                 </div>
                 <div>
-                    • Fecha de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate), 0,10)."</b>
+                    • Fecha de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate), 0, 10) . "</b>
                 </div>
                 <div>
-                    • Hora de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate),11, 8)."</b>
+                    • Hora de la Transacci&oacute;n: <b>" . substr(self::utcToLocalDate($transactionResult->transactionDate), 11, 8) . "</b>
                 </div>
                 <div>
                     • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
                 </div>
            ";
-
         } else {
             if ($transactionResult->status == 'ERROR') {
                 $error = $transactionResult->status;
@@ -174,7 +175,8 @@ class TbkResponseHelper {
     }
 
 
-    public static function getOneclickDetails($transactionResult){
+    public static function getOneclickDetails($transactionResult)
+    {
         $details = $transactionResult->details;
         foreach ($details as $detail) {
             $transactionResult->amount = $detail->amount;
