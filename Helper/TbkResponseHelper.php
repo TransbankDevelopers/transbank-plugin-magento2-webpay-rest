@@ -45,6 +45,18 @@ class TbkResponseHelper
     }
 
     /**
+     * Get the installment type from the payment type response.
+     *
+     * @param string $paymentType The code of the installment type.
+     * @return string The corresponding installment type.
+     */
+    public static function getInstallmentType(string $paymentType): string
+    {
+        return self::PAYMENT_TYPE_CODE[$paymentType] ?? $paymentType;
+    }
+
+
+    /**
      * @param string $utcDate representation of date in UTC format
      *
      * @return string|null date string in localtime representation, `null` if input cannot be transformed
