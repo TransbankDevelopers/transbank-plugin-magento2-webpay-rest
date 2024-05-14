@@ -3,7 +3,6 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
-use Transbank\Webpay\Block\Checkout\SuccessVoucher;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
@@ -23,7 +22,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $resultRawFactory;
     protected $resultPageFactory;
     protected $webpayOrderDataFactory;
-    protected $successVoucherBlock;
     protected $log;
 
     public function __construct(
@@ -35,8 +33,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        SuccessVoucher $successVoucherBlock
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
         parent::__construct($context);
 
@@ -49,7 +46,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
-        $this->successVoucherBlock = $successVoucherBlock;
         $this->log = new PluginLogger();
     }
 
