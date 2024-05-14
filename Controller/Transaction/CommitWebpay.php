@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
+use Transbank\Webpay\Block\Checkout\SuccessVoucher;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
@@ -20,7 +21,9 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $checkoutSession;
     protected $resultJsonFactory;
     protected $resultRawFactory;
+    protected $resultPageFactory;
     protected $webpayOrderDataFactory;
+    protected $successVoucherBlock;
     protected $log;
 
     public function __construct(
@@ -30,8 +33,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
+        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        SuccessVoucher $successVoucherBlock
     ) {
         parent::__construct($context);
 
@@ -40,9 +45,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->quoteRepository = $quoteRepository;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
+        $this->resultPageFactory = $resultPageFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->successVoucherBlock = $successVoucherBlock;
         $this->log = new PluginLogger();
     }
 
@@ -115,20 +122,18 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, $product);
-
-                    $this->messageManager->addComplexSuccessMessage(
-                        'successMessage',
-                        [
-                            'message' => $message
-                        ]
-                    );
+                    $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($transactionResult);
 
                     $this->log->logInfo('TRANSACCION VALIDADA POR MAGENTO Y POR TBK EN ESTADO STATUS_APPROVED => TOKEN: '
                         .$tokenWs);
                     $this->log->logInfo(json_encode($transactionResult));
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+                    $resultPage = $this->resultPageFactory->create();
+                    $resultPage->addHandle('checkout_onepage_success');
+                    $block = $resultPage->getLayout()->getBlock('transbank_success');
+                    $block->setResponse($formattedResponse);
+                    return $resultPage;
+
                 } else {
                     $this->log->logError('C.5. Respuesta de tbk commit fallido => token: '.$tokenWs);
                     $this->log->logError(json_encode($transactionResult));
@@ -151,16 +156,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 $transactionResult = json_decode($webpayOrderData->getMetadata());
 
                 if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
-                    $message = TbkResponseHelper::getSuccessMessage($transactionResult, $product);
+                    $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($transactionResult);
 
-                    $this->messageManager->addComplexSuccessMessage(
-                        'successMessage',
-                        [
-                            'message' => $message
-                        ]
-                    );
+                    $resultPage = $this->resultPageFactory->create();
+                    $resultPage->addHandle('checkout_onepage_success');
+                    $block = $resultPage->getLayout()->getBlock('transbank_success');
+                    $block->setResponse($formattedResponse);
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+                    return $resultPage;
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
                     $this->checkoutSession->restoreQuote();
                     $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
