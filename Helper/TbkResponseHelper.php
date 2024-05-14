@@ -115,6 +115,17 @@ class TbkResponseHelper
     }
 
     /**
+     * Get the CLP formatted amount from an integer value.
+     *
+     * @param int $amount The integer amount to be formatted.
+     * @return string The formatted amount as a string.
+     */
+    public static function getAmountFormatted(int $amount): string
+    {
+        return '$' . number_format($amount, 0, ',', '.');
+    }
+
+    /**
      * Retrieve success message for a transaction
      *
      * @param object|array $transactionResult
