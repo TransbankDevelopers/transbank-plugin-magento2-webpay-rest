@@ -34,6 +34,17 @@ class TbkResponseHelper
     ];
 
     /**
+     * Get the payment type from its code.
+     *
+     * @param string $paymentType The code of the payment type.
+     * @return string The corresponding payment type.
+     */
+    public static function getPaymentType(string $paymentType): string
+    {
+        return self::PAYMENT_TYPE[$paymentType] ?? $paymentType;
+    }
+
+    /**
      * @param string $utcDate representation of date in UTC format
      *
      * @return string|null date string in localtime representation, `null` if input cannot be transformed
