@@ -33,6 +33,16 @@ class TbkResponseHelper
         "VP" => "Venta Prepago"
     ];
 
+    const STATUS_DESCRIPTION =  [
+        'INITIALIZED' => 'Inicializada',
+        'AUTHORIZED' => 'Autorizada',
+        'REVERSED' => 'Reversada',
+        'FAILED' => 'Fallida',
+        'NULLIFIED' => 'Anulada',
+        'PARTIALLY_NULLIFIED' => 'Parcialmente anulada',
+        'CAPTURED' => 'Capturada',
+    ];
+
     /**
      * Get the payment type from its code.
      *
