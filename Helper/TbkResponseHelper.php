@@ -65,6 +65,17 @@ class TbkResponseHelper
         return self::PAYMENT_TYPE_CODE[$paymentType] ?? $paymentType;
     }
 
+    /**
+     * Get the transaction status description from response status.
+     *
+     * @param string $status The code of the transaction status.
+     * @return string The description of the corresponding transaction status.
+     */
+    public static function getStatus(string $status): string
+    {
+        return self::STATUS_DESCRIPTION[$status] ?? $status;
+    }
+
 
     /**
      * @param string $utcDate representation of date in UTC format
