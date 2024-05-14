@@ -276,4 +276,85 @@ class TbkResponseHelper
         return $transactionResult;
     }
 
+    /**
+     * Get the common fields formatted for sale receipt.
+     *
+     * @param object $transactionResponse The transaction response.
+     * @return array The formatted common fields.
+     */
+    private static function getCommonFieldsFormatted(object $transactionResponse): array
+    {
+        $scopeConfig = ObjectManagerHelper::get(ScopeConfigInterface::class);
+        $timezone = $scopeConfig->getValue('general/locale/timezone');
+
+        $utcDate = new DateTime($transactionResponse->transactionDate, new DateTimeZone('UTC'));
+        $utcDate->setTimezone(new DateTimeZone($timezone));
+
+        $buyOrder = $transactionResponse->buyOrder;
+        $cardNumber = "**** **** **** {$transactionResponse->cardNumber}";
+        $transactionDate = $utcDate->format('d-m-Y');
+        $transactionTime = $utcDate->format('H:i:s');
+
+        return [
+            'buyOrder' => $buyOrder,
+            'cardNumber' => $cardNumber,
+            'transactionDate' => $transactionDate,
+            'transactionTime' => $transactionTime
+        ];
+    }
+
+    /**
+     * Get the formatted response for Webpay transactions.
+     *
+     * @param object $transactionResponse The response object for Webpay transactions.
+     * @return array The formatted response fields.
+     */
+    public static function getWebpayFormattedResponse(object $transactionResponse): array
+    {
+        $commonFields = self::getCommonFieldsFormatted($transactionResponse);
+
+        $amount = self::getAmountFormatted($transactionResponse->amount);
+        $paymentType = self::getPaymentType($transactionResponse->paymentTypeCode);
+        $installmentType = self::getInstallmentType($transactionResponse->paymentTypeCode);
+        $installmentAmount = self::getAmountFormatted($transactionResponse->installmentsAmount ?? 0);
+
+        $webpayFields = [
+            'amount' => $amount,
+            'authorizationCode' => $transactionResponse->authorizationCode,
+            'paymentType' => $paymentType,
+            'installmentType' => $installmentType,
+            'installmentNumber' => $transactionResponse->installmentsNumber,
+            'installmentAmount' => $installmentAmount
+        ];
+
+        return array_merge($commonFields, $webpayFields);
+    }
+
+    /**
+     * Get the formatted response for Oneclick transactions.
+     *
+     * @param object $transactionResponse The response object for Oneclick transactions.
+     * @return array The formatted response fields.
+     */
+    public static function getOneclickFormattedResponse(object $transactionResponse): array
+    {
+        $commonFields = self::getCommonFieldsFormatted($transactionResponse);
+        $detail = $transactionResponse->details[0];
+
+        $amount = self::getAmountFormatted($detail->amount);
+        $paymentType = self::getPaymentType($detail->paymentTypeCode);
+        $installmentType = self::getInstallmentType($detail->paymentTypeCode);
+        $installmentAmount = self::getAmountFormatted($detail->installmentsAmount ?? 0);
+
+        $oneclickFields = [
+            'amount' => $amount,
+            'authorizationCode' => $detail->authorizationCode,
+            'paymentType' => $paymentType,
+            'installmentType' => $installmentType,
+            'installmentNumber' => $detail->installmentsNumber,
+            'installmentAmount' => $installmentAmount
+        ];
+
+        return array_merge($commonFields, $oneclickFields);
+    }
 }
