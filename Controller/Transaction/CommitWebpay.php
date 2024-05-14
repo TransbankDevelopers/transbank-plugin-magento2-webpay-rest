@@ -142,7 +142,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
-                    $message = TbkResponseHelper::getRejectMessage($transactionResult, $product);
+                    $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -163,7 +163,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
                     $this->checkoutSession->restoreQuote();
-                    $message = TbkResponseHelper::getRejectMessage($transactionResult, $product);
+                    $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
