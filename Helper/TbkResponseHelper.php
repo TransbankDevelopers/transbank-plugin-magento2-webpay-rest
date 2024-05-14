@@ -9,6 +9,20 @@ use DateTimeZone;
 
 class TbkResponseHelper
 {
+    const PAYMENT_TYPE_CREDIT = "Crédito";
+    const PAYMENT_TYPE_DEBIT = "Débito";
+    const PAYMENT_TYPE_PREPAID = "Prepago";
+
+    const PAYMENT_TYPE = [
+        "VD" => self::PAYMENT_TYPE_DEBIT,
+        "VN" => self::PAYMENT_TYPE_CREDIT,
+        "VC" => self::PAYMENT_TYPE_CREDIT,
+        "SI" => self::PAYMENT_TYPE_CREDIT,
+        "S2" => self::PAYMENT_TYPE_CREDIT,
+        "NC" => self::PAYMENT_TYPE_CREDIT,
+        "VP" => self::PAYMENT_TYPE_PREPAID
+    ];
+
     const PAYMENT_TYPE_CODE = [
         "VD" => "Venta Débito",
         "VN" => "Venta Normal",
