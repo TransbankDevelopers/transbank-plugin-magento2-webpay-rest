@@ -98,6 +98,23 @@ class TbkResponseHelper
     }
 
     /**
+     * Get the formatted accounting date from response.
+     *
+     * @param string $accountingDate The accounting date in 'md' format.
+     * @return string The accounting date in 'mm-dd' format.
+     */
+    public static function getAccountingDate(string $accountingDate): string
+    {
+        $date = DateTime::createFromFormat('md', $accountingDate);
+
+        if (!$date) {
+            return $accountingDate;
+        }
+
+        return $date->format('m-d');
+    }
+
+    /**
      * Retrieve success message for a transaction
      *
      * @param object|array $transactionResult
