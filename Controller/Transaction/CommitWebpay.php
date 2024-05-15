@@ -57,7 +57,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $config = $this->configProvider->getPluginConfig();
         $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
         $transactionResult = [];
-        $product = 'Webpay Plus';
 
         try {
             $tokenWs = $_POST['token_ws'] ?? $_GET['token_ws'] ?? null;
