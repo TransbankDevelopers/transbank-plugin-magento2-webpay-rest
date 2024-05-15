@@ -125,7 +125,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $this->log->logInfo(json_encode($transactionResult));
 
                     $resultPage = $this->resultPageFactory->create();
-                    $resultPage->addHandle('checkout_onepage_success');
+                    $resultPage->addHandle('transbank_checkout_success');
                     $block = $resultPage->getLayout()->getBlock('transbank_success');
                     $block->setResponse($formattedResponse);
                     return $resultPage;
@@ -155,7 +155,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($transactionResult);
 
                     $resultPage = $this->resultPageFactory->create();
-                    $resultPage->addHandle('checkout_onepage_success');
+                    $resultPage->addHandle('transbank_checkout_success');
                     $block = $resultPage->getLayout()->getBlock('transbank_success');
                     $block->setResponse($formattedResponse);
 
