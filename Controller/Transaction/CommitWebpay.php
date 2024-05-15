@@ -289,53 +289,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->save();
     }
 
-    protected function commitResponseToArray($response)
-    {
-        return [
-            'vci'                => $response->getVci(),
-            'amount'             => $response->getAmount(),
-            'status'             => $response->getStatus(),
-            'buyOrder'           => $response->getBuyOrder(),
-            'sessionId'          => $response->getSessionId(),
-            'cardDetail'         => $response->getCardDetail(),
-            'accountingDate'     => $response->getAccountingDate(),
-            'transactionDate'    => $response->getTransactionDate(),
-            'authorizationCode'  => $response->getAuthorizationCode(),
-            'paymentTypeCode'    => $response->getPaymentTypeCode(),
-            'responseCode'       => $response->getResponseCode(),
-            'installmentsAmount' => $response->getInstallmentsAmount(),
-            'installmentsNumber' => $response->getInstallmentsNumber(),
-            'balance'            => $response->getBalance(),
-        ];
-    }
-
-    protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
-    {
-        $message = 'Orden cancelada por el usuario';
-
-        $webpayOrderData = $this->getWebpayOrderData($token);
-        $orderId = $webpayOrderData->getOrderId();
-        $order = $this->getOrder($orderId);
-
-        $getQuoteById = $this->quoteRepository->get($quoteId);
-
-        if ($getQuoteById) {
-            $customerId = $getQuoteById->getCustomerId();
-            $isGuest = $getQuoteById->getCustomerIsGuest();
-
-            if ($customerId && $isGuest == 1) {
-                $getQuoteById->setCustomerIsGuest(false);
-                $getQuoteById->save();
-            }
-        }
-
-        if ($order != null) {
-            $this->cancelOrder($order, $message);
-        }
-
-        return $this->redirectWithErrorMessage($message);
-    }
-
     protected function getOrder($orderId): Order
     {
         $order = ObjectManagerHelper::get(Order::class);
