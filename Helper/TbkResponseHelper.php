@@ -13,7 +13,7 @@ class TbkResponseHelper
     const PAYMENT_TYPE_DEBIT = "Débito";
     const PAYMENT_TYPE_PREPAID = "Prepago";
 
-    const PAYMENT_TYPE = [
+    const PAYMENT_TYPES = [
         "VD" => self::PAYMENT_TYPE_DEBIT,
         "VN" => self::PAYMENT_TYPE_CREDIT,
         "VC" => self::PAYMENT_TYPE_CREDIT,
@@ -33,7 +33,7 @@ class TbkResponseHelper
         "VP" => "Venta Prepago"
     ];
 
-    const STATUS_DESCRIPTION =  [
+    const STATUS_DESCRIPTIONS =  [
         'INITIALIZED' => 'Inicializada',
         'AUTHORIZED' => 'Autorizada',
         'REVERSED' => 'Reversada',
@@ -51,7 +51,7 @@ class TbkResponseHelper
      */
     public static function getPaymentType(string $paymentTypeCode): string
     {
-        return self::PAYMENT_TYPE[$paymentTypeCode] ?? $paymentTypeCode;
+        return self::PAYMENT_TYPES[$paymentTypeCode] ?? $paymentTypeCode;
     }
 
     /**
@@ -73,7 +73,7 @@ class TbkResponseHelper
      */
     public static function getStatus(string $status): string
     {
-        return self::STATUS_DESCRIPTION[$status] ?? $status;
+        return self::STATUS_DESCRIPTIONS[$status] ?? $status;
     }
 
 
