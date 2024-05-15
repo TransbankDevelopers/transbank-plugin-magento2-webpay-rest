@@ -9,6 +9,7 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ObjectManager;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\TbkResponseHelper;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Transbank\Webpay\Model\Config\ConfigProvider;
@@ -19,6 +20,7 @@ use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 
 
@@ -29,19 +31,13 @@ class AuthorizeOneclick extends Action
 {
     protected $configProvider;
 
-    protected $responseCodeArray = [
-        '-96' => 'Cancelaste la inscripción durante el formulario de Oneclick.',
-        '-97' => 'La transacción ha sido rechazada porque se superó el monto máximo diario de pago.',
-        '-98' => 'La transacción ha sido rechazada porque se superó el monto máximo de pago.',
-        '-99' => 'La transacción ha sido rechazada porque se superó la cantidad máxima de pagos diarios.',
-    ];
-
     private $cart;
     private $checkoutSession;
     private $resultJsonFactory;
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
+    private $resultPageFactory;
     protected $messageManager;
     private $oneclickConfig;
 
@@ -62,6 +58,7 @@ class AuthorizeOneclick extends Action
         Cart $cart,
         Session $checkoutSession,
         JsonFactory $resultJsonFactory,
+        PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
@@ -76,6 +73,7 @@ class AuthorizeOneclick extends Action
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->resultPageFactory = $resultPageFactory;
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
     }
@@ -169,17 +167,16 @@ class AuthorizeOneclick extends Action
 
                 $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                $message = $this->getSuccessMessage($response, $oneclickTitle);
-                $this->messageManager->addComplexSuccessMessage(
-                    'successMessage',
-                    [
-                        'message' => $message
-                    ]
-                );
-                return $resultJson->setData(['status' => 'success', 'response' => $response, '$webpayOrderData' => $webpayOrderData]);
+                $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
+
+                $resultPage = $this->resultPageFactory->create();
+                $resultPage->addHandle('transbank_checkout_success');
+                $block = $resultPage->getLayout()->getBlock('transbank_success');
+                $block->setResponse($formattedResponse);
+                return $resultPage;
             } else {
                 $webpayOrderData = $this->saveWebpayData(
-                    $this->oneclickConfig['CHILD_COMMERCE_CODE'],
+                    $response,
                     $grandTotal,
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
                     $orderId,
@@ -187,7 +184,7 @@ class AuthorizeOneclick extends Action
                 );
 
                 $order->setStatus($orderStatusCanceled);
-                $message = '<h3>Error en Inscripción con Oneclick</h3><br>' . json_encode($response);
+                $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($response);
 
                 $order->addStatusToHistory($order->getStatus(), $message);
                 $order->cancel();
@@ -195,11 +192,10 @@ class AuthorizeOneclick extends Action
 
                 $this->checkoutSession->restoreQuote();
 
-                $message = $this->getRejectMessage($response, $oneclickTitle);
+                $message = TbkResponseHelper::getRejectMessage($response, "Oneclick Mall");
                 $this->messageManager->addErrorMessage(__($message));
 
-                // return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-                return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 1]);
+                return $this->resultRedirectFactory->create()->setPath('checkout/cart');
             }
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: ' . $e->getMessage();
@@ -215,7 +211,7 @@ class AuthorizeOneclick extends Action
             }
 
             $this->messageManager->addErrorMessage($e->getMessage());
-            return $resultJson->setData(['status' => 'error', 'response' => $response, 'flag' => 2]);
+            return $this->resultRedirectFactory->create()->setPath('checkout/cart');
         }
     }
 
@@ -290,91 +286,5 @@ class AuthorizeOneclick extends Action
         $webpayOrderData->save();
 
         return $webpayOrderData;
-    }
-
-    protected function getSuccessMessage($transactionResult, $oneclickTitle)
-    {
-        if ($transactionResult->details[0]->responseCode == 0) {
-            $transactionResponse = 'Transacci&oacute;n Aprobada';
-        } else {
-            $transactionResponse = 'Transacci&oacute;n Rechazada';
-        }
-
-        if ($transactionResult->details[0]->paymentTypeCode == 'VD') {
-            $paymentType = 'Débito';
-        } elseif ($transactionResult->details[0]->paymentTypeCode == 'VP') {
-            $paymentType = 'Prepago';
-        } else {
-            $paymentType = 'Crédito';
-        }
-
-
-        $message = "
-        <b>Detalles del pago {$oneclickTitle}</b>
-        <div>
-            • Respuesta de la Transacci&oacute;n: <b>{$transactionResponse}</b>
-        </div>
-        <div>
-            • C&oacute;digo de la Transacci&oacute;n: <b>{$transactionResult->details[0]->responseCode}</b>
-        </div>
-        <div>
-            • Monto: <b>$ {$transactionResult->details[0]->amount}</b>
-        </div>
-        <div>
-            • Order de Compra: <b>{$transactionResult->details[0]->buyOrder}</b>
-        </div>
-        <div>
-            • Fecha de la Transacci&oacute;n: <b>" . date('d-m-Y', strtotime($transactionResult->transactionDate)) . '</b>
-        </div>
-        <div>
-            • Hora de la Transacci&oacute;n: <b>' . date('H:i:s', strtotime($transactionResult->transactionDate)) . "</b>
-        </div>
-        <div>
-            • Tarjeta: <b>**** **** **** {$transactionResult->cardNumber}</b>
-        </div>
-        <div>
-            • C&oacute;digo de autorizacion: <b>{$transactionResult->details[0]->authorizationCode}</b>
-        </div>
-        <div>
-            • Tipo de Pago: <b>{$paymentType}</b>
-        </div>
-        ";
-
-        return $message;
-    }
-
-    protected function getRejectMessage($transactionResult, $oneclickTitle)
-    {
-        if (isset($transactionResult)) {
-            $message = "<h2>Autorizaci&oacute;n de transacci&oacute;n rechazada con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult->details[0]->responseCode]}<br>
-                <b>Monto:</b> $ {$transactionResult->details[0]->amount}<br>
-                <b>Order de Compra: </b> {$transactionResult->details[0]->buyOrder}<br>
-                <b>Fecha de la Transacci&oacute;n: </b>" . date('d-m-Y', strtotime($transactionResult->transactionDate)) . '<br>
-                <b>Hora de la Transacci&oacute;n: </b>' . date('H:i:s', strtotime($transactionResult->transactionDate)) . "<br>
-                <b>Tarjeta: </b>**** **** **** {$transactionResult->cardNumber}<br>
-            </p>";
-
-            return $message;
-        } else {
-            if ($transactionResult->details[0]->status == 'ERROR') {
-                $error = $transactionResult->details[0]->status;
-                $detail = isset($transactionResult->details[0]) ? $transactionResult->details[0] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con Oneclick</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
-                <b>Mensaje: </b>{$detail}
-            </p>";
-
-                return $message;
-            } else {
-                $message = '<h2>Transacci&oacute;n Fallida</h2>';
-
-                return $message;
-            }
-        }
     }
 }

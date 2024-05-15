@@ -6,7 +6,7 @@ use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Helper\DateHelper;
+use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -14,21 +14,13 @@ use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
  */
 class CommitWebpay extends \Magento\Framework\App\Action\Action
 {
-    protected $paymentTypeCodearray = [
-        'VD' => 'Venta Debito',
-        'VN' => 'Venta Normal',
-        'VC' => 'Venta en cuotas',
-        'SI' => '3 cuotas sin interés',
-        'S2' => '2 cuotas sin interés',
-        'NC' => 'N cuotas sin interés',
-    ];
     protected $configProvider;
-
     protected $quoteRepository;
     protected $cart;
     protected $checkoutSession;
     protected $resultJsonFactory;
     protected $resultRawFactory;
+    protected $resultPageFactory;
     protected $webpayOrderDataFactory;
     protected $log;
 
@@ -39,6 +31,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
+        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
@@ -49,6 +42,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->quoteRepository = $quoteRepository;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
+        $this->resultPageFactory = $resultPageFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
@@ -123,20 +117,18 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
                     $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                    $message = $this->getSuccessMessage($this->commitResponseToArray($transactionResult));
-
-                    $this->messageManager->addComplexSuccessMessage(
-                        'successMessage',
-                        [
-                            'message' => $message
-                        ]
-                    );
+                    $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($transactionResult);
 
                     $this->log->logInfo('TRANSACCION VALIDADA POR MAGENTO Y POR TBK EN ESTADO STATUS_APPROVED => TOKEN: '
                         .$tokenWs);
                     $this->log->logInfo(json_encode($transactionResult));
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+                    $resultPage = $this->resultPageFactory->create();
+                    $resultPage->addHandle('transbank_checkout_success');
+                    $block = $resultPage->getLayout()->getBlock('transbank_success');
+                    $block->setResponse($formattedResponse);
+                    return $resultPage;
+
                 } else {
                     $this->log->logError('C.5. Respuesta de tbk commit fallido => token: '.$tokenWs);
                     $this->log->logError(json_encode($transactionResult));
@@ -150,28 +142,26 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                     $order->save();
 
                     $this->checkoutSession->restoreQuote();
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
             } else {
-                $transactionResult = json_decode($webpayOrderData->getMetadata(), true);
+                $transactionResult = json_decode($webpayOrderData->getMetadata());
 
                 if ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
-                    $message = $this->getSuccessMessage($transactionResult);
+                    $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($transactionResult);
 
-                    $this->messageManager->addComplexSuccessMessage(
-                        'successMessage',
-                        [
-                            'message' => $message
-                        ]
-                    );
+                    $resultPage = $this->resultPageFactory->create();
+                    $resultPage->addHandle('transbank_checkout_success');
+                    $block = $resultPage->getLayout()->getBlock('transbank_success');
+                    $block->setResponse($formattedResponse);
 
-                    return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+                    return $resultPage;
                 } elseif ($paymentStatus == WebpayOrderData::PAYMENT_STATUS_FAILED) {
                     $this->checkoutSession->restoreQuote();
-                    $message = $this->getRejectMessage($transactionResult);
+                    $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                     $this->messageManager->addError(__($message));
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -218,75 +208,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         ];
     }
 
-    protected function getSuccessMessage(array $transactionResult)
-    {
-        if ( in_array($transactionResult['paymentTypeCode'], ['SI', 'S2', 'NC', 'VC']) ) {
-            $tipoCuotas = $this->paymentTypeCodearray[$transactionResult['paymentTypeCode']];
-        } else {
-            $tipoCuotas = 'Sin cuotas';
-        }
-
-        if ($transactionResult['responseCode'] == 0) {
-            $transactionResponse = 'Transacci&oacute;n Aprobada';
-        } else {
-            $transactionResponse = 'Transacci&oacute;n Rechazada';
-        }
-
-        if ($transactionResult['paymentTypeCode'] == 'VD') {
-            $paymentType = 'Débito';
-        } elseif ($transactionResult['paymentTypeCode'] == 'VP') {
-            $paymentType = 'Prepago';
-        } else {
-            $paymentType = 'Crédito';
-        }
-        $installmentsString = '';
-        if ($tipoCuotas != 'Sin cuotas') {
-            $installmentsString = "
-                <div>
-                    • N&uacute;mero de cuotas: <b>{$transactionResult['installmentsNumber']}</b>
-                </div>
-                <div>
-                    • Monto Cuota: <b>{$transactionResult['installmentsAmount']}</b>
-                </div>
-            ";
-        }
-
-        return "
-            <b>Detalles del pago con Webpay</b>
-            <div>
-                • Respuesta de la Transacci&oacute;n: <b>{$transactionResponse}</b>
-            </div>
-            <div>
-                • C&oacute;digo de la Transacci&oacute;n: <b>{$transactionResult['responseCode']}</b>
-            </div>
-            <div>
-                • Monto: <b>$ {$transactionResult['amount']}</b>
-            </div>
-            <div>
-                • Order de Compra: <b>$ {$transactionResult['buyOrder']}</b>
-            </div>
-            <div>
-                • Fecha de la Transacci&oacute;n: <b>".date('d-m-Y', strtotime($transactionResult['transactionDate'])).'</b>
-            </div>
-            <div>
-                • Hora de la Transacci&oacute;n: <b>'.date('H:i:s', strtotime($transactionResult['transactionDate']))."</b>
-            </div>
-            <div>
-                • Tarjeta: <b>**** **** **** {$transactionResult['cardDetail']['card_number']}</b>
-            </div>
-            <div>
-                • C&oacute;digo de autorizacion: <b>{$transactionResult['authorizationCode']}</b>
-            </div>
-            <div>
-                • Tipo de Pago: <b>{$paymentType}</b>
-            </div>
-            <div>
-                • Tipo de Cuotas: <b>{$tipoCuotas}</b>
-            </div>
-            {$installmentsString}
-            ";
-    }
-
     protected function orderCanceledByUser($token, $quoteId, $orderStatusCanceled)
     {
         $message = 'Orden cancelada por el usuario';
@@ -319,53 +240,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         }
 
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-    }
-
-    /**
-     * @param array|TransactionCommitResponse $transactionResult
-     * @return string
-     */
-    protected function getRejectMessage( $transactionResult ): string
-    {
-        if (isset($transactionResult) && $transactionResult instanceof TransactionCommitResponse) {
-            return "<b>Transacci&oacute;n rechazada por Webpay</b>
-                <div>
-                    • Respuesta de la Transacci&oacute;n: <b>{$transactionResult->getResponseCode()}</b>
-                </div>
-                <div>
-                    • Monto: <b>$ {$transactionResult->getAmount()}</b>
-                </div>
-                <div>
-                    • Orden de Compra: <b>{$transactionResult->getBuyOrder()}</b>
-                </div>
-                <div>
-                    • Fecha de la Transacci&oacute;n: <b>"
-                        . date('d-m-Y', strtotime($transactionResult->getTransactionDate())) ."</b>
-                </div>
-                <div>
-                    • Hora de la Transacci&oacute;n: <b>"
-                        . date('H:i:s', strtotime($transactionResult->getTransactionDate())) ."</b>
-                </div>
-                <div>
-                    • Tarjeta: <b>**** **** **** {$transactionResult->getCardNumber()}</b>
-                </div>";
-
-        }
-
-        if (isset($transactionResult['error'])) {
-            $error = $transactionResult['error'];
-            $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-            return "<b>Transacci&oacute;n fallida con Webpay</b>
-                <div>
-                    • Respuesta de la Transacci&oacute;n: <b>{$error}</b>
-                </div>
-                <div>
-                    • Mensaje: <b>{$detail}</b>
-                </div>";
-        }
-
-        return '<h2>Transacci&oacute;n Fallida</h2>';
-
     }
 
     protected function getOrder($orderId)
@@ -416,7 +290,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function createCommitHistoryComment($commitResponse): string {
         if ( $commitResponse instanceof TransactionCommitResponse ) {
-            $transactionLocalDate = DateHelper::utcToLocalDate($commitResponse->getTransactionDate());
+            $transactionLocalDate = TbkResponseHelper::utcToLocalDate($commitResponse->getTransactionDate());
             $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
             $installmentsAmount = $commitResponse->getInstallmentsAmount();
             $balance = $commitResponse->getBalance();

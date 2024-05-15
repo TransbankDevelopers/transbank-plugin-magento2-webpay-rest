@@ -1,0 +1,58 @@
+<?php
+$responseData = $block->getResponse();
+
+if (is_null($responseData)) {
+    return;
+}
+
+?>
+
+<section class="tbk_voucher">
+    <header class="tbk_voucher-header">
+        <h2>Detalles del pago</h2>
+    </header>
+    <div class="tbk_voucher-body">
+        <div class="tbk_voucher-field">
+            <p>Orden de compra:</p>
+            <p>#<?= $responseData['buyOrder'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Código de autorización:</p>
+            <p><?= $responseData['authorizationCode'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Fecha transacción:</p>
+            <p><?= $responseData['transactionDate'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Hora transacción:</p>
+            <p><?= $responseData['transactionTime'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Número de tarjeta:</p>
+            <p><?= $responseData['cardNumber'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Tipo de pago:</p>
+            <p><?= $responseData['paymentType'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Tipo de cuota:</p>
+            <p><?= $responseData['installmentType'] ?></p>
+        </div>
+        <div class="tbk_voucher-field">
+            <p>Número de cuotas:</p>
+            <p><?= $responseData['installmentNumber'] ?></p>
+        </div>
+        <?php if ($responseData['installmentNumber'] > 0) { ?>
+            <div class="tbk_voucher-field">
+                <p>Monto de cada cuota:</p>
+                <p><?= $responseData['installmentAmount'] ?></p>
+            </div>
+        <?php } ?>
+        <div class="tbk_voucher-field">
+            <h3>Monto compra:</h3>
+            <h3><?= $responseData['amount'] ?></h3>
+        </div>
+    </div>
+</section>
