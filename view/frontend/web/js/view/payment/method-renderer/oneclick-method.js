@@ -88,12 +88,11 @@ function checkTransaction(result) {
 function authorizeTransaction(selected_inscription) {
     let url = window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
 
-    jQuery.post(url, {
-        inscription: selected_inscription
-    }, function (result) {
-        console.log(result);
-        window.location.href = 'cart';
-    });
+    let form = jQuery('<form action="' + url + '" method="post">' +
+        '<input type="hidden" name="inscription" value="'+ selected_inscription +'" />' +
+        '</form>');
+    jQuery('body').append(form);
+    form.submit();
 }
 
 function handleOneclickTransaction(self, selectedInscription) {

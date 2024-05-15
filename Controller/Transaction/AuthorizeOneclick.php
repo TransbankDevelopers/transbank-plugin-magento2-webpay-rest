@@ -20,6 +20,7 @@ use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 
 
@@ -36,6 +37,7 @@ class AuthorizeOneclick extends Action
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
+    private $resultPageFactory;
     protected $messageManager;
     private $oneclickConfig;
 
@@ -56,6 +58,7 @@ class AuthorizeOneclick extends Action
         Cart $cart,
         Session $checkoutSession,
         JsonFactory $resultJsonFactory,
+        PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
@@ -70,6 +73,7 @@ class AuthorizeOneclick extends Action
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->resultPageFactory = $resultPageFactory;
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
     }
@@ -163,16 +167,13 @@ class AuthorizeOneclick extends Action
 
                 $this->checkoutSession->getQuote()->setIsActive(false)->save();
 
-                $message = TbkResponseHelper::getSuccessMessage($response, "Oneclick Mall");
+                $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
 
-                $this->messageManager->addComplexSuccessMessage(
-                    'successMessage',
-                    [
-                        'message' => $message
-                    ]
-                );
-
-                return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+                $resultPage = $this->resultPageFactory->create();
+                $resultPage->addHandle('transbank_checkout_success');
+                $block = $resultPage->getLayout()->getBlock('transbank_success');
+                $block->setResponse($formattedResponse);
+                return $resultPage;
             } else {
                 $webpayOrderData = $this->saveWebpayData(
                     $response,
@@ -195,7 +196,6 @@ class AuthorizeOneclick extends Action
                 $this->messageManager->addErrorMessage(__($message));
 
                 return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-
             }
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: ' . $e->getMessage();
@@ -287,5 +287,4 @@ class AuthorizeOneclick extends Action
 
         return $webpayOrderData;
     }
-
 }
