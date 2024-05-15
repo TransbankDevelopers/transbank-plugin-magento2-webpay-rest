@@ -66,11 +66,7 @@ define([
             const oneclickMaxAmount =
                 window.checkoutConfig.totalsData.oneclick_max_amount;
 
-            if (oneclickMaxAmount < grandTotal) {
-                return true;
-            } else {
-                return false;
-            }
+            return oneclickMaxAmount < grandTotal;
         },
     });
 });
