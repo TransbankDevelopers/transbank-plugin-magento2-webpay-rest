@@ -23,7 +23,7 @@ class TbkResponseHelper
         "VP" => self::PAYMENT_TYPE_PREPAID
     ];
 
-    const PAYMENT_TYPE_CODE = [
+    const INSTALLMENT_TYPES = [
         "VD" => "Venta Débito",
         "VN" => "Venta Normal",
         "VC" => "Venta en cuotas",
@@ -57,12 +57,12 @@ class TbkResponseHelper
     /**
      * Get the installment type from the payment type response.
      *
-     * @param string $paymentType The code of the installment type.
+     * @param string $paymentTypeCode The code of the installment type.
      * @return string The corresponding installment type.
      */
-    public static function getInstallmentType(string $paymentType): string
+    public static function getInstallmentType(string $paymentTypeCode): string
     {
-        return self::PAYMENT_TYPE_CODE[$paymentType] ?? $paymentType;
+        return self::INSTALLMENT_TYPES[$paymentTypeCode] ?? $paymentTypeCode;
     }
 
     /**
