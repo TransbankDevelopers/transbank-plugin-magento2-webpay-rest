@@ -213,9 +213,9 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $this->log->logInfo('Orden aprobada => Token: ' . $token);
 
-        $message = $this->getSuccessMessage($this->commitResponseToArray($commitResponse));
+        $responseData = TbkResponseHelper::getWebpayFormattedResponse($commitResponse);
 
-        return $this->redirectToSuccess($message);
+        return $this->redirectToSuccess($responseData);
     }
 
     private function handleUnauthorizedTransaction(
@@ -270,14 +270,15 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->redirectWithErrorMessage($message);
     }
 
-    private function redirectToSuccess(string $message)
+    private function redirectToSuccess(array $responseData)
     {
         $this->checkoutSession->getQuote()->setIsActive(false)->save();
-        $this->messageManager->addComplexSuccessMessage(
-            'successMessage',
-            ['message' => $message]
-        );
-        return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
+
+        $resultPage = $this->resultPageFactory->create();
+        $resultPage->addHandle('transbank_checkout_success');
+        $block = $resultPage->getLayout()->getBlock('transbank_success');
+        $block->setResponse($responseData);
+        return $resultPage;
     }
 
     private function redirectWithErrorMessage(string $message)
