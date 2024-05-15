@@ -63,7 +63,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         try {
-            $request = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
+            $requestMethod = $_SERVER['REQUEST_METHOD'];
+            $request = $requestMethod === 'POST' ? $_POST : $_GET;
+
+            $this->log->logInfo('Request: method -> ' . $requestMethod);
+            $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
             return $this->handleRequest($request);
         } catch (Exception $exception) {
