@@ -46,12 +46,12 @@ class TbkResponseHelper
     /**
      * Get the payment type from its code.
      *
-     * @param string $paymentType The code of the payment type.
+     * @param string $paymentTypeCode The code of the payment type.
      * @return string The corresponding payment type.
      */
-    public static function getPaymentType(string $paymentType): string
+    public static function getPaymentType(string $paymentTypeCode): string
     {
-        return self::PAYMENT_TYPE[$paymentType] ?? $paymentType;
+        return self::PAYMENT_TYPE[$paymentTypeCode] ?? $paymentTypeCode;
     }
 
     /**
