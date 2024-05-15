@@ -159,6 +159,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logInfo('Procesando transacción por flujo timeout => Orden de compra: ' . $buyOrder);
 
         $message = 'Orden cancelada por inactividad del usuario en el formulario de pago';
+        $order = $this->getOrder($buyOrder);
+
+        if (!is_null($order->getId())) {
+            $this->cancelOrder($order, $message);
+        }
 
         return $this->redirectWithErrorMessage($message);
     }
