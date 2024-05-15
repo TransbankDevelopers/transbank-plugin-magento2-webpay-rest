@@ -315,6 +315,19 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $webpayOrderDataModel->load($tokenWs, 'token');
     }
 
+    /**
+     * Get the Webpay order data by buy order.
+     *
+     * @param string $buyOrder The buy order.
+     *
+     * @return WebpayOrderData
+     */
+    private function getWebpayOrderDataByBuyOrder($buyOrder): WebpayOrderData
+    {
+        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
+        return $webpayOrderDataModel->load($buyOrder, 'order_id');
+    }
+
     private function createCommitHistoryComment($commitResponse): string
     {
         if ($commitResponse instanceof TransactionCommitResponse) {
