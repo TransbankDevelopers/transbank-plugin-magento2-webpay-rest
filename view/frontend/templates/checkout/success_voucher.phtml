@@ -42,7 +42,7 @@ if (is_null($responseData)) return;
             <p>Número de cuotas:</p>
             <p><?= $responseData['installmentNumber'] ?></p>
         </div>
-        <?php if ($responseData['installmentAmount'] > 0) { ?>
+        <?php if ($responseData['installmentNumber'] > 0) { ?>
             <div class="tbk_voucher-field">
                 <p>Monto de cada cuota:</p>
                 <p><?= $responseData['installmentAmount'] ?></p>
