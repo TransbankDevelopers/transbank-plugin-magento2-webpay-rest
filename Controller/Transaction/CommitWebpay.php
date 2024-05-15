@@ -22,14 +22,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     const WEBPAY_FLOW_ABORTED = 'aborted';
     const WEBPAY_FLOW_ERROR = 'error';
 
-    protected $paymentTypeCodearray = [
-        'VD' => 'Venta Debito',
-        'VN' => 'Venta Normal',
-        'VC' => 'Venta en cuotas',
-        'SI' => '3 cuotas sin interés',
-        'S2' => '2 cuotas sin interés',
-        'NC' => 'N cuotas sin interés',
-    ];
     protected $configProvider;
     protected $quoteRepository;
     protected $cart;
