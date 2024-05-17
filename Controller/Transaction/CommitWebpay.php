@@ -276,6 +276,43 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->redirectWithErrorMessage($message);
     }
 
+    private function handleTransactionAlreadyProcessed(string $token)
+    {
+        $this->log->logInfo('Transacción ya se encontraba procesada.');
+
+        $webpayOrderData = $this->getWebpayOrderData($token);
+        $status = $webpayOrderData->getPaymentStatus();
+        $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
+
+        $this->log->logInfo('Estado de la transacción => ' . $status);
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
+            $metadata = $webpayOrderData->getMetadata();
+            $response = json_decode($metadata);
+            $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($response);
+
+            return $this->redirectToSuccess($formattedResponse);
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_FAILED) {
+            $message = self::WEBPAY_FAILED_FLOW_MESSAGE;
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_CANCELED_BY_USER) {
+            $message = self::WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE;
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_TIMEOUT) {
+            $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_ERROR) {
+            $message = self::WEBPAY_ERROR_FLOW_MESSAGE;
+        }
+
+        return $this->redirectWithErrorMessage($message);
+    }
+
     private function redirectToSuccess(array $responseData)
     {
         $this->checkoutSession->getQuote()->setIsActive(false)->save();
