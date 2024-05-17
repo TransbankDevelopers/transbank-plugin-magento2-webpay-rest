@@ -66,6 +66,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
 
+            $this->log->logInfo('Procesando retorno desde formulario de Webpay.');
             $this->log->logInfo('Request: method -> ' . $requestMethod);
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
