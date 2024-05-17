@@ -144,6 +144,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Procesando transacción por flujo Normal => token: ' . $token);
 
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
+
         $config = $this->configProvider->getPluginConfig();
         $webpayOrderData = $this->getWebpayOrderData($token);
         $orderId = $webpayOrderData->getOrderId();
@@ -170,12 +174,20 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $webpayOrderData = $this->getWebpayOrderDataByBuyOrder($buyOrder);
         $token = $webpayOrderData->getToken();
 
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
+
         return $this->handleAbortedTransaction($token, $message, WebpayOrderData::PAYMENT_STATUS_TIMEOUT);
     }
 
     private function handleFlowAborted(string $token)
     {
         $this->log->logInfo('Procesando transacción por flujo de pago abortado => Token: ' . $token);
+
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
 
         $message = self::WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE;
 
@@ -185,6 +197,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function handleFlowError(string $token)
     {
         $this->log->logInfo('Procesando transacción por flujo de error en formulario de pago => Token: ' . $token);
+
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
 
         $message = self::WEBPAY_ERROR_FLOW_MESSAGE;
 
