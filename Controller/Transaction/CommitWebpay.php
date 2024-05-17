@@ -303,6 +303,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->save();
     }
 
+    private function checkTransactionIsAlreadyProcessed($token): bool
+    {
+        $webpayOrderData = $this->getWebpayOrderData($token);
+        $status = $webpayOrderData->getPaymentStatus();
+
+        return $status != WebpayOrderData::PAYMENT_STATUS_WATING;
+    }
+
     protected function getOrder($orderId): Order
     {
         $order = ObjectManagerHelper::get(Order::class);
