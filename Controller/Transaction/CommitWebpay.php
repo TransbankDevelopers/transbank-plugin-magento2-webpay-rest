@@ -22,6 +22,12 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     const WEBPAY_FLOW_ABORTED = 'aborted';
     const WEBPAY_FLOW_ERROR = 'error';
 
+    const WEBPAY_FAILED_FLOW_MESSAGE = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
+    const WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE = 'Orden cancelada por el usuario.';
+    const WEBPAY_TIMEOUT_FLOW_MESSAGE = 'Orden cancelada por inactividad del usuario en el formulario de pago.';
+    const WEBPAY_ERROR_FLOW_MESSAGE = 'Orden cancelada por un error en el formulario de pago';
+    const WEBPAY_EXCEPTION_FLOW_MESSAGE = 'No se pudo procesar el pago.';
+
     protected $configProvider;
     protected $quoteRepository;
     protected $cart;
@@ -66,6 +72,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
 
+            $this->log->logInfo('Procesando retorno desde formulario de Webpay.');
             $this->log->logInfo('Request: method -> ' . $requestMethod);
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
@@ -137,6 +144,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Procesando transacción por flujo Normal => token: ' . $token);
 
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
+
         $config = $this->configProvider->getPluginConfig();
         $webpayOrderData = $this->getWebpayOrderData($token);
         $orderId = $webpayOrderData->getOrderId();
@@ -158,10 +169,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Procesando transacción por flujo timeout => Orden de compra: ' . $buyOrder);
 
-        $message = 'Orden cancelada por inactividad del usuario en el formulario de pago';
+        $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
 
         $webpayOrderData = $this->getWebpayOrderDataByBuyOrder($buyOrder);
         $token = $webpayOrderData->getToken();
+
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
 
         return $this->handleAbortedTransaction($token, $message, WebpayOrderData::PAYMENT_STATUS_TIMEOUT);
     }
@@ -170,7 +185,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Procesando transacción por flujo de pago abortado => Token: ' . $token);
 
-        $message = 'Orden cancelada por el usuario';
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
+
+        $message = self::WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE;
 
         return $this->handleAbortedTransaction($token, $message, WebpayOrderData::PAYMENT_STATUS_CANCELED_BY_USER);
     }
@@ -179,7 +198,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Procesando transacción por flujo de error en formulario de pago => Token: ' . $token);
 
-        $message = 'Orden cancelada por un error en el formulario de pago';
+        if ($this->checkTransactionIsAlreadyProcessed($token)) {
+            return $this->handleTransactionAlreadyProcessed($token);
+        }
+
+        $message = self::WEBPAY_ERROR_FLOW_MESSAGE;
 
         return $this->handleAbortedTransaction($token, $message, WebpayOrderData::PAYMENT_STATUS_ERROR);
     }
@@ -225,7 +248,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $token = $webpayOrderData->getToken();
         $this->log->logInfo('Transacción rechazada por Transbank, cancelando orden => token: ' . $token);
 
-        $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
+        $message = self::WEBPAY_FAILED_FLOW_MESSAGE;
 
         $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
         $webpayOrderData->save();
@@ -260,11 +283,48 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleException(Exception $exception)
     {
-        $message = 'No se pudo procesar el pago.';
+        $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
 
         $this->log->logError('Error al procesar el pago: ');
         $this->log->logError($exception->getMessage());
         $this->log->logError($exception->getTraceAsString());
+
+        return $this->redirectWithErrorMessage($message);
+    }
+
+    private function handleTransactionAlreadyProcessed(string $token)
+    {
+        $this->log->logInfo('Transacción ya se encontraba procesada.');
+
+        $webpayOrderData = $this->getWebpayOrderData($token);
+        $status = $webpayOrderData->getPaymentStatus();
+        $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
+
+        $this->log->logInfo('Estado de la transacción => ' . $status);
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
+            $metadata = $webpayOrderData->getMetadata();
+            $response = json_decode($metadata);
+            $formattedResponse = TbkResponseHelper::getWebpayFormattedResponse($response);
+
+            return $this->redirectToSuccess($formattedResponse);
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_FAILED) {
+            $message = self::WEBPAY_FAILED_FLOW_MESSAGE;
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_CANCELED_BY_USER) {
+            $message = self::WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE;
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_TIMEOUT) {
+            $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
+        }
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_ERROR) {
+            $message = self::WEBPAY_ERROR_FLOW_MESSAGE;
+        }
 
         return $this->redirectWithErrorMessage($message);
     }
@@ -294,6 +354,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->setStatus($orderStatusCanceled);
         $order->addStatusToHistory($order->getStatus(), $message);
         $order->save();
+    }
+
+    private function checkTransactionIsAlreadyProcessed($token): bool
+    {
+        $webpayOrderData = $this->getWebpayOrderData($token);
+        $status = $webpayOrderData->getPaymentStatus();
+
+        return $status != WebpayOrderData::PAYMENT_STATUS_WATING;
     }
 
     protected function getOrder($orderId): Order
