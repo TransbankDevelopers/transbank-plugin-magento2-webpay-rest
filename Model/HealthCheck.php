@@ -2,25 +2,83 @@
 
 namespace Transbank\Webpay\Model;
 
+use Magento\Framework\Module\ModuleList;
+use Magento\Framework\App\ProductMetadataInterface;
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\WebpayPlus;
 
 class HealthCheck
 {
+    const MAGENTO_REPOSITORY = 'Magento/Magento2';
+    const PLUGIN_REPOSITORY = 'TransbankDevelopers/transbank-plugin-magento2-webpay-rest';
+
+    /**
+     * Transbank API Key.
+     * @var string
+     */
     public $apiKey;
+
+    /**
+     * Transbank commerce code.
+     * @var string
+     */
     public $commerceCode;
+
+    /**
+     * The environment.
+     * @var string
+     */
     public $environment;
+
+    /**
+     * List of required PHP extension.
+     * @var array
+     */
     public $extensions;
+
+    /**
+     * PHP version support status.
+     * @var array
+     */
     public $versionInfo;
+
+    /**
+     * Summary of server information.
+     * @var array
+     */
     public $resume;
+
+    /**
+     * Summary for the all plugin information.
+     * @var array
+     */
     public $fullResume;
+
+    /**
+     * The name of the ecommerce platform.
+     * @var string
+     */
     public $ecommerce;
+
+    /**
+     * Configuration data.
+     * @var array
+     */
     public $config;
+
+    /**
+     * Results of extension validation.
+     * @var array
+     */
     public $resExtensions;
 
+    /**
+     * Initializes the HealthCheck instance with configuration data.
+     *
+     * @param array $config The configuration data.
+     */
     public function __construct($config)
     {
-        $config['COMMERCE_CODE'] = WebpayPlus::DEFAULT_COMMERCE_CODE;
-        $config['API_KEY'] = WebpayPlus::DEFAULT_API_KEY;
         $this->config = $config;
         $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];
@@ -32,10 +90,16 @@ class HealthCheck
         ];
     }
 
-    // valida version de php
-    private function getValidatephp()
+    /**
+     * Validate PHP version.
+     *
+     * Checks if the PHP version is supported.
+     *
+     * @return array Information about PHP version validation.
+     */
+    private function getValidatePHP()
     {
-        if (version_compare(phpversion(), '7.2.1', '<=') and version_compare(phpversion(), '5.5.0', '>=')) {
+        if (version_compare(phpversion(), '7.4.33', '<=') && version_compare(phpversion(), '5.5.0', '>=')) {
             $this->versionInfo = [
                 'status'  => 'OK',
                 'version' => phpversion(),
@@ -50,7 +114,14 @@ class HealthCheck
         return $this->versionInfo;
     }
 
-    // verifica si existe la extension y cual es la version de esta
+    /**
+     * Check PHP extension.
+     *
+     * Checks if a PHP extension is loaded and retrieves its version.
+     *
+     * @param string $extension The name of the PHP extension to check.
+     * @return array Information about the PHP extension.
+     */
     private function getCheckExtension($extension)
     {
         if (extension_loaded($extension)) {
@@ -58,8 +129,8 @@ class HealthCheck
                 $version = OPENSSL_VERSION_TEXT;
             } else {
                 $version = phpversion($extension);
-                if (empty($version) or $version == null or $version === false or $version == ' ' or $version == '') {
-                    $version = 'PHP Extension Compiled. ver:'.phpversion();
+                if (empty($version) || $version == null || $version === false || $version == ' ' || $version == '') {
+                    $version = 'PHP Extension Compiled. ver:' . phpversion();
                 }
             }
             $status = 'OK';
@@ -77,11 +148,17 @@ class HealthCheck
         return $result;
     }
 
-    //obtiene ultimas versiones
-    // permite un maximo de 60 consultas por hora
+    /**
+     * Get last release version from GitHub.
+     *
+     * Retrieves the latest release version of a repository from GitHub.
+     *
+     * @param string $string The GitHub repository name.
+     * @return string The latest release version.
+     */
     private function getLastGitHubReleaseVersion($string)
     {
-        $baseurl = 'https://api.github.com/repos/'.$string.'/releases/latest';
+        $baseurl = 'https://api.github.com/repos/' . $string . '/releases/latest';
         $agent = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)';
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $baseurl);
@@ -95,17 +172,47 @@ class HealthCheck
         return $version;
     }
 
-    // funcion para obtener info de cada ecommerce, si el ecommerce es incorrecto o no esta seteado se escapa como respuesta "NO APLICA"
-    private function getEcommerceInfo($ecommerce)
+    /**
+     * Get last Magento release version.
+     *
+     * Retrieves the latest release version of Magento from GitHub.
+     *
+     * @return string The latest Magento release version.
+     */
+    private function getLastMagentoReleaseVersion()
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $actualversion = $productMetadata->getVersion();
-        $lastversion = $this->getLastGitHubReleaseVersion('Magento/Magento2');
-        $plugininfo = $objectManager->get('Magento\Framework\Module\ModuleList')->getOne('Transbank_Webpay');
+        return $this->getLastGitHubReleaseVersion(self::MAGENTO_REPOSITORY);
+    }
+
+    /**
+     * Get last plugin release version.
+     *
+     * Retrieves the latest release version of the plugin from GitHub.
+     *
+     * @return string The latest plugin release version.
+     */
+    private function getLastPluginReleaseVersion()
+    {
+        return $this->getLastGitHubReleaseVersion(self::PLUGIN_REPOSITORY);
+    }
+
+    /**
+     * Get ecommerce info.
+     *
+     * Retrieves information about the ecommerce platform and the plugin.
+     *
+     * @param string $ecommerce The name of the ecommerce platform.
+     * @return array Information about the ecommerce and plugin versions.
+     */
+    private function getEcommerceInfo()
+    {
+        $productMetadata = ObjectManagerHelper::get(ProductMetadataInterface::class);
+        $magentoVersion = $productMetadata->getVersion();
+        $lastversion = $this->getLastMagentoReleaseVersion();
+        $plugininfo = ObjectManagerHelper::get(ModuleList::class)->getOne('Transbank_Webpay');
         $currentplugin = $plugininfo['setup_version'];
         $result = [
-            'current_ecommerce_version' => $actualversion,
+            'current_ecommerce_version' => $magentoVersion,
             'last_ecommerce_version'    => $lastversion,
             'current_plugin_version'    => $currentplugin,
         ];
@@ -113,27 +220,35 @@ class HealthCheck
         return $result;
     }
 
-    // creacion de retornos
-    // arma array que entrega informacion del ecommerce: nombre, version instalada, ultima version disponible
-    private function getPluginInfo($ecommerce)
+    /**
+     * Get plugin info.
+     *
+     * Retrieves information about the plugin version.
+     *
+     * @param string $ecommerce The name of the ecommerce platform.
+     * @return array Information about the plugin version.
+     */
+    private function getPluginInfo()
     {
-        $data = $this->getEcommerceInfo($ecommerce);
+        $data = $this->getEcommerceInfo();
         $result = [
-            'ecommerce'              => $ecommerce,
+            'ecommerce'              => $this->ecommerce,
             'ecommerce_version'      => $data['current_ecommerce_version'],
+            'last_ecommerce_version' => $data['last_ecommerce_version'],
             'current_plugin_version' => $data['current_plugin_version'],
-            'last_plugin_version'    => $this->getPluginLastVersion($ecommerce, $data['current_ecommerce_version']), // ultimo declarado
+            'last_plugin_version'    => $this->getLastPluginReleaseVersion(),
         ];
 
         return $result;
     }
 
-    private function getPluginLastVersion($ecommerce, $currentversion)
-    {
-        return 'Indefinido';
-    }
-
-    // lista y valida extensiones/ modulos de php en servidor ademas mostrar version
+    /**
+     * Validate PHP extensions.
+     *
+     * Checks if required PHP extensions are loaded and retrieves their versions.
+     *
+     * @return array Information about PHP extensions.
+     */
     private function getExtensionsValidate()
     {
         foreach ($this->extensions as $value) {
@@ -142,20 +257,32 @@ class HealthCheck
 
         return $this->resExtensions;
     }
-  
-    // crea resumen de informacion del servidor. NO incluye a PHP info
+
+    /**
+     * Get server resume.
+     *
+     * Retrieves a summary of server information.
+     *
+     * @return array Summary of server information.
+     */
     private function getServerResume()
     {
         $this->resume = [
-            'php_version'    => $this->getValidatephp(),
+            'php_version'    => $this->getValidatePHP(),
             'server_version' => ['server_software' => $_SERVER['SERVER_SOFTWARE']],
-            'plugin_info'    => $this->getPluginInfo($this->ecommerce),
+            'plugin_info'    => $this->getPluginInfo(),
         ];
 
         return $this->resume;
     }
 
-    // crea array con la informacion de comercio para posteriormente exportarla via json
+    /**
+     * Get commerce info.
+     *
+     * Retrieves information about the commerce configuration.
+     *
+     * @return array Information about commerce configuration.
+     */
     private function getCommerceInfo()
     {
         $result = [
@@ -167,21 +294,14 @@ class HealthCheck
         return ['data' => $result];
     }
 
-    // guarda en array informacion de funcion phpinfo
-    private function getPhpInfo()
-    {
-        ob_start();
-        phpinfo();
-        $info = ob_get_contents();
-        ob_end_clean();
-        $newinfo = strstr($info, '<table>');
-        $newinfo = strstr($newinfo, '<h1>PHP Credits</h1>', true);
-        $return = ['string' => ['content' => str_replace('</div></body></html>', '', $newinfo)]];
-
-        return $return;
-    }
-
-    public function setCreateTransaction()
+    /**
+     * Create transaction.
+     *
+     * Creates a transaction using Transbank SDK.
+     *
+     * @return array Information about the transaction.
+     */
+    public function createTestTransaction()
     {
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
         $amount = 990;
@@ -208,60 +328,21 @@ class HealthCheck
         return $response;
     }
 
-    //compila en solo un metodo toda la informacion obtenida, lista para imprimir
-    private function getFullResume()
+    /**
+     * Get full resume.
+     *
+     * Retrieves a full summary of server information.
+     *
+     * @return array Full summary of server information.
+     */
+    public function getFullResume()
     {
         $this->fullResume = [
             'server_resume'          => $this->getServerResume(),
             'php_extensions_status'  => $this->getExtensionsValidate(),
             'commerce_info'          => $this->getCommerceInfo(),
-            'php_info'               => $this->getPhpInfo(),
         ];
 
         return $this->fullResume;
-    }
-
-    private function setpostinstall()
-    {
-        return false;
-    }
-
-    // imprime informacion de comercio y llaves
-    public function printCommerceInfo()
-    {
-        return json_encode($this->getCommerceInfo());
-    }
-
-    public function printPhpInfo()
-    {
-        return json_encode($this->getPhpInfo());
-    }
-
-    // imprime en formato json la validacion de extensiones / modulos de php
-    public function printExtensionStatus()
-    {
-        return json_encode($this->getExtensionsValidate());
-    }
-
-    // imprime en formato json informacion del servidor
-    public function printServerResume()
-    {
-        return json_encode($this->getServerResume());
-    }
-
-    // imprime en formato json el resumen completo
-    public function printFullResume()
-    {
-        return json_encode($this->getFullResume());
-    }
-
-    public function getCreateTransaction()
-    {
-        return json_encode($this->setCreateTransaction());
-    }
-
-    public function getpostinstallinfo()
-    {
-        return json_encode($this->setpostinstall());
     }
 }

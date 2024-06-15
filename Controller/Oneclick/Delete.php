@@ -45,8 +45,6 @@ class Delete extends Action
 
                 $response = $transbankSdkWebpay->deleteInscription($username, $tbkUser);
 
-                var_dump($response);
-
                 if ($response->success) {
                     $this->messageManager->addSuccessMessage(__("Tarjeta inscrita eliminada exitosamente."));
                 } else {

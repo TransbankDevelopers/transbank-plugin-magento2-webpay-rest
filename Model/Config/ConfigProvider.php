@@ -4,11 +4,11 @@ namespace Transbank\Webpay\Model\Config;
 
 class ConfigProvider implements \Magento\Checkout\Model\ConfigProviderInterface
 {
-    const SECURITY_CONFIGS_ROUTE = 'payment/transbank_webpay/security/';
-    const ORDER_CONFIGS_ROUTE = 'payment/transbank_webpay/general_parameters/';
-    
-    const SECURITY_CONFIGS_ROUTE_ONECLICK = 'payment/transbank_oneclick/security/';
-    const ORDER_CONFIGS_ROUTE_ONECLICK = 'payment/transbank_oneclick/general_parameters/';
+    const SECURITY_CONFIGS_ROUTE = 'payment/transbank_webpay/';
+    const ORDER_CONFIGS_ROUTE = 'payment/transbank_webpay/';
+
+    const SECURITY_CONFIGS_ROUTE_ONECLICK = 'payment/transbank_oneclick/';
+    const ORDER_CONFIGS_ROUTE_ONECLICK = 'payment/transbank_oneclick/';
 
     const CC_VAULT_CODE = 'transbank_oneclick_cc_vault';
 

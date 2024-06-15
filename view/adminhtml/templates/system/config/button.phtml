@@ -3,7 +3,6 @@
 <div id="popup-modal" class="tbk-modal-body" style="display:none">
     <div class="tbk-tab">
         <button id="tab_modal_info" class="tbk-tablinks" onclick="openInfoTab('tab_modal_info', 'modal_info')">Información</button>
-        <button id="tab_modal_php_info" class="tbk-tablinks" onclick="openInfoTab('tab_modal_php_info', 'modal_php_info')">PHP info</button>
         <button id="tab_modal_logs" class="tbk-tablinks" onclick="openInfoTab('tab_modal_logs', 'modal_logs')">Registros</button>
     </div>
 
@@ -21,10 +20,18 @@
 
                 <div class="tbk_column_title" >
                 <span title="Versión de <?php echo $this->tbk_data['ecommerce']; ?> instalada en el servidor" class="tbk-label-info">?</span>
-                Version E-commerce:
+                Versión E-commerce:
                 </div>
                 <div class="tbk_column_value" >
                 <?php echo $this->tbk_data['ecommerce_version']; ?>
+                </div>
+
+                <div class="tbk_column_title" >
+                <span title="Última versión de magento disponible" class="tbk-label-info">?</span>
+                Última versión E-commerce:
+                </div>
+                <div class="tbk_column_value" >
+                <?php echo $this->tbk_data['last_ecommerce_version']; ?>
                 </div>
 
                 <div class="tbk_column_title" >
@@ -34,7 +41,7 @@
                 <div class="tbk_column_value" >
                 <?php echo $this->tbk_data['current_plugin_version']; ?>
                 </div>
-                
+
                 <div class="tbk_column_title" >
                 <span title="Última versión del plugin Webpay para <?php echo $this->tbk_data['ecommerce']; ?> disponible" class="tbk-label-info">?</span>
                 Última versión del plugin:
@@ -45,7 +52,7 @@
             </div>
 
             <hr>
-            
+
             <div class="tbk-grid-title">Información Principal</div>
             <div class="tbk-grid-container">
                 <div class="tbk_column_title" >
@@ -89,7 +96,7 @@
                 <div class="tbk_column_title" >Extensión</div>
                 <div class="tbk_column_title" >Estado</div>
                 <div class="tbk_column_title" >Versión</div>
-            
+
                 <div class="tbk_column_title" >
                 dom:
                 </div>
@@ -134,7 +141,7 @@
                     <span class="status-label label" style="display:none"></span>
                 </div>
             </div>
-            
+
             <div class="tbk-grid-container" id="row_response_url" style="display:none">
                 <div class="tbk_column_title" >
                 <span title="URL entregada por Transbank para realizar la transacción" class="tbk-label-info">?</span>
@@ -144,7 +151,7 @@
                     <span class="tbk_table_trans content_url"></span>
                 </div>
             </div>
-            
+
             <div class="tbk-grid-container" id="row_response_token" style="display:none">
                 <div class="tbk_column_title" >
                 <span title="Token entregada por Transbank para realizar la transacción" class="tbk-label-info">?</span>
@@ -154,7 +161,7 @@
                     <span class="tbk_table_trans content_token"></span>
                 </div>
             </div>
-            
+
             <div class="tbk-grid-container" id="row_error_message" style="display:none">
                 <div class="tbk_column_title" >
                 <span title="Mensaje de error devuelto por Transbank al fallar init_transaction" class="tbk-label-info">?</span>
@@ -164,7 +171,7 @@
                     <span class="tbk_table_trans error_content"></span>
                 </div>
             </div>
-            
+
             <div class="tbk-grid-container" id="row_error_detail" style="display:none">
                 <div class="tbk_column_title" >
                 <span title="Detalle del error devuelto por Transbank al fallar init_transaction" class="tbk-label-info">?</span>
@@ -177,17 +184,6 @@
 
         </div>
 
-    </div>
-
-    <div id="modal_php_info" class="tbk-tab-content" >
-        <a class="btn btn-sm btn-primary" href='<?php echo $this->tbk_data['url_create_pdf_php_info']; ?>' target="_blank">
-            Crear PHP info
-        </a>
-        <br>
-        <br>
-        <span style="font-size: 10px; font-family:monospace; display: block; background: white;overflow: hidden; width: 90%;" >
-            <?php echo $this->tbk_data['php_info']; ?>
-        </span>
     </div>
 
     <div id="modal_logs" class="tbk-tab-content" >
@@ -219,7 +215,10 @@
                     <?php
                     $logs_list = $this->tbk_data['logs_list'];
                     foreach ($logs_list as $index){
-                    echo '<li>'.$index.'</li>';
+                        $item = <<<HTML
+                            <li>$index</li>
+                            HTML;
+                        echo $item;
                     }
                     ?>
                 </ul>

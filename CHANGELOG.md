@@ -4,6 +4,29 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [2.2.1] - 2024-04-22
+## Fixed
+- Se corrige el valor de path_config para que sea aceptado desde las versiones 2.4.6 en adelante.
+- Se corrige el test de conexión en entorno de producción.
+- Se corrige el registro de los datos de la transacción en la base de datos para Oneclick.
+
+# [2.2.0] - 2024-04-12
+## Fixed
+- Se corrige el retorno de una inscripción Oneclick cuando es rechazada por el usuario.
+- Se corrige el retorno de transacción Webpay Plus cuando es rechazada por el usuario.
+- Se modifica la vista de configuración del plugin.
+- Se corrige bug de vista duplicada al listar tarjetas desde el administrador de cuenta de usuario.
+- Se corrige un bug relacionado a cancelaciones simultáneas en el formulario de Transbank.
+## Added
+- Se muestra ahora la última versión del plugin disponible desde la vista de diagnóstico.
+- Se agrega la opción de reembolso parcial para Oneclick.
+- Se agrega reembolso parcial y total para Webpay Plus.
+
+## Changed
+- Se quita el servicio para recolectar métricas.
+- Se modifica el campo de API Key a tipo password.
+- Se mejora la gestión de la clase de logs.
+- Se remueven referencias deprecadas a la integración con SOAP.
 
 # [2.1.5] - 2023-03-24
 ## Added
