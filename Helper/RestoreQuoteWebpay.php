@@ -37,15 +37,19 @@ class RestoreQuoteWebpay extends AbstractHelper
 
     public function replaceQuoteAfterRedirection($quote)
     {
-
-        $this->quoteRepository->get($this->checkoutSession->getQuoteId())->setIsActive(false)->save();
+        $quote->setIsActive(false)->save();
 
         $newQuote = $this->quoteFactory->create();
         $newQuote->merge($quote);
+        $newQuote->setStoreId($this->checkoutSession->getStoreId());
         $newQuote->setIsActive(true)->collectTotals();
         $this->quoteRepository->save($newQuote);
+        $this->checkoutSession->clearStorage();
         $this->checkoutSession->replaceQuote($newQuote);
+        $this->checkoutSession->setQuoteId($newQuote->getId());
         $this->setGuestData($quote);
+
+        return $newQuote;
     }
 
     protected function restoreShippingInformation($oldQuote, $newQuote)
