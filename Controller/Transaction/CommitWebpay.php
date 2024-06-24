@@ -156,6 +156,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
         $commitResponse = $transbankSdkWebpay->commitTransaction($token);
 
+        if (is_array($commitResponse) && isset($commitResponse['error'])) {
+            $this->handleFlowError($token);
+        }
+
         $webpayOrderData->setMetadata(json_encode($commitResponse));
 
         if ($commitResponse->isApproved()) {
