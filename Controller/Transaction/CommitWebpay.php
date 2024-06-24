@@ -35,6 +35,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $resultJsonFactory;
     protected $resultRawFactory;
     protected $resultPageFactory;
+    protected $eventManager;
     protected $webpayOrderDataFactory;
     protected $log;
 
@@ -46,6 +47,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
@@ -57,6 +59,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
         $this->resultPageFactory = $resultPageFactory;
+        $this->eventManager = $eventManager;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
@@ -238,6 +241,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->save();
 
         $this->log->logInfo('Orden aprobada => Token: ' . $token);
+
+        $this->eventManager->dispatch(
+            'checkout_onepage_controller_success_action',
+            ['order' => $order]
+        );
 
         $responseData = TbkResponseHelper::getWebpayFormattedResponse($commitResponse);
 
