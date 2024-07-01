@@ -6,6 +6,8 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\RestoreQuoteWebpay;
+use Magento\Quote\Model\QuoteRepository;
 
 /**
  * Controller for create transaction Webpay.
@@ -20,6 +22,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     protected $storeManager;
     protected $webpayOrderDataFactory;
     protected $log;
+    protected $quoteRepository;
+    protected $restoreQuoteWebpay;
 
     /**
      * CreateWebpayM22 constructor.
@@ -32,6 +36,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
      * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
+     * @param \Magento\Quote\Model\QuoteRepository             $quoteRepository,
+     * @param \Transbank\Webpay\Helper\RestoreQuoteWebpay      $restoreQuoteWebpay
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -41,7 +47,9 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        \Magento\Quote\Model\QuoteRepository $quoteRepository,
+        \Transbank\Webpay\Helper\RestoreQuoteWebpay $restoreQuoteWebpay
     ) {
         parent::__construct($context);
 
@@ -53,6 +61,8 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
+        $this->quoteRepository = $quoteRepository;
+        $this->restoreQuoteWebpay = $restoreQuoteWebpay;
     }
 
     /**
@@ -62,7 +72,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      */
     public function execute()
     {
-
         $this->log->logInfo('B.1. Iniciando medio de pago Webpay Plus');
 
         $response = null;
@@ -76,8 +85,9 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $config = $this->configProvider->getPluginConfig();
 
+            $this->restoreQuote();
+
             $tmpOrder = $this->getOrder();
-            $this->checkoutSession->restoreQuote();
 
             $quote = $this->cart->getQuote();
 
@@ -102,7 +112,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
-            $returnUrl = $baseUrl.$config['URL_RETURN'];
+            $returnUrl = $baseUrl . $config['URL_RETURN'];
             $quoteId = $quote->getId();
             $orderId = $this->getOrderId();
 
@@ -110,11 +120,11 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
             $this->log->logInfo('B.2. Preparando datos antes de crear la transacción en Transbank');
-            $this->log->logInfo('amount: '.$grandTotal.', sessionId: '.$quoteId.', buyOrder: '.$orderId.', returnUrl: '.$returnUrl);
+            $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', buyOrder: ' . $orderId . ', returnUrl: ' . $returnUrl);
             $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $orderId, $returnUrl);
 
             $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId];
-            $message = '<h3>Esperando pago con Webpay</h3><br>'.json_encode($dataLog);
+            $message = '<h3>Esperando pago con Webpay</h3><br>' . json_encode($dataLog);
 
             if (isset($response['token_ws'])) {
                 $this->saveWebpayData(
@@ -133,18 +143,15 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
                 $order->cancel();
                 $order->save();
                 $order->setStatus($orderStatusCanceled);
-                $message = '<h3>Error en pago con Webpay</h3><br>'.json_encode($response);
+                $message = '<h3>Error en pago con Webpay</h3><br>' . json_encode($response);
                 $this->log->logError('B.3. Transacción creada con error en Transbank');
                 $this->log->logError(json_encode($response));
             }
 
             $order->addStatusToHistory($order->getStatus(), $message);
             $order->save();
-
-            $this->checkoutSession->getQuote()->setIsActive(true)->save();
-            $this->cart->getQuote()->setIsActive(true)->save();
         } catch (\Exception $e) {
-            $message = 'Error al crear transacción: '.$e->getMessage();
+            $message = 'Error al crear transacción: ' . $e->getMessage();
             $this->log->logError($message);
             $response = ['error' => $message];
             if ($order != null) {
@@ -160,6 +167,27 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $result->setData($response);
 
         return $result;
+    }
+
+    /**
+     * Restore quote.
+     */
+    private function restoreQuote()
+    {
+        $lastRealOrder = $this->checkoutSession->getLastRealOrder();
+        try {
+            $quote = $this->quoteRepository->get($lastRealOrder->getQuoteId());
+
+            $quote->setIsActive(1)->setReservedOrderId(null);
+            $this->quoteRepository->save($quote);
+            $this->checkoutSession->replaceQuote($quote)->unsLastRealOrderId();
+            $this->restoreQuoteWebpay->setGuestData($quote);
+
+            $this->checkoutSession->restoreQuote();
+        } catch (\Exception $e) {
+            $message = 'Error al recuperar el carrito: ' . $e->getMessage();
+            $this->log->logError($message);
+        }
     }
 
     /**

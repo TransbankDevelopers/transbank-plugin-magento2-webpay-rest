@@ -11,6 +11,7 @@ use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
+use Transbank\Webpay\Helper\RestoreQuoteWebpay;
 
 /**
  * Controller for commit transaction Webpay.
@@ -38,6 +39,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $eventManager;
     protected $webpayOrderDataFactory;
     protected $log;
+    protected $restoreQuoteWebpay;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -49,7 +51,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        \Transbank\Webpay\Helper\RestoreQuoteWebpay $restoreQuoteWebpay
     ) {
         parent::__construct($context);
 
@@ -64,6 +67,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
+        $this->restoreQuoteWebpay = $restoreQuoteWebpay;
     }
 
     /**
@@ -74,7 +78,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         try {
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
-
             $this->log->logInfo('Procesando retorno desde formulario de Webpay.');
             $this->log->logInfo('Request: method -> ' . $requestMethod);
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
@@ -354,7 +357,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function redirectWithErrorMessage(string $message)
     {
-        $this->checkoutSession->restoreQuote();
         $this->messageManager->addErrorMessage(__($message));
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
@@ -366,6 +368,15 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->setStatus($orderStatusCanceled);
         $order->addStatusToHistory($order->getStatus(), $message);
         $order->save();
+        $quote = $this->checkoutSession->getQuote();
+
+        $isGuest = $quote->getCustomerIsGuest();
+        $storeId = $order->getStoreId();
+
+        $newQuote = $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote, $isGuest, $storeId);
+
+        $this->checkoutSession->replaceQuote($newQuote);
+        $this->cart->setQuote($newQuote);
     }
 
     private function checkTransactionIsAlreadyProcessed($token): bool
