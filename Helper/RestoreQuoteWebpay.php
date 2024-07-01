@@ -35,19 +35,23 @@ class RestoreQuoteWebpay extends AbstractHelper
         $this->customerRepository = $customerRepository;
     }
 
-    public function replaceQuoteAfterRedirection($quote)
+    public function replaceQuoteAfterRedirection($quote, $isGuest, $storeId)
     {
         $quote->setIsActive(false)->save();
 
         $newQuote = $this->quoteFactory->create();
         $newQuote->merge($quote);
-        $newQuote->setStoreId($this->checkoutSession->getStoreId());
         $newQuote->setIsActive(true)->collectTotals();
+
+        if (!$isGuest) {
+            $customer = $this->customerRepository->getById($quote->getCustomerId());
+            $newQuote->assignCustomer($customer)->save();
+            $newQuote->setStoreId($storeId);
+        }
+
         $this->quoteRepository->save($newQuote);
         $this->checkoutSession->clearStorage();
         $this->checkoutSession->replaceQuote($newQuote);
-        $this->checkoutSession->setQuoteId($newQuote->getId());
-        $this->setGuestData($quote);
 
         return $newQuote;
     }
@@ -77,20 +81,11 @@ class RestoreQuoteWebpay extends AbstractHelper
 
     public function setGuestData($oldQuote)
     {
-
-        $customerId = $oldQuote->getCustomerId();
         $isGuest = $oldQuote->getCustomerIsGuest();
 
-        if ($customerId && $isGuest == 1) {
-            $oldQuote->setCustomerIsGuest(false);
-            $oldQuote->save();
-        }
-
-        $newQuote = $this->checkoutSession->getQuote();
-
-        if ($isGuest == 1) {
-            $this->restoreShippingInformation($oldQuote, $newQuote);
-        } else {
+        if (!$isGuest) {
+            $customerId = $oldQuote->getCustomerId();
+            $newQuote = $this->checkoutSession->getQuote();
             $customer = $this->customerRepository->getById($customerId);
             $newQuote->assignCustomer($customer)->save();
         }
