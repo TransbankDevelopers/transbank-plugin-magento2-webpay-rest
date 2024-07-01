@@ -345,7 +345,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function redirectWithErrorMessage(string $message)
     {
-        $this->checkoutSession->restoreQuote();
         $this->messageManager->addErrorMessage(__($message));
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
@@ -358,11 +357,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->addStatusToHistory($order->getStatus(), $message);
         $order->save();
         $quote = $this->checkoutSession->getQuote();
-        $newQuote = $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote);
 
+        $isGuest = $quote->getCustomerIsGuest();
+        $storeId = $order->getStoreId();
+
+        $newQuote = $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote, $isGuest, $storeId);
+
+        $this->checkoutSession->replaceQuote($newQuote);
         $this->cart->setQuote($newQuote);
-
-        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
     private function checkTransactionIsAlreadyProcessed($token): bool
