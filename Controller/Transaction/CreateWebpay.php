@@ -88,7 +88,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             $this->restoreQuote();
 
             $tmpOrder = $this->getOrder();
-            $this->checkoutSession->restoreQuote();
 
             $quote = $this->cart->getQuote();
 
@@ -179,18 +178,12 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         try {
             $quote = $this->quoteRepository->get($lastRealOrder->getQuoteId());
 
-            if ($lastRealOrder->getId() && $lastRealOrder->getState() != \Magento\Sales\Model\Order::STATE_CANCELED) {
-                $quote->setIsActive(1)->setReservedOrderId(null);
-                $this->quoteRepository->save($quote);
-                $this->checkoutSession->replaceQuote($quote)->unsLastRealOrderId();
-                if ($lastRealOrder->getCustomerId()) {
-                    $this->restoreQuoteWebpay->setGuestData($quote);
-                }
-            } else {
-                $quote->setIsActive(0);
-                $this->quoteRepository->save($quote);
-                $this->checkoutSession->replaceQuote($this->checkoutSession->getQuote());
-            }
+            $quote->setIsActive(1)->setReservedOrderId(null);
+            $this->quoteRepository->save($quote);
+            $this->checkoutSession->replaceQuote($quote)->unsLastRealOrderId();
+            $this->restoreQuoteWebpay->setGuestData($quote);
+
+            $this->checkoutSession->restoreQuote();
         } catch (\Exception $e) {
             $message = 'Error al recuperar el carrito: ' . $e->getMessage();
             $this->log->logError($message);
