@@ -11,7 +11,6 @@ use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
-use Transbank\Webpay\Helper\RestoreQuoteWebpay;
 
 /**
  * Controller for commit transaction Webpay.
@@ -38,7 +37,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $resultPageFactory;
     protected $webpayOrderDataFactory;
     protected $log;
-    protected $restoreQuoteWebpay;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -50,7 +48,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        \Transbank\Webpay\Helper\RestoreQuoteWebpay $restoreQuoteWebpay
     ) {
         parent::__construct($context);
 
@@ -64,7 +61,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
-        $this->restoreQuoteWebpay = $restoreQuoteWebpay;
     }
 
     /**
@@ -356,15 +352,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->setStatus($orderStatusCanceled);
         $order->addStatusToHistory($order->getStatus(), $message);
         $order->save();
-        $quote = $this->checkoutSession->getQuote();
-
-        $isGuest = $quote->getCustomerIsGuest();
-        $storeId = $order->getStoreId();
-
-        $newQuote = $this->restoreQuoteWebpay->replaceQuoteAfterRedirection($quote, $isGuest, $storeId);
-
-        $this->checkoutSession->replaceQuote($newQuote);
-        $this->cart->setQuote($newQuote);
     }
 
     private function checkTransactionIsAlreadyProcessed($token): bool

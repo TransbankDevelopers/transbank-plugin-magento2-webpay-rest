@@ -6,7 +6,6 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Helper\RestoreQuoteWebpay;
 use Magento\Quote\Model\QuoteRepository;
 
 /**
@@ -23,7 +22,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     protected $webpayOrderDataFactory;
     protected $log;
     protected $quoteRepository;
-    protected $restoreQuoteWebpay;
 
     /**
      * CreateWebpayM22 constructor.
@@ -34,10 +32,9 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
-     * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
+     * @param \Transbank\Webpay\Model\Config\ConfigProvider      $configProvider
      * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
-     * @param \Magento\Quote\Model\QuoteRepository             $quoteRepository,
-     * @param \Transbank\Webpay\Helper\RestoreQuoteWebpay      $restoreQuoteWebpay
+     * @param \Magento\Quote\Model\QuoteRepository             $quoteRepository
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -49,7 +46,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
         \Magento\Quote\Model\QuoteRepository $quoteRepository,
-        \Transbank\Webpay\Helper\RestoreQuoteWebpay $restoreQuoteWebpay
     ) {
         parent::__construct($context);
 
@@ -62,7 +58,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
         $this->quoteRepository = $quoteRepository;
-        $this->restoreQuoteWebpay = $restoreQuoteWebpay;
     }
 
     /**
@@ -84,8 +79,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;
 
             $config = $this->configProvider->getPluginConfig();
-
-            $this->restoreQuote();
 
             $tmpOrder = $this->getOrder();
 
@@ -167,27 +160,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $result->setData($response);
 
         return $result;
-    }
-
-    /**
-     * Restore quote.
-     */
-    private function restoreQuote()
-    {
-        $lastRealOrder = $this->checkoutSession->getLastRealOrder();
-        try {
-            $quote = $this->quoteRepository->get($lastRealOrder->getQuoteId());
-
-            $quote->setIsActive(1)->setReservedOrderId(null);
-            $this->quoteRepository->save($quote);
-            $this->checkoutSession->replaceQuote($quote)->unsLastRealOrderId();
-            $this->restoreQuoteWebpay->setGuestData($quote);
-
-            $this->checkoutSession->restoreQuote();
-        } catch (\Exception $e) {
-            $message = 'Error al recuperar el carrito: ' . $e->getMessage();
-            $this->log->logError($message);
-        }
     }
 
     /**
