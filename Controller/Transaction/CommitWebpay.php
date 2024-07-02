@@ -35,6 +35,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $resultJsonFactory;
     protected $resultRawFactory;
     protected $resultPageFactory;
+    protected $quoteFactory;
     protected $webpayOrderDataFactory;
     protected $log;
 
@@ -46,6 +47,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
+        \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
     ) {
@@ -57,6 +59,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
         $this->resultPageFactory = $resultPageFactory;
+        $this->quoteFactory = $quoteFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
@@ -254,8 +257,9 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $commitHistoryComment = $this->createCommitHistoryComment($commitResponse);
         $this->cancelOrder($order, $commitHistoryComment);
-
         $this->log->logInfo('Orden cancelada => Token: ' . $token);
+
+        $this->processQuoteForCancelOrder($order);
 
         return $this->redirectWithErrorMessage($message);
     }
@@ -275,6 +279,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         if ($order != null) {
             $this->cancelOrder($order, $message);
             $this->log->logInfo('Orden cancelada => Token: ' . $token);
+
+            $this->processQuoteForCancelOrder($order);
         }
 
         return $this->redirectWithErrorMessage($message);
@@ -352,6 +358,27 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->setStatus($orderStatusCanceled);
         $order->addStatusToHistory($order->getStatus(), $message);
         $order->save();
+    }
+
+    public function processQuoteForCancelOrder(Order $order)
+    {
+        $quote = $this->quoteFactory->create()->load($order->getQuoteId());
+        if ($quote->getId()) {
+            $quote->setIsActive(false);
+            $quote->setReservedOrderId(null);
+            $quote->save();
+
+            $newQuote = $this->quoteFactory->create();
+            $newQuote->merge($quote)
+                ->setIsActive(true)
+                ->setStoreId($quote->getStoreId())
+                ->setCustomer($quote->getCustomer())
+                ->save();
+
+            $this->checkoutSession->replaceQuote($newQuote);
+            $this->cart->setQuote($newQuote);
+            $this->cart->saveQuote();
+        }
     }
 
     private function checkTransactionIsAlreadyProcessed($token): bool

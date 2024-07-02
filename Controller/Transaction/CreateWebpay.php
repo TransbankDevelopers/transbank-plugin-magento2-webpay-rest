@@ -82,7 +82,11 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $tmpOrder = $this->getOrder();
 
-            $quote = $this->cart->getQuote();
+            $quote = $this->checkoutSession->getQuote();
+            if (!$quote->getId()) {
+                $this->checkoutSession->restoreQuote();
+                $quote = $this->checkoutSession->getQuote();
+            }
 
             if ($guestEmail != null) {
                 $this->setQuoteData($quote, $guestEmail);
