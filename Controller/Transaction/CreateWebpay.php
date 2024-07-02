@@ -6,7 +6,6 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
-use Magento\Quote\Model\QuoteRepository;
 
 /**
  * Controller for create transaction Webpay.
@@ -34,7 +33,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider      $configProvider
      * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
-     * @param \Magento\Quote\Model\QuoteRepository             $quoteRepository
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -45,7 +43,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        \Magento\Quote\Model\QuoteRepository $quoteRepository,
     ) {
         parent::__construct($context);
 
@@ -57,7 +54,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
-        $this->quoteRepository = $quoteRepository;
     }
 
     /**
