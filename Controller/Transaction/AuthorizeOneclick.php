@@ -96,6 +96,8 @@ class AuthorizeOneclick extends Action
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
         $oneclickTitle = $this->configProvider->getOneclickTitle();
+        $cookieName = 'AUTHORIZE_TRANSACTION-BUY-ORDER:';
+        $cookieIdForBuyOrder = "";
 
         try {
             $resultJson = $this->resultJsonFactory->create();
@@ -113,14 +115,37 @@ class AuthorizeOneclick extends Action
             $this->checkoutSession->restoreQuote();
 
             $quote = $this->cart->getQuote();
-
-            $quote->getPayment()->importData(['method' => Oneclick::CODE]);
-            $quote->collectTotals();
             $order = $this->getOrder();
-            $grandTotal = round($order->getGrandTotal());
 
             $quoteId = $quote->getId();
             $orderId = $order->getId();
+            $orderStatus = $order->getStatus();
+
+            if ($orderStatus == $orderStatusCanceled) {
+                $this->log->logInfo('Cancelando flujo ya que la transaccion ya esta cancelada');
+                $this->messageManager->addErrorMessage(__('Error al autorizar la transacción'));
+                return $resultJson->setData(['status' => 'error', 'message' => 'Esta transacción ha sido cancelada', 'flag' => 0]);
+            }
+
+            if ($orderStatus == $orderStatusSuccess) {
+                $this->log->logInfo('Cancelando flujo ya que la transaccion ya esta autorizada');
+                $this->messageManager->addErrorMessage(__('Error al autorizar la transacción'));
+                return $resultJson->setData(['status' => 'error', 'message' => 'Esta transacción ya ha sido autorizada', 'flag' => 0]);
+            }
+
+            $cookieIdForBuyOrder = $cookieName . $orderId;
+
+            if (isset($_COOKIE[$cookieIdForBuyOrder])) {
+                $this->log->logInfo('Cancelando flujo ya que la transaccion ya esta en proceso');
+                $this->messageManager->addErrorMessage(__('Error al autorizar la transacción'));
+                return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción', 'flag' => 0]);
+            }
+
+            setcookie($cookieIdForBuyOrder, 'true', time() + 100, '/');
+
+            $quote->getPayment()->importData(['method' => Oneclick::CODE]);
+            $quote->collectTotals();
+            $grandTotal = round($order->getGrandTotal());
 
             $quote->save();
 
@@ -207,10 +232,13 @@ class AuthorizeOneclick extends Action
                 $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                 $this->messageManager->addErrorMessage(__($message));
 
+                setcookie($cookieIdForBuyOrder, '', time() - 1000, '/');
                 return $this->resultRedirectFactory->create()->setPath('checkout/cart');
             }
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: ' . $e->getMessage();
+
+            setcookie($cookieIdForBuyOrder, '', time() - 1000, '/');
 
             $this->log->logError($message);
             $response = ['error' => $message];
