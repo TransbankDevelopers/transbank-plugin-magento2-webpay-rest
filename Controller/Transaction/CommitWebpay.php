@@ -49,7 +49,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
         parent::__construct($context);
 

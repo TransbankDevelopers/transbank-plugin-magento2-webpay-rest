@@ -42,7 +42,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
     ) {
         parent::__construct($context);
 
