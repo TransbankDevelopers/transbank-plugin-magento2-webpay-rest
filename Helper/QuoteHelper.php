@@ -3,7 +3,6 @@
 namespace Transbank\Webpay\Helper;
 
 use Magento\Checkout\Model\Cart;
-use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Session;
 use Magento\Quote\Model\QuoteFactory;
 
