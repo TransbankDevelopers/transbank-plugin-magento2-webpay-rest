@@ -196,7 +196,7 @@ class AuthorizeOneclick extends Action
 
                 $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
-                $message = TbkResponseHelper::getRejectMessage($response, "Oneclick Mall");
+                $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                 $this->messageManager->addErrorMessage(__($message));
 
                 return $this->resultRedirectFactory->create()->setPath('checkout/cart');
