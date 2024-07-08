@@ -9,6 +9,7 @@ use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
@@ -29,42 +30,36 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     const WEBPAY_EXCEPTION_FLOW_MESSAGE = 'No se pudo procesar el pago.';
 
     protected $configProvider;
-    protected $quoteRepository;
-    protected $cart;
     protected $checkoutSession;
     protected $resultJsonFactory;
     protected $resultRawFactory;
     protected $resultPageFactory;
-    protected $quoteFactory;
     protected $webpayOrderDataFactory;
     protected $log;
     protected $messageManager;
+    private $quoteHelper;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Cart $cart,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        QuoteHelper $quoteHelper
     ) {
         parent::__construct($context);
 
-        $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
-        $this->quoteRepository = $quoteRepository;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
         $this->resultPageFactory = $resultPageFactory;
-        $this->quoteFactory = $quoteFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
+        $this->quoteHelper = $quoteHelper;
     }
 
     /**
@@ -260,7 +255,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->cancelOrder($order, $commitHistoryComment);
         $this->log->logInfo('Orden cancelada => Token: ' . $token);
 
-        $this->processQuoteForCancelOrder($order);
+        $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
         return $this->redirectWithErrorMessage($message);
     }
@@ -281,7 +276,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $this->cancelOrder($order, $message);
             $this->log->logInfo('Orden cancelada => Token: ' . $token);
 
-            $this->processQuoteForCancelOrder($order);
+            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
         }
 
         return $this->redirectWithErrorMessage($message);
@@ -359,27 +354,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->setStatus($orderStatusCanceled);
         $order->addStatusToHistory($order->getStatus(), $message);
         $order->save();
-    }
-
-    public function processQuoteForCancelOrder(Order $order)
-    {
-        $quote = $this->quoteFactory->create()->load($order->getQuoteId());
-        if ($quote->getId()) {
-            $quote->setIsActive(false);
-            $quote->setReservedOrderId(null);
-            $quote->save();
-
-            $newQuote = $this->quoteFactory->create();
-            $newQuote->merge($quote)
-                ->setIsActive(true)
-                ->setStoreId($quote->getStoreId())
-                ->setCustomer($quote->getCustomer())
-                ->save();
-
-            $this->checkoutSession->replaceQuote($newQuote);
-            $this->cart->setQuote($newQuote);
-            $this->cart->saveQuote();
-        }
     }
 
     private function checkTransactionIsAlreadyProcessed($token): bool

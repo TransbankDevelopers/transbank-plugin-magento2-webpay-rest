@@ -21,6 +21,7 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
+use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 
 
@@ -40,6 +41,7 @@ class AuthorizeOneclick extends Action
     private $resultPageFactory;
     protected $messageManager;
     private $oneclickConfig;
+    private $quoteHelper;
 
     /**
      * AuthorizeOneclick constructor.
@@ -62,7 +64,8 @@ class AuthorizeOneclick extends Action
         ConfigProvider $configProvider,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
-        ManagerInterface $messageManager
+        ManagerInterface $messageManager,
+        QuoteHelper $quoteHelper
     ) {
         parent::__construct($context);
 
@@ -76,6 +79,7 @@ class AuthorizeOneclick extends Action
         $this->resultPageFactory = $resultPageFactory;
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
+        $this->quoteHelper = $quoteHelper;
     }
 
     /**
@@ -190,7 +194,7 @@ class AuthorizeOneclick extends Action
                 $order->cancel();
                 $order->save();
 
-                $this->checkoutSession->restoreQuote();
+                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
                 $message = TbkResponseHelper::getRejectMessage($response, "Oneclick Mall");
                 $this->messageManager->addErrorMessage(__($message));
@@ -208,6 +212,7 @@ class AuthorizeOneclick extends Action
                 $order->setStatus($orderStatusCanceled);
                 $order->addStatusToHistory($order->getStatus(), $message);
                 $order->save();
+                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
             }
 
             $this->messageManager->addErrorMessage($e->getMessage());
