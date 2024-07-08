@@ -290,6 +290,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logError($exception->getMessage());
         $this->log->logError($exception->getTraceAsString());
 
+        $order = $this->checkoutSession->getLastRealOrder();
+        if($order->getId()) {
+            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+        }
+
         return $this->redirectWithErrorMessage($message);
     }
 
