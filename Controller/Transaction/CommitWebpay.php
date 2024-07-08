@@ -9,6 +9,7 @@ use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
@@ -29,8 +30,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     const WEBPAY_EXCEPTION_FLOW_MESSAGE = 'No se pudo procesar el pago.';
 
     protected $configProvider;
-    protected $quoteRepository;
-    protected $cart;
     protected $checkoutSession;
     protected $resultJsonFactory;
     protected $resultRawFactory;
@@ -38,24 +37,23 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $eventManager;
     protected $webpayOrderDataFactory;
     protected $log;
+    protected $messageManager;
+    private $quoteHelper;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Cart $cart,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        QuoteHelper $quoteHelper
     ) {
         parent::__construct($context);
 
-        $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
-        $this->quoteRepository = $quoteRepository;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
         $this->resultPageFactory = $resultPageFactory;
@@ -64,6 +62,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
+        $this->quoteHelper = $quoteHelper;
     }
 
     /**
@@ -74,7 +73,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         try {
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
-
             $this->log->logInfo('Procesando retorno desde formulario de Webpay.');
             $this->log->logInfo('Request: method -> ' . $requestMethod);
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
@@ -267,8 +265,9 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $commitHistoryComment = $this->createCommitHistoryComment($commitResponse);
         $this->cancelOrder($order, $commitHistoryComment);
-
         $this->log->logInfo('Orden cancelada => Token: ' . $token);
+
+        $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
         return $this->redirectWithErrorMessage($message);
     }
@@ -288,6 +287,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         if ($order != null) {
             $this->cancelOrder($order, $message);
             $this->log->logInfo('Orden cancelada => Token: ' . $token);
+
+            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
         }
 
         return $this->redirectWithErrorMessage($message);
@@ -300,6 +301,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logError('Error al procesar el pago: ');
         $this->log->logError($exception->getMessage());
         $this->log->logError($exception->getTraceAsString());
+
+        $order = $this->checkoutSession->getLastRealOrder();
+        if ($order->getId()) {
+            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+        }
 
         return $this->redirectWithErrorMessage($message);
     }
@@ -354,7 +360,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function redirectWithErrorMessage(string $message)
     {
-        $this->checkoutSession->restoreQuote();
         $this->messageManager->addErrorMessage(__($message));
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }

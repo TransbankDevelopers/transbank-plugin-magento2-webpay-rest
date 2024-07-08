@@ -21,7 +21,7 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
-use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
+use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 
 
@@ -42,6 +42,7 @@ class AuthorizeOneclick extends Action
     protected $eventManager;
     protected $messageManager;
     private $oneclickConfig;
+    private $quoteHelper;
 
     /**
      * AuthorizeOneclick constructor.
@@ -65,7 +66,8 @@ class AuthorizeOneclick extends Action
         EventManagerInterface $eventManager,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
-        ManagerInterface $messageManager
+        ManagerInterface $messageManager,
+        QuoteHelper $quoteHelper
     ) {
         parent::__construct($context);
 
@@ -80,6 +82,7 @@ class AuthorizeOneclick extends Action
         $this->eventManager = $eventManager;
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
+        $this->quoteHelper = $quoteHelper;
     }
 
     /**
@@ -199,9 +202,9 @@ class AuthorizeOneclick extends Action
                 $order->cancel();
                 $order->save();
 
-                $this->checkoutSession->restoreQuote();
+                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
-                $message = TbkResponseHelper::getRejectMessage($response, "Oneclick Mall");
+                $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                 $this->messageManager->addErrorMessage(__($message));
 
                 return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -217,6 +220,7 @@ class AuthorizeOneclick extends Action
                 $order->setStatus($orderStatusCanceled);
                 $order->addStatusToHistory($order->getStatus(), $message);
                 $order->save();
+                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
             }
 
             $this->messageManager->addErrorMessage($e->getMessage());
