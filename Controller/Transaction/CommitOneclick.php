@@ -43,6 +43,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected $resultRawFactory;
     protected $oneclickInscriptionDataFactory;
     protected $log;
+    protected $messageManager;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,

@@ -38,6 +38,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $quoteFactory;
     protected $webpayOrderDataFactory;
     protected $log;
+    protected $messageManager;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
