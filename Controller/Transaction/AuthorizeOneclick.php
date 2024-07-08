@@ -232,13 +232,13 @@ class AuthorizeOneclick extends Action
                 $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                 $this->messageManager->addErrorMessage(__($message));
 
-                setcookie($cookieIdForBuyOrder, '', time() - 1000, '/', true, true);
+                setcookie($cookieIdForBuyOrder, '', time() - 1000, '/', true, true, true);
                 return $this->resultRedirectFactory->create()->setPath('checkout/cart');
             }
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: ' . $e->getMessage();
 
-            setcookie($cookieIdForBuyOrder, '', time() - 1000, '/', true, true);
+            setcookie($cookieIdForBuyOrder, '', time() - 1000, '/', true, true, true);
 
             $this->log->logError($message);
             $response = ['error' => $message];
