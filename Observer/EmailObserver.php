@@ -13,7 +13,6 @@ class EmailObserver extends SuccessObserver implements ObserverInterface
         $order = $observer->getEvent()->getOrder();
 
         if ($emailSettings == 'transbank' || $oneclickEmailSettings == 'transbank') {
-            $this->_current_order = $order;
             $order->setCanSendNewEmailFlag(true);
             $order->save();
 

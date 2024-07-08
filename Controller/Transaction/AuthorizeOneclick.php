@@ -39,6 +39,7 @@ class AuthorizeOneclick extends Action
     private $log;
     private $webpayOrderDataFactory;
     private $resultPageFactory;
+    protected $eventManager;
     protected $messageManager;
     private $oneclickConfig;
     private $quoteHelper;
@@ -62,6 +63,7 @@ class AuthorizeOneclick extends Action
         JsonFactory $resultJsonFactory,
         PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
+        EventManagerInterface $eventManager,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
         ManagerInterface $messageManager,
@@ -77,6 +79,7 @@ class AuthorizeOneclick extends Action
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->resultPageFactory = $resultPageFactory;
+        $this->eventManager = $eventManager;
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
         $this->quoteHelper = $quoteHelper;
@@ -170,6 +173,11 @@ class AuthorizeOneclick extends Action
                 $order->save();
 
                 $this->checkoutSession->getQuote()->setIsActive(false)->save();
+
+                $this->eventManager->dispatch(
+                    'checkout_onepage_controller_success_action',
+                    ['order' => $order]
+                );
 
                 $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
 
