@@ -94,7 +94,6 @@ class AuthorizeOneclick extends Action
     public function execute()
     {
         $response = null;
-        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
         $oneclickTitle = $this->configProvider->getOneclickTitle();
 
@@ -196,13 +195,9 @@ class AuthorizeOneclick extends Action
                     $quoteId,
                 );
 
-                $order->setStatus($orderStatusCanceled);
                 $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($response);
 
-                $order->addStatusToHistory($order->getStatus(), $message);
-                $order->cancel();
-                $order->save();
-
+                $this->cancelOrder($order, $message);
                 $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
                 $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
@@ -217,16 +212,21 @@ class AuthorizeOneclick extends Action
             $response = ['error' => $message];
 
             if ($order != null) {
-                $order->cancel();
-                $order->setStatus($orderStatusCanceled);
-                $order->addStatusToHistory($order->getStatus(), $message);
-                $order->save();
+                $this->cancelOrder($order, $message);
                 $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
             }
 
             $this->messageManager->addErrorMessage($e->getMessage());
             return $this->resultRedirectFactory->create()->setPath('checkout/cart');
         }
+    }
+    private function cancelOrder(Order $order, string $message)
+    {
+        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
+        $order->cancel();
+        $order->setStatus($orderStatusCanceled);
+        $order->addStatusToHistory($order->getStatus(), $message);
+        $order->save();
     }
 
     /**
