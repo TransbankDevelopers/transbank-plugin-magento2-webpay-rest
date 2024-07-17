@@ -1,7 +1,7 @@
 <?php
 
 namespace Transbank\Webpay\Controller\Transaction;
-
+use Exception;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
 use Transbank\Webpay\Model\Oneclick;
@@ -31,6 +31,7 @@ use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
  */
 class AuthorizeOneclick extends Action
 {
+    const ONECLICK_EXCEPTION_FLOW_MESSAGE = 'No se pudo procesar el pago.';
     protected $configProvider;
 
     private $cart;
@@ -203,20 +204,29 @@ class AuthorizeOneclick extends Action
                 $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
                 return $this->redirectWithErrorMessage($message);
             }
-        } catch (\Exception $e) {
-            $message = 'Error al crear transacción: ' . $e->getMessage();
-
-            $this->log->logError($message);
-            $response = ['error' => $message];
-
-            if ($order != null) {
-                $this->cancelOrder($order, $message);
-                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
-            }
-
-            return $this->redirectWithErrorMessage($e->getMessage());
+        } catch (Exception $e) {
+            return $this->handleException($e);
         }
     }
+
+    private function handleException(Exception $exception)
+    {
+        $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
+
+        $this->log->logError('Error al procesar el pago: ');
+        $this->log->logError($exception->getMessage());
+        $this->log->logError($exception->getTraceAsString());
+
+        $order = $this->checkoutSession->getLastRealOrder();
+
+        if ($order->getId()) {
+            $this->cancelOrder($order, $message);
+            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+        }
+
+        return $this->redirectWithErrorMessage($message);
+    }
+
     private function redirectWithErrorMessage(string $message)
     {
         $this->messageManager->addErrorMessage(__($message));
