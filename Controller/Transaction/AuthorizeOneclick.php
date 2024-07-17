@@ -1,6 +1,7 @@
 <?php
 
 namespace Transbank\Webpay\Controller\Transaction;
+
 use Exception;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
@@ -144,7 +145,7 @@ class AuthorizeOneclick extends Action
 
             if (isset($response->details) && $response->details[0]->responseCode == 0) {
 
-                $webpayOrderData = $this->saveWebpayData(
+                $webpayOrderData = $this->saveOneclickData(
                     $response,
                     $grandTotal,
                     OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
@@ -188,7 +189,7 @@ class AuthorizeOneclick extends Action
                 $block->setResponse($formattedResponse);
                 return $resultPage;
             } else {
-                $webpayOrderData = $this->saveWebpayData(
+                $webpayOrderData = $this->saveOneclickData(
                     $response,
                     $grandTotal,
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
@@ -294,7 +295,7 @@ class AuthorizeOneclick extends Action
      *
      * @return WebpayOrderData
      */
-    protected function saveWebpayData($authorizeResponse, $amount, $payment_status, $order_id, $quote_id)
+    protected function saveOneclickData($authorizeResponse, $amount, $payment_status, $order_id, $quote_id)
     {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
