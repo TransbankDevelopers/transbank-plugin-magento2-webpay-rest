@@ -23,6 +23,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
+use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 
 
 /**
