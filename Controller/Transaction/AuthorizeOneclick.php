@@ -201,9 +201,7 @@ class AuthorizeOneclick extends Action
                 $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
                 $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
-                $this->messageManager->addErrorMessage(__($message));
-
-                return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+                return $this->redirectWithErrorMessage($message);
             }
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: ' . $e->getMessage();
@@ -216,10 +214,15 @@ class AuthorizeOneclick extends Action
                 $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
             }
 
-            $this->messageManager->addErrorMessage($e->getMessage());
-            return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+            return $this->redirectWithErrorMessage($e->getMessage());
         }
     }
+    private function redirectWithErrorMessage(string $message)
+    {
+        $this->messageManager->addErrorMessage(__($message));
+        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+    }
+
     private function cancelOrder(Order $order, string $message)
     {
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
