@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Exception;
+use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
 use Transbank\Webpay\Model\Oneclick;
@@ -25,7 +26,7 @@ use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
-
+use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -189,25 +190,33 @@ class AuthorizeOneclick extends Action
                 $block->setResponse($formattedResponse);
                 return $resultPage;
             } else {
-                $webpayOrderData = $this->saveOneclickData(
-                    $response,
-                    $grandTotal,
-                    OneclickInscriptionData::PAYMENT_STATUS_FAILED,
-                    $orderId,
-                    $quoteId,
-                );
-
-                $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($response);
-
-                $this->cancelOrder($order, $message);
-                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
-
-                $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
-                return $this->redirectWithErrorMessage($message);
+                return $this->handleUnauthorizedTransaction($order, $response, $grandTotal);
             }
         } catch (Exception $e) {
             return $this->handleException($e);
         }
+    }
+
+    private function handleUnauthorizedTransaction(
+        Order $order,
+        MallTransactionAuthorizeResponse $authorizeResponse,
+        float $totalAmount
+    ) {
+        $this->saveOneclickData(
+            $authorizeResponse,
+            $totalAmount,
+            OneclickInscriptionData::PAYMENT_STATUS_FAILED,
+            $order->getId(),
+            $order->getQuoteId(),
+        );
+
+        $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
+
+        $this->cancelOrder($order, $message);
+        $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+
+        $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
+        return $this->redirectWithErrorMessage($message);
     }
 
     private function handleException(Exception $exception)

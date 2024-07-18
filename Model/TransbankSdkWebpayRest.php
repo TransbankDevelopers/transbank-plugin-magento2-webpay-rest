@@ -12,6 +12,7 @@ use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
 use Transbank\Webpay\Oneclick;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
+use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 
 /**
  * Class TransbankSdkWebpayRest.
@@ -213,7 +214,7 @@ class TransbankSdkWebpayRest
      *
      * @throws MissingArgumentException
      *
-     * @return array
+     * @return array|MallTransactionAuthorizeResponse
      */
     public function authorizeTransaction($username, $tbkUser, $buyOrder, $details)
     {
