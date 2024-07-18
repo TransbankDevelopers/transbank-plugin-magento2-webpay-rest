@@ -27,6 +27,7 @@ use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -97,13 +98,18 @@ class AuthorizeOneclick extends Action
     public function execute()
     {
         try {
-            $resultJson = $this->resultJsonFactory->create();
-
-            if (isset($_POST['inscription'])) {
-                $inscriptionId = intval($_POST['inscription']);
-            } else {
-                return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción', 'flag' => 0]);
+            if (!isset($_POST['inscription'])) {
+                throw new InvalidRequestException('Petición invalida: Falta el campo inscription');
             }
+
+            $requestMethod = $_SERVER['REQUEST_METHOD'];
+            $request = $requestMethod === 'POST' ? $_POST : $_GET;
+
+            $inscriptionId = intval($request['inscription']);
+
+            $this->log->logInfo('Autorizando transacción Oneclick.');
+            $this->log->logInfo('Request: method -> ' . $requestMethod);
+            $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
             return $this->handleOneclickRequest($inscriptionId);
         } catch (Exception $e) {
