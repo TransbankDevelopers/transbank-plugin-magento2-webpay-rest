@@ -175,20 +175,14 @@ class AuthorizeOneclick extends Action
                 $order->addStatusToHistory($order->getStatus(), $orderLogs);
                 $order->save();
 
-                $this->checkoutSession->getQuote()->setIsActive(false)->save();
-
                 $this->eventManager->dispatch(
                     'checkout_onepage_controller_success_action',
                     ['order' => $order]
                 );
 
-                $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
+                $responseData = TbkResponseHelper::getOneclickFormattedResponse($response);
 
-                $resultPage = $this->resultPageFactory->create();
-                $resultPage->addHandle('transbank_checkout_success');
-                $block = $resultPage->getLayout()->getBlock('transbank_success');
-                $block->setResponse($formattedResponse);
-                return $resultPage;
+                return $this->redirectToSuccess($responseData);
             } else {
                 return $this->handleUnauthorizedTransaction($order, $response, $grandTotal);
             }
@@ -235,6 +229,17 @@ class AuthorizeOneclick extends Action
         }
 
         return $this->redirectWithErrorMessage($message);
+    }
+
+    private function redirectToSuccess(array $responseData)
+    {
+        $this->checkoutSession->getQuote()->setIsActive(false)->save();
+
+        $resultPage = $this->resultPageFactory->create();
+        $resultPage->addHandle('transbank_checkout_success');
+        $block = $resultPage->getLayout()->getBlock('transbank_success');
+        $block->setResponse($responseData);
+        return $resultPage;
     }
 
     private function redirectWithErrorMessage(string $message)
