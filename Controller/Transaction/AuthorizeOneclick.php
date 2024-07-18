@@ -142,53 +142,62 @@ class AuthorizeOneclick extends Action
             ];
 
             $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
-            $dataLog = ['customerId' => $username, 'orderId' => $orderId];
 
             if (isset($response->details) && $response->details[0]->responseCode == 0) {
-
-                $webpayOrderData = $this->saveOneclickData(
-                    $response,
-                    $grandTotal,
-                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
-                    $orderId,
-                    $quoteId
-                );
-
-
-                $this->checkoutSession->setLastQuoteId($quote->getId());
-                $this->checkoutSession->setLastSuccessQuoteId($quote->getId());
-                $this->checkoutSession->setLastOrderId($order->getId());
-                $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
-                $this->checkoutSession->setLastOrderStatus($order->getStatus());
-                $this->checkoutSession->setGrandTotal($grandTotal);
-                $this->checkoutSession->getQuote()->setIsActive(true)->save();
-                $this->cart->getQuote()->setIsActive(true)->save();
-
-                $orderLogs = '<h3>Pago autorizado exitosamente con ' . $oneclickTitle . '</h3><br>' . json_encode($dataLog);
-                $payment = $order->getPayment();
-
-                $payment->setLastTransId($response->details[0]->authorizationCode);
-                $payment->setTransactionId($response->details[0]->authorizationCode);
-                $payment->setAdditionalInformation([Transaction::RAW_DETAILS => (array) $response->details[0]]);
-
-                $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
-                $order->addStatusToHistory($order->getStatus(), $orderLogs);
-                $order->save();
-
-                $this->eventManager->dispatch(
-                    'checkout_onepage_controller_success_action',
-                    ['order' => $order]
-                );
-
-                $responseData = TbkResponseHelper::getOneclickFormattedResponse($response);
-
-                return $this->redirectToSuccess($responseData);
+                return $this->handleAuthorizedTransaction($order, $response, $grandTotal);
             } else {
                 return $this->handleUnauthorizedTransaction($order, $response, $grandTotal);
             }
         } catch (Exception $e) {
             return $this->handleException($e);
         }
+    }
+
+    private function handleAuthorizedTransaction(
+        Order $order,
+        MallTransactionAuthorizeResponse $authorizeResponse,
+        float $totalAmount
+    ) {
+        $quoteId = $order->getQuoteId();
+
+        $this->saveOneclickData(
+            $authorizeResponse,
+            $totalAmount,
+            OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
+            $order->getId(),
+            $quoteId
+        );
+
+
+        $this->checkoutSession->setLastQuoteId($quoteId);
+        $this->checkoutSession->setLastSuccessQuoteId($quoteId);
+        $this->checkoutSession->setLastOrderId($order->getId());
+        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+        $this->checkoutSession->setLastOrderStatus($order->getStatus());
+        $this->checkoutSession->setGrandTotal($totalAmount);
+        $this->checkoutSession->getQuote()->setIsActive(true)->save();
+        $this->cart->getQuote()->setIsActive(true)->save();
+
+        $orderLogs = '<h3>Pago autorizado exitosamente con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
+        $payment = $order->getPayment();
+
+        $payment->setLastTransId($authorizeResponse->details[0]->authorizationCode);
+        $payment->setTransactionId($authorizeResponse->details[0]->authorizationCode);
+        $payment->setAdditionalInformation([Transaction::RAW_DETAILS => (array) $authorizeResponse->details[0]]);
+
+        $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
+        $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
+        $order->addStatusToHistory($order->getStatus(), $orderLogs);
+        $order->save();
+
+        $this->eventManager->dispatch(
+            'checkout_onepage_controller_success_action',
+            ['order' => $order]
+        );
+
+        $responseData = TbkResponseHelper::getOneclickFormattedResponse($authorizeResponse);
+
+        return $this->redirectToSuccess($responseData);
     }
 
     private function handleUnauthorizedTransaction(
@@ -201,7 +210,7 @@ class AuthorizeOneclick extends Action
             $totalAmount,
             OneclickInscriptionData::PAYMENT_STATUS_FAILED,
             $order->getId(),
-            $order->getQuoteId(),
+            $order->getQuoteId()
         );
 
         $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
