@@ -96,10 +96,6 @@ class AuthorizeOneclick extends Action
      */
     public function execute()
     {
-        $response = null;
-        $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
-        $oneclickTitle = $this->configProvider->getOneclickTitle();
-
         try {
             $resultJson = $this->resultJsonFactory->create();
 
@@ -109,47 +105,48 @@ class AuthorizeOneclick extends Action
                 return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción', 'flag' => 0]);
             }
 
-            $inscription = $this->getOneclickInscriptionData($inscriptionId);
-            $username = $inscription->getUsername();
-            $tbkUser = $inscription->getTbkUser();
-
-            $this->checkoutSession->restoreQuote();
-
-            $quote = $this->cart->getQuote();
-
-            $quote->getPayment()->importData(['method' => Oneclick::CODE]);
-            $quote->collectTotals();
-            $order = $this->getOrder();
-            $grandTotal = round($order->getGrandTotal());
-
-            $quoteId = $quote->getId();
-            $orderId = $order->getId();
-
-            $quote->save();
-
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
-
-            $buyOrder = "100000" . $orderId;
-            $childBuyOrder = "200000" . $orderId;
-
-            $details = [
-                [
-                    "commerce_code" => $this->oneclickConfig['CHILD_COMMERCE_CODE'],
-                    "buy_order" => $childBuyOrder,
-                    "amount" => $grandTotal,
-                    "installments_number" => 1
-                ]
-            ];
-
-            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
-
-            if (isset($response->details) && $response->details[0]->responseCode == 0) {
-                return $this->handleAuthorizedTransaction($order, $response, $grandTotal);
-            } else {
-                return $this->handleUnauthorizedTransaction($order, $response, $grandTotal);
-            }
+            return $this->handleOneclickRequest($inscriptionId);
         } catch (Exception $e) {
             return $this->handleException($e);
+        }
+    }
+
+    private function handleOneclickRequest(int $inscriptionId)
+    {
+        $inscription = $this->getOneclickInscriptionData($inscriptionId);
+        $username = $inscription->getUsername();
+        $tbkUser = $inscription->getTbkUser();
+
+        $this->checkoutSession->restoreQuote();
+        $quote = $this->cart->getQuote();
+        $quote->getPayment()->importData(['method' => Oneclick::CODE]);
+        $quote->collectTotals();
+        $quote->save();
+
+        $order = $this->getOrder();
+        $orderId = $order->getId();
+        $grandTotal = round($order->getGrandTotal());
+
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
+
+        $buyOrder = "100000" . $orderId;
+        $childBuyOrder = "200000" . $orderId;
+
+        $details = [
+            [
+                "commerce_code" => $this->oneclickConfig['CHILD_COMMERCE_CODE'],
+                "buy_order" => $childBuyOrder,
+                "amount" => $grandTotal,
+                "installments_number" => 1
+            ]
+        ];
+
+        $authorizeResponse = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
+
+        if (isset($authorizeResponse->details) && $authorizeResponse->details[0]->responseCode == 0) {
+            return $this->handleAuthorizedTransaction($order, $authorizeResponse, $grandTotal);
+        } else {
+            return $this->handleUnauthorizedTransaction($order, $authorizeResponse, $grandTotal);
         }
     }
 
