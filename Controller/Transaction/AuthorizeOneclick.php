@@ -9,9 +9,9 @@ use Magento\Checkout\Model\Session;
 use Transbank\Webpay\Model\Oneclick;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\ObjectManager;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Transbank\Webpay\Model\Config\ConfigProvider;
@@ -129,7 +129,7 @@ class AuthorizeOneclick extends Action
         $quote->collectTotals();
         $quote->save();
 
-        $order = $this->getOrder();
+        $order = $this->getOrder($this->checkoutSession->getLastOrderId());
         $orderId = $order->getId();
         $grandTotal = round($order->getGrandTotal());
 
@@ -270,22 +270,16 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * @return |null
+     * @return Order
      */
-    private function getOrder()
+    private function getOrder($orderId): Order
     {
-        try {
-            $orderId = $this->checkoutSession->getLastOrderId();
-            if ($orderId == null) {
-                return null;
-            }
+        /**
+         * @var Order
+         */
+        $order = ObjectManagerHelper::get(Order::class);
 
-            $objectManager = ObjectManager::getInstance();
-
-            return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
-        } catch (\Exception $e) {
-            return null;
-        }
+        return $order->load($orderId);
     }
 
     /**
