@@ -302,14 +302,6 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * @return string
-     */
-    protected function getOrderId()
-    {
-        return $this->checkoutSession->getLastRealOrderId();
-    }
-
-    /**
      * @param $buyOrder
      * @param $childBuyOrder
      * @param $commerceCode
