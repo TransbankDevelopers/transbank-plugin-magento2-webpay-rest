@@ -19,6 +19,7 @@ use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\ResultInterface;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
+use Transbank\Webpay\Model\WebpayOrderDataRepository;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\Controller\Result\JsonFactory;
@@ -28,6 +29,7 @@ use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
+use Transbank\Webpay\Model\WebpayOrderData;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -43,6 +45,7 @@ class AuthorizeOneclick extends Action
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
+    protected $webpayOrderDataRepository;
     private $resultPageFactory;
     protected $eventManager;
     protected $messageManager;
@@ -71,6 +74,7 @@ class AuthorizeOneclick extends Action
         EventManagerInterface $eventManager,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
+        WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
         QuoteHelper $quoteHelper
     ) {
@@ -83,6 +87,7 @@ class AuthorizeOneclick extends Action
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->webpayOrderDataRepository = $webpayOrderDataRepository;
         $this->resultPageFactory = $resultPageFactory;
         $this->eventManager = $eventManager;
         $this->log = new PluginLogger();
@@ -133,6 +138,10 @@ class AuthorizeOneclick extends Action
         $orderId = $order->getId();
         $grandTotal = round($order->getGrandTotal());
 
+        if ($this->checkTransactionIsAlreadyProcessed($orderId, $quote->getId())) {
+            return $this->handleTransactionAlreadyProcessed($orderId, $quote->getId());
+        }
+
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
 
         $buyOrder = "100000" . $orderId;
@@ -171,7 +180,6 @@ class AuthorizeOneclick extends Action
             $quoteId
         );
 
-
         $this->checkoutSession->setLastQuoteId($quoteId);
         $this->checkoutSession->setLastSuccessQuoteId($quoteId);
         $this->checkoutSession->setLastOrderId($order->getId());
@@ -200,6 +208,8 @@ class AuthorizeOneclick extends Action
 
         $responseData = TbkResponseHelper::getOneclickFormattedResponse($authorizeResponse);
 
+        $this->checkoutSession->getQuote()->setIsActive(false)->save();
+
         return $this->redirectToSuccess($responseData);
     }
 
@@ -225,6 +235,22 @@ class AuthorizeOneclick extends Action
         return $this->redirectWithErrorMessage($message);
     }
 
+    private function handleTransactionAlreadyProcessed($orderId, $quoteId)
+    {
+        $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
+            $status = $webpayOrderData->getPaymentStatus();
+
+            if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
+                $metadata = $webpayOrderData->getMetadata();
+                $response = json_decode($metadata);
+                $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
+
+                return $this->redirectToSuccess($formattedResponse);
+            }
+
+            return $this->redirectWithErrorMessage("La orden ya fue procesada.");
+    }
+
     private function handleException(Exception $exception)
     {
         $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
@@ -245,8 +271,6 @@ class AuthorizeOneclick extends Action
 
     private function redirectToSuccess(array $responseData)
     {
-        $this->checkoutSession->getQuote()->setIsActive(false)->save();
-
         $resultPage = $this->resultPageFactory->create();
         $resultPage->addHandle('transbank_checkout_success');
         $block = $resultPage->getLayout()->getBlock('transbank_success');
@@ -269,6 +293,16 @@ class AuthorizeOneclick extends Action
         $order->save();
     }
 
+    private function checkTransactionIsAlreadyProcessed($orderId, $quoteId): bool
+    {
+        $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
+        $status = $webpayOrderData->getPaymentStatus();
+
+        return $status == WebpayOrderData::PAYMENT_STATUS_SUCCESS ||
+            $status == WebpayOrderData::PAYMENT_STATUS_NULLIFIED ||
+            $status == WebpayOrderData::PAYMENT_STATUS_REVERSED;
+    }
+
     /**
      * @return Order
      */
@@ -280,6 +314,11 @@ class AuthorizeOneclick extends Action
         $order = ObjectManagerHelper::get(Order::class);
 
         return $order->load($orderId);
+    }
+
+    private function getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId)
+    {
+        return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
 
     /**
