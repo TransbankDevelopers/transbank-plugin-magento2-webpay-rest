@@ -3,8 +3,9 @@
 namespace Transbank\Webpay\Model;
 
 use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\DataObject\IdentityInterface;
 
-class WebpayOrderData extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+class WebpayOrderData extends AbstractModel implements IdentityInterface
 {
     const CACHE_TAG = 'webpay_order_data';
     const PAYMENT_STATUS_WATING = 'WAITING';
