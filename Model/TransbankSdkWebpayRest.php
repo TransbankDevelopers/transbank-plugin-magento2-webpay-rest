@@ -56,14 +56,13 @@ class TransbankSdkWebpayRest
             $this->mallInscription = new Oneclick\MallInscription();
             $this->mallTransaction = new Oneclick\MallTransaction();
 
-            $this->log->logInfo('Environment: '.json_encode($environment));
+            $this->log->logInfo('Environment: ' . json_encode($environment));
 
             if ($environment != 'TEST') {
                 $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
                 $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
                 $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
             }
-
         }
     }
 
@@ -84,19 +83,19 @@ class TransbankSdkWebpayRest
         try {
             $txDate = date('d-m-Y');
             $txTime = date('H:i:s');
-            $this->log->logInfo('createTransaction - amount: '.$amount.', sessionId: '.$sessionId.
-                ', buyOrder: '.$buyOrder.', txDate: '.$txDate.', txTime: '.$txTime);
+            $this->log->logInfo('createTransaction - amount: ' . $amount . ', sessionId: ' . $sessionId .
+                ', buyOrder: ' . $buyOrder . ', txDate: ' . $txDate . ', txTime: ' . $txTime);
 
             $createResult = $this->transaction->create($buyOrder, $sessionId, $amount, $returnUrl);
 
-            $this->log->logInfo('createTransaction - createResult: '.json_encode($createResult));
+            $this->log->logInfo('createTransaction - createResult: ' . json_encode($createResult));
             if (isset($createResult) && isset($createResult->url) && isset($createResult->token)) {
                 $result = [
                     'url'      => $createResult->url,
                     'token_ws' => $createResult->token,
                 ];
             } else {
-                throw new TransbankCreateException('No se ha creado la transacción para, amount: '.$amount.', sessionId: '.$sessionId.', buyOrder: '.$buyOrder);
+                throw new TransbankCreateException('No se ha creado la transacción para, amount: ' . $amount . ', sessionId: ' . $sessionId . ', buyOrder: ' . $buyOrder);
             }
         } catch (TransactionCreateException $e) {
             $result = [
@@ -125,7 +124,7 @@ class TransbankSdkWebpayRest
 
             $transaction = $this->transaction->commit($tokenWs);
 
-            $this->log->logInfo('commitTransaction: '.json_encode($transaction));
+            $this->log->logInfo('commitTransaction: ' . json_encode($transaction));
             return $transaction;
         } catch (TransactionCommitException $e) {
             $result = [
@@ -152,19 +151,19 @@ class TransbankSdkWebpayRest
         $result = [];
 
         try {
-            $this->log->logInfo('initInscription - Username: '.$username.', email: '.$email.
-                ', responseUrl: '.$responseUrl);
+            $this->log->logInfo('initInscription - Username: ' . $username . ', email: ' . $email .
+                ', responseUrl: ' . $responseUrl);
 
             $initResult = $this->mallInscription->start($username, $email, $responseUrl);
 
-            $this->log->logInfo('createInscription - initResult: '.json_encode($initResult));
+            $this->log->logInfo('createInscription - initResult: ' . json_encode($initResult));
             if (isset($initResult) && isset($initResult->token) && isset($initResult->urlWebpay)) {
                 $result = [
                     'token'      => $initResult->token,
                     'urlWebpay' => $initResult->urlWebpay,
                 ];
             } else {
-                throw new TransbankCreateException('No se ha creado la inscripción para, username: '.$username.', email: '.$email.', responseUrl: '.$responseUrl);
+                throw new TransbankCreateException('No se ha creado la inscripción para, username: ' . $username . ', email: ' . $email . ', responseUrl: ' . $responseUrl);
             }
         } catch (InscriptionStartException $e) {
             $result = [
@@ -187,13 +186,13 @@ class TransbankSdkWebpayRest
     public function finishInscription($tbkToken)
     {
         try {
-            $this->log->logInfo('getInscriptonResult - tokenWs: '.$tbkToken);
+            $this->log->logInfo('getInscriptonResult - tokenWs: ' . $tbkToken);
             if ($tbkToken == null) {
                 throw new MissingArgumentException('El token tokenWs es requerido');
             }
 
             $inscription = $this->mallInscription->finish($tbkToken);
-            $this->log->logInfo('finishInscription: '.json_encode($inscription));
+            $this->log->logInfo('finishInscription: ' . json_encode($inscription));
 
             return $inscription;
         } catch (InscriptionFinishException $e) {
@@ -250,10 +249,9 @@ class TransbankSdkWebpayRest
             }
 
             $delInscription = $this->mallInscription->delete($tbkUser, $username);
-            $this->log->logInfo('deleteInscription: '.json_encode($delInscription));
+            $this->log->logInfo('deleteInscription: ' . json_encode($delInscription));
 
             return $delInscription;
-
         } catch (InscriptionFinishException $e) {
             $result = [
                 'error'  => 'Error al eliminar una inscripción',
@@ -280,10 +278,8 @@ class TransbankSdkWebpayRest
         string $childCommerceCode,
         string $childBuyOrder,
         int $amount
-        ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse
-    {
+    ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse {
         return $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
-
     }
 
     /**
@@ -298,9 +294,7 @@ class TransbankSdkWebpayRest
     public function refundWebpayPlusTransaction(
         string $token,
         int $amount
-        ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse
-    {
+    ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse {
         return $this->transaction->refund($token, $amount);
-
     }
 }
