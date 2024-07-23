@@ -98,9 +98,9 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * @throws \Exception
+     * This method handle the controller request.
      *
-     * @return ResponseInterface|Json|ResultInterface
+     * @return Page|Redirect The result of handling the request.
      */
     public function execute()
     {
@@ -124,6 +124,13 @@ class AuthorizeOneclick extends Action
         }
     }
 
+    /**
+     * This method handle Oneclick Request
+     *
+     * @param int $inscriptionId The Id for the inscription.
+     *
+     * @return Page|Redirect The result of handling Oneclick the request.
+     */
     private function handleOneclickRequest(int $inscriptionId)
     {
         $inscription = $this->getOneclickInscriptionData($inscriptionId);
@@ -167,6 +174,15 @@ class AuthorizeOneclick extends Action
         }
     }
 
+    /**
+     * This method handle de authorized transaction flow.
+     *
+     * @param Order                            $order             The Magento order.
+     * @param MallTransactionAuthorizeResponse $authorizeResponse The Oneclick authorization response.
+     * @param float                            $totalAmount       The total amount of the order.
+     *
+     * @return Page The success result page.
+     */
     private function handleAuthorizedTransaction(
         Order $order,
         MallTransactionAuthorizeResponse $authorizeResponse,
@@ -215,6 +231,16 @@ class AuthorizeOneclick extends Action
         return $this->redirectToSuccess($responseData);
     }
 
+
+    /**
+     * This method handle de unauthorized transaction flow.
+     *
+     * @param Order                            $order             The Magento order.
+     * @param MallTransactionAuthorizeResponse $authorizeResponse The Oneclick authorization response.
+     * @param float                            $totalAmount       The total amount of the order.
+     *
+     * @return Redirect Redirect to cart page.
+     */
     private function handleUnauthorizedTransaction(
         Order $order,
         MallTransactionAuthorizeResponse $authorizeResponse,
@@ -237,6 +263,14 @@ class AuthorizeOneclick extends Action
         return $this->redirectWithErrorMessage($message);
     }
 
+    /**
+     * This method handle the flow for orders already processed.
+     *
+     * @param int $orderId The order id.
+     * @param int $quoteId The quote id.
+     *
+     * @return Page|Redirect The result of handling Oneclick the request.
+     */
     private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
     {
         $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
@@ -253,6 +287,13 @@ class AuthorizeOneclick extends Action
             return $this->redirectWithErrorMessage("La orden ya fue procesada.");
     }
 
+    /**
+     * This method will handle the flow when an exception is thrown.
+     *
+     * @param Exception $exception The exception object.
+     *
+     * @return Redirect Redirect to cart page.
+     */
     private function handleException(Exception $exception): Redirect
     {
         $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
@@ -271,6 +312,13 @@ class AuthorizeOneclick extends Action
         return $this->redirectWithErrorMessage($message);
     }
 
+    /**
+     * This method show the success result page.
+     *
+     * @param array $responseData The formatted response.
+     *
+     * @return Page The success result page.
+     */
     private function redirectToSuccess(array $responseData): Page
     {
         $resultPage = $this->resultPageFactory->create();
@@ -280,12 +328,28 @@ class AuthorizeOneclick extends Action
         return $resultPage;
     }
 
+    /**
+     * This method redirect to the cart page.
+     *
+     * @param string $message The error message to show in the page.
+     *
+     * @return Redirect Redirect to cart page.
+     */
     private function redirectWithErrorMessage(string $message): Redirect
     {
         $this->messageManager->addErrorMessage(__($message));
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
+
+    /**
+     * This method cancels the order and updates its status.
+     *
+     * @param Order $order The Magento order.
+     * @param string $message The message to show in order resume.
+     *
+     * @return void
+     */
     private function cancelOrder(Order $order, string $message): void
     {
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
@@ -295,6 +359,14 @@ class AuthorizeOneclick extends Action
         $order->save();
     }
 
+    /**
+     * This method check if the order already process.
+     *
+     * @param int $orderId The order id.
+     * @param int $quoteId The quote id.
+     *
+     * @return bool True if the order is already processed, false if it is not processed.
+     */
     private function checkTransactionIsAlreadyProcessed(int $orderId, int $quoteId): bool
     {
         $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
@@ -306,7 +378,11 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * @return Order
+     * This method return the order object based on the id.
+     *
+     * @param int $orderId The order id.
+     *
+     * @return Order The Magento order.
      */
     private function getOrder(int $orderId): Order
     {
@@ -318,17 +394,24 @@ class AuthorizeOneclick extends Action
         return $order->load($orderId);
     }
 
+    /**
+     * This method return the WebpayOrderData base on the order id and quote id.
+     *
+     * @param int $orderId The order id.
+     * @param int $quoteId The quite id.
+     *
+     * @return WebpayOrderData The Webpay order data object.
+     */
     private function getWebpayOrderDataByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
     {
         return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
 
     /**
-     * @param $inscriptionId
+     * This method return the OneclickInscriptionData based on the id.
+     * @param $inscriptionId The OneclickInscriptionData id.
      *
-     * @throws \Exception
-     *
-     * @return OneclickInscriptionData
+     * @return OneclickInscriptionData The Oneclick inscription data object.
      */
     protected function getOneclickInscriptionData(int $inscriptionId): OneclickInscriptionData
     {
@@ -337,14 +420,13 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * @param $buyOrder
-     * @param $childBuyOrder
-     * @param $commerceCode
-     * @param $payment_status
-     * @param $order_id
-     * @param $quote_id
+     * This method update the WebpayOrderData.
      *
-     * @throws \Exception
+     * @param MallTransactionAuthorizeResponse $authorizeResponse The authorization response.
+     * @param float $amount The amount of the order.
+     * @param string $payment_status The payment status.
+     * @param int $order_id The order id.
+     * @param int $quote_id The quote id.
      *
      * @return WebpayOrderData
      */
