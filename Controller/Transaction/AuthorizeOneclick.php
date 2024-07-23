@@ -274,17 +274,17 @@ class AuthorizeOneclick extends Action
     private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
     {
         $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
-            $status = $webpayOrderData->getPaymentStatus();
+        $status = $webpayOrderData->getPaymentStatus();
 
-            if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
-                $metadata = $webpayOrderData->getMetadata();
-                $response = json_decode($metadata);
-                $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
+        if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
+            $metadata = $webpayOrderData->getMetadata();
+            $response = json_decode($metadata);
+            $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
 
-                return $this->redirectToSuccess($formattedResponse);
-            }
+            return $this->redirectToSuccess($formattedResponse);
+        }
 
-            return $this->redirectWithErrorMessage("La orden ya fue procesada.");
+        return $this->redirectWithErrorMessage("La orden ya fue procesada.");
     }
 
     /**
