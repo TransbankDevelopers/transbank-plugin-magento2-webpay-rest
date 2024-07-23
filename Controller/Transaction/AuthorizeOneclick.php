@@ -2,34 +2,44 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Exception;
+use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
 use Transbank\Webpay\Model\Oneclick;
+use Magento\Framework\View\Result\Page;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\ObjectManager;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
+use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\Result\Redirect;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
+use Transbank\Webpay\Model\WebpayOrderDataRepository;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
-
+use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
+use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
+use Transbank\Webpay\Model\WebpayOrderData;
 
 /**
  * Controller for create Oneclick Inscription.
  */
 class AuthorizeOneclick extends Action
 {
+    const ONECLICK_EXCEPTION_FLOW_MESSAGE = 'No se pudo procesar el pago.';
+    const AUTHORIZED_RESPONSE_CODE = 0;
     protected $configProvider;
 
     private $cart;
@@ -38,6 +48,7 @@ class AuthorizeOneclick extends Action
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
+    protected $webpayOrderDataRepository;
     private $resultPageFactory;
     protected $eventManager;
     protected $messageManager;
@@ -66,6 +77,7 @@ class AuthorizeOneclick extends Action
         EventManagerInterface $eventManager,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         WebpayOrderDataFactory $webpayOrderDataFactory,
+        WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
         QuoteHelper $quoteHelper
     ) {
@@ -78,6 +90,7 @@ class AuthorizeOneclick extends Action
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->webpayOrderDataRepository = $webpayOrderDataRepository;
         $this->resultPageFactory = $resultPageFactory;
         $this->eventManager = $eventManager;
         $this->log = new PluginLogger();
@@ -86,202 +99,348 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * @throws \Exception
+     * This method handle the controller request.
      *
-     * @return ResponseInterface|Json|ResultInterface
+     * @return Page|Redirect The result of handling the request.
      */
     public function execute()
     {
-        $response = null;
-        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
-        $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
-        $oneclickTitle = $this->configProvider->getOneclickTitle();
-
         try {
-            $resultJson = $this->resultJsonFactory->create();
-
-            if (isset($_POST['inscription'])) {
-                $inscriptionId = intval($_POST['inscription']);
-            } else {
-                return $resultJson->setData(['status' => 'error', 'message' => 'Error autorizando transacción', 'flag' => 0]);
+            if (!isset($_POST['inscription'])) {
+                throw new InvalidRequestException('Petición invalida: Falta el campo inscription');
             }
 
-            $inscription = $this->getOneclickInscriptionData($inscriptionId);
-            $username = $inscription->getUsername();
-            $tbkUser = $inscription->getTbkUser();
+            $requestMethod = $_SERVER['REQUEST_METHOD'];
+            $request = $requestMethod === 'POST' ? $_POST : $_GET;
 
-            $this->checkoutSession->restoreQuote();
+            $inscriptionId = intval($request['inscription']);
 
-            $quote = $this->cart->getQuote();
+            $this->log->logInfo('Autorizando transacción Oneclick.');
+            $this->log->logInfo('Request: method -> ' . $requestMethod);
+            $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
-            $quote->getPayment()->importData(['method' => Oneclick::CODE]);
-            $quote->collectTotals();
-            $order = $this->getOrder();
-            $grandTotal = round($order->getGrandTotal());
-
-            $quoteId = $quote->getId();
-            $orderId = $order->getId();
-
-            $quote->save();
-
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
-
-            $buyOrder = "100000" . $orderId;
-            $childBuyOrder = "200000" . $orderId;
-
-            $details = [
-                [
-                    "commerce_code" => $this->oneclickConfig['CHILD_COMMERCE_CODE'],
-                    "buy_order" => $childBuyOrder,
-                    "amount" => $grandTotal,
-                    "installments_number" => 1
-                ]
-            ];
-
-            $response = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
-            $dataLog = ['customerId' => $username, 'orderId' => $orderId];
-
-            if (isset($response->details) && $response->details[0]->responseCode == 0) {
-
-                $webpayOrderData = $this->saveWebpayData(
-                    $response,
-                    $grandTotal,
-                    OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
-                    $orderId,
-                    $quoteId
-                );
-
-
-                $this->checkoutSession->setLastQuoteId($quote->getId());
-                $this->checkoutSession->setLastSuccessQuoteId($quote->getId());
-                $this->checkoutSession->setLastOrderId($order->getId());
-                $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
-                $this->checkoutSession->setLastOrderStatus($order->getStatus());
-                $this->checkoutSession->setGrandTotal($grandTotal);
-                $this->checkoutSession->getQuote()->setIsActive(true)->save();
-                $this->cart->getQuote()->setIsActive(true)->save();
-
-                $orderLogs = '<h3>Pago autorizado exitosamente con ' . $oneclickTitle . '</h3><br>' . json_encode($dataLog);
-                $payment = $order->getPayment();
-
-                $payment->setLastTransId($response->details[0]->authorizationCode);
-                $payment->setTransactionId($response->details[0]->authorizationCode);
-                $payment->setAdditionalInformation([Transaction::RAW_DETAILS => (array) $response->details[0]]);
-
-                $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
-                $order->addStatusToHistory($order->getStatus(), $orderLogs);
-                $order->save();
-
-                $this->checkoutSession->getQuote()->setIsActive(false)->save();
-
-                $this->eventManager->dispatch(
-                    'checkout_onepage_controller_success_action',
-                    ['order' => $order]
-                );
-
-                $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
-
-                $resultPage = $this->resultPageFactory->create();
-                $resultPage->addHandle('transbank_checkout_success');
-                $block = $resultPage->getLayout()->getBlock('transbank_success');
-                $block->setResponse($formattedResponse);
-                return $resultPage;
-            } else {
-                $webpayOrderData = $this->saveWebpayData(
-                    $response,
-                    $grandTotal,
-                    OneclickInscriptionData::PAYMENT_STATUS_FAILED,
-                    $orderId,
-                    $quoteId,
-                );
-
-                $order->setStatus($orderStatusCanceled);
-                $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($response);
-
-                $order->addStatusToHistory($order->getStatus(), $message);
-                $order->cancel();
-                $order->save();
-
-                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
-
-                $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
-                $this->messageManager->addErrorMessage(__($message));
-
-                return $this->resultRedirectFactory->create()->setPath('checkout/cart');
-            }
-        } catch (\Exception $e) {
-            $message = 'Error al crear transacción: ' . $e->getMessage();
-
-            $this->log->logError($message);
-            $response = ['error' => $message];
-
-            if ($order != null) {
-                $order->cancel();
-                $order->setStatus($orderStatusCanceled);
-                $order->addStatusToHistory($order->getStatus(), $message);
-                $order->save();
-                $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
-            }
-
-            $this->messageManager->addErrorMessage($e->getMessage());
-            return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+            return $this->handleOneclickRequest($inscriptionId);
+        } catch (Exception $e) {
+            return $this->handleException($e);
         }
     }
 
     /**
-     * @return |null
+     * This method handle Oneclick Request
+     *
+     * @param int $inscriptionId The Id for the inscription.
+     *
+     * @return Page|Redirect The result of handling Oneclick the request.
      */
-    private function getOrder()
+    private function handleOneclickRequest(int $inscriptionId)
     {
-        try {
-            $orderId = $this->checkoutSession->getLastOrderId();
-            if ($orderId == null) {
-                return null;
-            }
+        $inscription = $this->getOneclickInscriptionData($inscriptionId);
+        $username = $inscription->getUsername();
+        $tbkUser = $inscription->getTbkUser();
 
-            $objectManager = ObjectManager::getInstance();
+        $this->checkoutSession->restoreQuote();
+        $quote = $this->cart->getQuote();
+        $quote->getPayment()->importData(['method' => Oneclick::CODE]);
+        $quote->collectTotals();
+        $quote->save();
 
-            return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
-        } catch (\Exception $e) {
-            return null;
+        $order = $this->getOrder($this->checkoutSession->getLastOrderId());
+        $orderId = $order->getId();
+        $grandTotal = round($order->getGrandTotal());
+
+        if ($this->checkTransactionIsAlreadyProcessed($orderId, $quote->getId())) {
+            return $this->handleTransactionAlreadyProcessed($orderId, $quote->getId());
+        }
+
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
+
+        $buyOrder = "100000" . $orderId;
+        $childBuyOrder = "200000" . $orderId;
+
+        $details = [
+            [
+                "commerce_code" => $this->oneclickConfig['CHILD_COMMERCE_CODE'],
+                "buy_order" => $childBuyOrder,
+                "amount" => $grandTotal,
+                "installments_number" => 1
+            ]
+        ];
+
+        $authorizeResponse = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
+
+        if (
+            isset($authorizeResponse->details) &&
+            $authorizeResponse->details[0]->responseCode == self::AUTHORIZED_RESPONSE_CODE
+        ) {
+            return $this->handleAuthorizedTransaction($order, $authorizeResponse, $grandTotal);
+        } else {
+            return $this->handleUnauthorizedTransaction($order, $authorizeResponse, $grandTotal);
         }
     }
 
     /**
-     * @param $inscriptionId
+     * This method handle de authorized transaction flow.
      *
-     * @throws \Exception
+     * @param Order                            $order             The Magento order.
+     * @param MallTransactionAuthorizeResponse $authorizeResponse The Oneclick authorization response.
+     * @param float                            $totalAmount       The total amount of the order.
      *
-     * @return OneclickInscriptionData
+     * @return Page The success result page.
      */
-    protected function getOneclickInscriptionData($inscriptionId): OneclickInscriptionData
+    private function handleAuthorizedTransaction(
+        Order $order,
+        MallTransactionAuthorizeResponse $authorizeResponse,
+        float $totalAmount
+    ): Page {
+        $quoteId = $order->getQuoteId();
+
+        $this->saveOneclickData(
+            $authorizeResponse,
+            $totalAmount,
+            OneclickInscriptionData::PAYMENT_STATUS_SUCCESS,
+            $order->getId(),
+            $quoteId
+        );
+
+        $this->checkoutSession->setLastQuoteId($quoteId);
+        $this->checkoutSession->setLastSuccessQuoteId($quoteId);
+        $this->checkoutSession->setLastOrderId($order->getId());
+        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+        $this->checkoutSession->setLastOrderStatus($order->getStatus());
+        $this->checkoutSession->setGrandTotal($totalAmount);
+        $this->checkoutSession->getQuote()->setIsActive(true)->save();
+        $this->cart->getQuote()->setIsActive(true)->save();
+
+        $orderLogs = '<h3>Pago autorizado exitosamente con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
+        $payment = $order->getPayment();
+
+        $payment->setLastTransId($authorizeResponse->details[0]->authorizationCode);
+        $payment->setTransactionId($authorizeResponse->details[0]->authorizationCode);
+        $payment->setAdditionalInformation([Transaction::RAW_DETAILS => (array) $authorizeResponse->details[0]]);
+
+        $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
+        $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
+        $order->addStatusToHistory($order->getStatus(), $orderLogs);
+        $order->save();
+
+        $this->eventManager->dispatch(
+            'checkout_onepage_controller_success_action',
+            ['order' => $order]
+        );
+
+        $responseData = TbkResponseHelper::getOneclickFormattedResponse($authorizeResponse);
+
+        $this->checkoutSession->getQuote()->setIsActive(false)->save();
+
+        return $this->redirectToSuccess($responseData);
+    }
+
+
+    /**
+     * This method handle de unauthorized transaction flow.
+     *
+     * @param Order                            $order             The Magento order.
+     * @param MallTransactionAuthorizeResponse $authorizeResponse The Oneclick authorization response.
+     * @param float                            $totalAmount       The total amount of the order.
+     *
+     * @return Redirect Redirect to cart page.
+     */
+    private function handleUnauthorizedTransaction(
+        Order $order,
+        MallTransactionAuthorizeResponse $authorizeResponse,
+        float $totalAmount
+    ): Redirect {
+        $this->saveOneclickData(
+            $authorizeResponse,
+            $totalAmount,
+            OneclickInscriptionData::PAYMENT_STATUS_FAILED,
+            $order->getId(),
+            $order->getQuoteId()
+        );
+
+        $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
+
+        $this->cancelOrder($order, $message);
+        $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+
+        $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
+        return $this->redirectWithErrorMessage($message);
+    }
+
+    /**
+     * This method handle the flow for orders already processed.
+     *
+     * @param int $orderId The order id.
+     * @param int $quoteId The quote id.
+     *
+     * @return Page|Redirect The result of handling Oneclick the request.
+     */
+    private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
+    {
+        $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
+        $status = $webpayOrderData->getPaymentStatus();
+
+        if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
+            $metadata = $webpayOrderData->getMetadata();
+            $response = json_decode($metadata);
+            $formattedResponse = TbkResponseHelper::getOneclickFormattedResponse($response);
+
+            return $this->redirectToSuccess($formattedResponse);
+        }
+
+        return $this->redirectWithErrorMessage("La orden ya fue procesada.");
+    }
+
+    /**
+     * This method will handle the flow when an exception is thrown.
+     *
+     * @param Exception $exception The exception object.
+     *
+     * @return Redirect Redirect to cart page.
+     */
+    private function handleException(Exception $exception): Redirect
+    {
+        $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
+
+        $this->log->logError('Error al procesar el pago: ');
+        $this->log->logError($exception->getMessage());
+        $this->log->logError($exception->getTraceAsString());
+
+        $order = $this->checkoutSession->getLastRealOrder();
+
+        if ($order->getId()) {
+            $this->cancelOrder($order, $message);
+            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+        }
+
+        return $this->redirectWithErrorMessage($message);
+    }
+
+    /**
+     * This method show the success result page.
+     *
+     * @param array $responseData The formatted response.
+     *
+     * @return Page The success result page.
+     */
+    private function redirectToSuccess(array $responseData): Page
+    {
+        $resultPage = $this->resultPageFactory->create();
+        $resultPage->addHandle('transbank_checkout_success');
+        $block = $resultPage->getLayout()->getBlock('transbank_success');
+        $block->setResponse($responseData);
+        return $resultPage;
+    }
+
+    /**
+     * This method redirect to the cart page.
+     *
+     * @param string $message The error message to show in the page.
+     *
+     * @return Redirect Redirect to cart page.
+     */
+    private function redirectWithErrorMessage(string $message): Redirect
+    {
+        $this->messageManager->addErrorMessage(__($message));
+        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
+    }
+
+
+    /**
+     * This method cancels the order and updates its status.
+     *
+     * @param Order $order The Magento order.
+     * @param string $message The message to show in order resume.
+     *
+     * @return void
+     */
+    private function cancelOrder(Order $order, string $message): void
+    {
+        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
+        $order->cancel();
+        $order->setStatus($orderStatusCanceled);
+        $order->addStatusToHistory($order->getStatus(), $message);
+        $order->save();
+    }
+
+    /**
+     * This method check if the order already process.
+     *
+     * @param int $orderId The order id.
+     * @param int $quoteId The quote id.
+     *
+     * @return bool True if the order is already processed, false if it is not processed.
+     */
+    private function checkTransactionIsAlreadyProcessed(int $orderId, int $quoteId): bool
+    {
+        $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
+        $status = $webpayOrderData->getPaymentStatus();
+
+        return $status == WebpayOrderData::PAYMENT_STATUS_SUCCESS ||
+            $status == WebpayOrderData::PAYMENT_STATUS_NULLIFIED ||
+            $status == WebpayOrderData::PAYMENT_STATUS_REVERSED;
+    }
+
+    /**
+     * This method return the order object based on the id.
+     *
+     * @param int $orderId The order id.
+     *
+     * @return Order The Magento order.
+     */
+    private function getOrder(int $orderId): Order
+    {
+        /**
+         * @var Order
+         */
+        $order = ObjectManagerHelper::get(Order::class);
+
+        return $order->load($orderId);
+    }
+
+    /**
+     * This method return the WebpayOrderData base on the order id and quote id.
+     *
+     * @param int $orderId The order id.
+     * @param int $quoteId The quite id.
+     *
+     * @return WebpayOrderData The Webpay order data object.
+     */
+    private function getWebpayOrderDataByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
+    {
+        return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
+    }
+
+    /**
+     * This method return the OneclickInscriptionData based on the id.
+     * @param $inscriptionId The OneclickInscriptionData id.
+     *
+     * @return OneclickInscriptionData The Oneclick inscription data object.
+     */
+    protected function getOneclickInscriptionData(int $inscriptionId): OneclickInscriptionData
     {
         $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
     }
 
     /**
-     * @return string
-     */
-    protected function getOrderId()
-    {
-        return $this->checkoutSession->getLastRealOrderId();
-    }
-
-    /**
-     * @param $buyOrder
-     * @param $childBuyOrder
-     * @param $commerceCode
-     * @param $payment_status
-     * @param $order_id
-     * @param $quote_id
+     * This method update the WebpayOrderData.
      *
-     * @throws \Exception
+     * @param MallTransactionAuthorizeResponse $authorizeResponse The authorization response.
+     * @param float $amount The amount of the order.
+     * @param string $payment_status The payment status.
+     * @param int $order_id The order id.
+     * @param int $quote_id The quote id.
      *
      * @return WebpayOrderData
      */
-    protected function saveWebpayData($authorizeResponse, $amount, $payment_status, $order_id, $quote_id)
-    {
+    protected function saveOneclickData(
+        MallTransactionAuthorizeResponse $authorizeResponse,
+        float $amount,
+        string $payment_status,
+        int $order_id,
+        int $quote_id
+    ): WebpayOrderData {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'buy_order'       => $authorizeResponse->getBuyOrder(),

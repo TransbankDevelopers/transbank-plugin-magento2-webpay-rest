@@ -3,8 +3,9 @@
 namespace Transbank\Webpay\Model;
 
 use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\DataObject\IdentityInterface;
 
-class WebpayOrderData extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+class WebpayOrderData extends AbstractModel implements IdentityInterface
 {
     const CACHE_TAG = 'webpay_order_data';
     const PAYMENT_STATUS_WATING = 'WAITING';
@@ -13,6 +14,8 @@ class WebpayOrderData extends AbstractModel implements \Magento\Framework\DataOb
     const PAYMENT_STATUS_CANCELED_BY_USER = 'CANCELED_BY_USER';
     const PAYMENT_STATUS_ERROR = 'ERROR';
     const PAYMENT_STATUS_TIMEOUT = 'TIMEOUT';
+    const PAYMENT_STATUS_NULLIFIED = 'NULLIFIED';
+    const PAYMENT_STATUS_REVERSED = 'REVERSED';
 
     /**
      * @return void
