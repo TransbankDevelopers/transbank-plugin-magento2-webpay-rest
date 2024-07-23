@@ -7,6 +7,7 @@ use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
 use Transbank\Webpay\Model\Oneclick;
+use Magento\Framework\View\Result\Page;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Transbank\Webpay\Helper\PluginLogger;
@@ -17,6 +18,7 @@ use Magento\Framework\Controller\Result\Json;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\Result\Redirect;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\WebpayOrderDataRepository;
@@ -169,7 +171,7 @@ class AuthorizeOneclick extends Action
         Order $order,
         MallTransactionAuthorizeResponse $authorizeResponse,
         float $totalAmount
-    ) {
+    ): Page {
         $quoteId = $order->getQuoteId();
 
         $this->saveOneclickData(
@@ -217,7 +219,7 @@ class AuthorizeOneclick extends Action
         Order $order,
         MallTransactionAuthorizeResponse $authorizeResponse,
         float $totalAmount
-    ) {
+    ): Redirect {
         $this->saveOneclickData(
             $authorizeResponse,
             $totalAmount,
@@ -235,7 +237,7 @@ class AuthorizeOneclick extends Action
         return $this->redirectWithErrorMessage($message);
     }
 
-    private function handleTransactionAlreadyProcessed($orderId, $quoteId)
+    private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
     {
         $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
             $status = $webpayOrderData->getPaymentStatus();
@@ -251,7 +253,7 @@ class AuthorizeOneclick extends Action
             return $this->redirectWithErrorMessage("La orden ya fue procesada.");
     }
 
-    private function handleException(Exception $exception)
+    private function handleException(Exception $exception): Redirect
     {
         $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
 
@@ -269,7 +271,7 @@ class AuthorizeOneclick extends Action
         return $this->redirectWithErrorMessage($message);
     }
 
-    private function redirectToSuccess(array $responseData)
+    private function redirectToSuccess(array $responseData): Page
     {
         $resultPage = $this->resultPageFactory->create();
         $resultPage->addHandle('transbank_checkout_success');
@@ -278,13 +280,13 @@ class AuthorizeOneclick extends Action
         return $resultPage;
     }
 
-    private function redirectWithErrorMessage(string $message)
+    private function redirectWithErrorMessage(string $message): Redirect
     {
         $this->messageManager->addErrorMessage(__($message));
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 
-    private function cancelOrder(Order $order, string $message)
+    private function cancelOrder(Order $order, string $message): void
     {
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $order->cancel();
@@ -293,7 +295,7 @@ class AuthorizeOneclick extends Action
         $order->save();
     }
 
-    private function checkTransactionIsAlreadyProcessed($orderId, $quoteId): bool
+    private function checkTransactionIsAlreadyProcessed(int $orderId, int $quoteId): bool
     {
         $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
         $status = $webpayOrderData->getPaymentStatus();
@@ -306,7 +308,7 @@ class AuthorizeOneclick extends Action
     /**
      * @return Order
      */
-    private function getOrder($orderId): Order
+    private function getOrder(int $orderId): Order
     {
         /**
          * @var Order
@@ -316,7 +318,7 @@ class AuthorizeOneclick extends Action
         return $order->load($orderId);
     }
 
-    private function getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId)
+    private function getWebpayOrderDataByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
     {
         return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
@@ -328,7 +330,7 @@ class AuthorizeOneclick extends Action
      *
      * @return OneclickInscriptionData
      */
-    protected function getOneclickInscriptionData($inscriptionId): OneclickInscriptionData
+    protected function getOneclickInscriptionData(int $inscriptionId): OneclickInscriptionData
     {
         $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
@@ -346,8 +348,13 @@ class AuthorizeOneclick extends Action
      *
      * @return WebpayOrderData
      */
-    protected function saveOneclickData($authorizeResponse, $amount, $payment_status, $order_id, $quote_id)
-    {
+    protected function saveOneclickData(
+        MallTransactionAuthorizeResponse $authorizeResponse,
+        float $amount,
+        string $payment_status,
+        int $order_id,
+        int $quote_id
+    ): WebpayOrderData {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'buy_order'       => $authorizeResponse->getBuyOrder(),
