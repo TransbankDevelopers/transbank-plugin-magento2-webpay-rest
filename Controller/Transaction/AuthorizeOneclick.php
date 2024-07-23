@@ -24,7 +24,6 @@ use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\WebpayOrderDataRepository;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
-use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
@@ -44,7 +43,6 @@ class AuthorizeOneclick extends Action
 
     private $cart;
     private $checkoutSession;
-    private $resultJsonFactory;
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
@@ -61,7 +59,6 @@ class AuthorizeOneclick extends Action
      * @param Context $context
      * @param Cart $cart
      * @param Session $checkoutSession
-     * @param JsonFactory $resultJsonFactory
      * @param ConfigProvider $configProvider
      * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
@@ -71,7 +68,6 @@ class AuthorizeOneclick extends Action
         Context $context,
         Cart $cart,
         Session $checkoutSession,
-        JsonFactory $resultJsonFactory,
         PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
         EventManagerInterface $eventManager,
@@ -85,7 +81,6 @@ class AuthorizeOneclick extends Action
 
         $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
-        $this->resultJsonFactory = $resultJsonFactory;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
