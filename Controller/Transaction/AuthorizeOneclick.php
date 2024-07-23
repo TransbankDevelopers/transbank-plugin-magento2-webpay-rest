@@ -39,6 +39,7 @@ use Transbank\Webpay\Model\WebpayOrderData;
 class AuthorizeOneclick extends Action
 {
     const ONECLICK_EXCEPTION_FLOW_MESSAGE = 'No se pudo procesar el pago.';
+    const AUTHORIZED_RESPONSE_CODE = 0;
     protected $configProvider;
 
     private $cart;
@@ -167,7 +168,10 @@ class AuthorizeOneclick extends Action
 
         $authorizeResponse = $transbankSdkWebpay->authorizeTransaction($username, $tbkUser, $buyOrder, $details);
 
-        if (isset($authorizeResponse->details) && $authorizeResponse->details[0]->responseCode == 0) {
+        if (
+            isset($authorizeResponse->details) &&
+            $authorizeResponse->details[0]->responseCode == self::AUTHORIZED_RESPONSE_CODE
+        ) {
             return $this->handleAuthorizedTransaction($order, $authorizeResponse, $grandTotal);
         } else {
             return $this->handleUnauthorizedTransaction($order, $authorizeResponse, $grandTotal);
