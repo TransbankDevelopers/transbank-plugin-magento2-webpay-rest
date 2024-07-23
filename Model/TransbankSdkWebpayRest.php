@@ -224,7 +224,7 @@ class TransbankSdkWebpayRest
         array $details
     ): MallTransactionAuthorizeResponse {
         if ($username == null || $tbkUser == null) {
-            throw new MissingArgumentException('El token tbkUser y el username son requerido');
+            throw new MissingArgumentException('El token tbkUser y el username son requeridos');
         }
 
         $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
