@@ -209,13 +209,14 @@ class TransbankSdkWebpayRest
     /**
      * This method authorize a Oneclick transaction.
      *
-     * @param $username
-     * @param $tbkUser
-     * @param $total
+     * @param string $username The username of the inscription.
+     * @param string $tbkUser  The tbk_user of the inscription.
+     * @param string $buyOrder The buy order.
+     * @param array $details  The transactions details.
      *
-     * @throws MissingArgumentException
+     * @throws MissingArgumentException Thrown when username or tbk_user is null.
      *
-     * @return MallTransactionAuthorizeResponse
+     * @return MallTransactionAuthorizeResponse The authorization response.
      */
     public function authorizeTransaction(
         string $username,
