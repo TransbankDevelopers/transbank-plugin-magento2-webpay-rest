@@ -36,7 +36,7 @@ class WebpayOrderDataRepository
      *
      * @return WebpayOrderData
      */
-    public function getByOrderIdAndQuoteId($orderId, $quoteId)
+    public function getByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('order_id', $orderId)
