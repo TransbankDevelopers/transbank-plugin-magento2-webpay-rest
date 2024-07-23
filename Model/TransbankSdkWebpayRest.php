@@ -208,35 +208,30 @@ class TransbankSdkWebpayRest
     }
 
     /**
+     * This method authorize a Oneclick transaction.
+     *
      * @param $username
      * @param $tbkUser
      * @param $total
      *
      * @throws MissingArgumentException
      *
-     * @return array|MallTransactionAuthorizeResponse
+     * @return MallTransactionAuthorizeResponse
      */
-    public function authorizeTransaction($username, $tbkUser, $buyOrder, $details)
-    {
-        try {
-            if ($username == null || $tbkUser == null) {
-                throw new MissingArgumentException('El token tbkUser y el username son requerido');
-            }
-
-            $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
-            $this->log->logInfo('authorizeTransaction: '.json_encode($transaction));
-
-            return $transaction;
-
-        } catch (InscriptionFinishException $e) {
-            $result = [
-                'error'  => 'Error al autorizar la transacción',
-                'detail' => $e->getMessage(),
-            ];
-            $this->log->logError(json_encode($result));
+    public function authorizeTransaction(
+        string $username,
+        string $tbkUser,
+        string $buyOrder,
+        array $details
+    ): MallTransactionAuthorizeResponse {
+        if ($username == null || $tbkUser == null) {
+            throw new MissingArgumentException('El token tbkUser y el username son requerido');
         }
 
-        return $result;
+        $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
+        $this->log->logInfo('authorizeTransaction: ' . json_encode($transaction));
+
+        return $transaction;
     }
 
     /**
