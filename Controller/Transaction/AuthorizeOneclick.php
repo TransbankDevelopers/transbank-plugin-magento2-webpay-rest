@@ -28,6 +28,7 @@ use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Model\WebpayOrderData;
+use Magento\Customer\Model\Session as CustomerSession;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -49,6 +50,7 @@ class AuthorizeOneclick extends Action
     protected $messageManager;
     private $oneclickConfig;
     private $quoteHelper;
+    protected $customerSession;
 
     /**
      * AuthorizeOneclick constructor.
@@ -56,9 +58,12 @@ class AuthorizeOneclick extends Action
      * @param Context $context
      * @param Cart $cart
      * @param Session $checkoutSession
+     * @param PageFactory $resultPageFactory
      * @param ConfigProvider $configProvider
+     * @param EventManagerInterface $eventManager
      * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
+     * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
      */
     public function __construct(
@@ -72,7 +77,8 @@ class AuthorizeOneclick extends Action
         WebpayOrderDataFactory $webpayOrderDataFactory,
         WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
-        QuoteHelper $quoteHelper
+        QuoteHelper $quoteHelper,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
@@ -88,6 +94,7 @@ class AuthorizeOneclick extends Action
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
         $this->quoteHelper = $quoteHelper;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -126,10 +133,6 @@ class AuthorizeOneclick extends Action
      */
     private function handleOneclickRequest(int $inscriptionId)
     {
-        $inscription = $this->getOneclickInscriptionData($inscriptionId);
-        $username = $inscription->getUsername();
-        $tbkUser = $inscription->getTbkUser();
-
         $this->checkoutSession->restoreQuote();
         $quote = $this->cart->getQuote();
         $quote->getPayment()->importData(['method' => Oneclick::CODE]);
@@ -144,7 +147,16 @@ class AuthorizeOneclick extends Action
             return $this->handleTransactionAlreadyProcessed($orderId, $quote->getId());
         }
 
+        if (!$this->isCustomerLoggedIn()) {
+            throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
+        }
+
+        $inscription = $this->getOneclickInscriptionData($inscriptionId);
+
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
+
+        $username = $inscription->getUsername();
+        $tbkUser = $inscription->getTbkUser();
 
         $buyOrder = "100000" . $orderId;
         $childBuyOrder = "200000" . $orderId;
@@ -413,6 +425,15 @@ class AuthorizeOneclick extends Action
     {
         $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
+    }
+
+    /**
+     * This method check if customer is logged in.
+     *
+     * @return bool True if customer is logged in, otherwise false.
+     */
+    private function isCustomerLoggedIn(): bool {
+        return $this->customerSession->isLoggedIn();
     }
 
     /**
