@@ -13,18 +13,14 @@ use Magento\Framework\App\Action\Context;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\Result\Json;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Magento\Framework\Message\ManagerInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Controller\Result\Redirect;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\WebpayOrderDataRepository;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
-use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
@@ -32,6 +28,7 @@ use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Model\WebpayOrderData;
+use Magento\Customer\Model\Session as CustomerSession;
 
 /**
  * Controller for create Oneclick Inscription.
@@ -44,7 +41,6 @@ class AuthorizeOneclick extends Action
 
     private $cart;
     private $checkoutSession;
-    private $resultJsonFactory;
     private $oneclickInscriptionDataFactory;
     private $log;
     private $webpayOrderDataFactory;
@@ -54,6 +50,7 @@ class AuthorizeOneclick extends Action
     protected $messageManager;
     private $oneclickConfig;
     private $quoteHelper;
+    protected $customerSession;
 
     /**
      * AuthorizeOneclick constructor.
@@ -61,17 +58,18 @@ class AuthorizeOneclick extends Action
      * @param Context $context
      * @param Cart $cart
      * @param Session $checkoutSession
-     * @param JsonFactory $resultJsonFactory
+     * @param PageFactory $resultPageFactory
      * @param ConfigProvider $configProvider
+     * @param EventManagerInterface $eventManager
      * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
+     * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
      */
     public function __construct(
         Context $context,
         Cart $cart,
         Session $checkoutSession,
-        JsonFactory $resultJsonFactory,
         PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
         EventManagerInterface $eventManager,
@@ -79,13 +77,13 @@ class AuthorizeOneclick extends Action
         WebpayOrderDataFactory $webpayOrderDataFactory,
         WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
-        QuoteHelper $quoteHelper
+        QuoteHelper $quoteHelper,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
         $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
-        $this->resultJsonFactory = $resultJsonFactory;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
@@ -96,28 +94,31 @@ class AuthorizeOneclick extends Action
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
         $this->quoteHelper = $quoteHelper;
+        $this->customerSession = $customerSession;
     }
 
     /**
      * This method handle the controller request.
+     *
+     * @throws InvalidRequestException When inscription is not defined.
      *
      * @return Page|Redirect The result of handling the request.
      */
     public function execute()
     {
         try {
-            if (!isset($_POST['inscription'])) {
-                throw new InvalidRequestException('Petición invalida: Falta el campo inscription');
-            }
-
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
-
-            $inscriptionId = intval($request['inscription']);
 
             $this->log->logInfo('Autorizando transacción Oneclick.');
             $this->log->logInfo('Request: method -> ' . $requestMethod);
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
+
+            if (!isset($_POST['inscription'])) {
+                throw new InvalidRequestException('Falta el campo inscription');
+            }
+
+            $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
         } catch (Exception $e) {
@@ -130,14 +131,12 @@ class AuthorizeOneclick extends Action
      *
      * @param int $inscriptionId The Id for the inscription.
      *
+     * @throws InvalidRequestException When the user is not logged in or when the user pays with a card that is not registered
+     *
      * @return Page|Redirect The result of handling Oneclick the request.
      */
     private function handleOneclickRequest(int $inscriptionId)
     {
-        $inscription = $this->getOneclickInscriptionData($inscriptionId);
-        $username = $inscription->getUsername();
-        $tbkUser = $inscription->getTbkUser();
-
         $this->checkoutSession->restoreQuote();
         $quote = $this->cart->getQuote();
         $quote->getPayment()->importData(['method' => Oneclick::CODE]);
@@ -152,7 +151,20 @@ class AuthorizeOneclick extends Action
             return $this->handleTransactionAlreadyProcessed($orderId, $quote->getId());
         }
 
+        if (!$this->isCustomerLoggedIn()) {
+            throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
+        }
+
+        $inscription = $this->getOneclickInscriptionData($inscriptionId);
+
+        if (!$this->validatePayerMatchesCardInscription($inscription)) {
+            throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
+        }
+
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
+
+        $username = $inscription->getUsername();
+        $tbkUser = $inscription->getTbkUser();
 
         $buyOrder = "100000" . $orderId;
         $childBuyOrder = "200000" . $orderId;
@@ -301,9 +313,10 @@ class AuthorizeOneclick extends Action
     private function handleException(Exception $exception): Redirect
     {
         $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
+        $exceptionName = get_class($exception);
 
         $this->log->logError('Error al procesar el pago: ');
-        $this->log->logError($exception->getMessage());
+        $this->log->logError($exceptionName . ": " .$exception->getMessage());
         $this->log->logError($exception->getTraceAsString());
 
         $order = $this->checkoutSession->getLastRealOrder();
@@ -421,6 +434,31 @@ class AuthorizeOneclick extends Action
     {
         $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
+    }
+
+    /**
+     * Validate that the user paying for the order is the same as the one who registered the card.
+     *
+     * @param OneclickInscriptionData $inscriptionData The card inscription data.
+     *
+     * @return bool True if the payer matches the card inscription, false otherwise.
+     */
+    private function validatePayerMatchesCardInscription(OneclickInscriptionData $inscriptionData)
+    {
+        $customerData = $this->customerSession->getCustomerData();
+        $customerEmail = $customerData->getEmail();
+        $inscriptionEmail = $inscriptionData->getEmail();
+
+        return $customerEmail == $inscriptionEmail;
+    }
+
+    /**
+     * This method check if customer is logged in.
+     *
+     * @return bool True if customer is logged in, otherwise false.
+     */
+    private function isCustomerLoggedIn(): bool {
+        return $this->customerSession->isLoggedIn();
     }
 
     /**
