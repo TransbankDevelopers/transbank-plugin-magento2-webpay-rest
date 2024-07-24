@@ -153,6 +153,10 @@ class AuthorizeOneclick extends Action
 
         $inscription = $this->getOneclickInscriptionData($inscriptionId);
 
+        if (!$this->validatePayerMatchesCardInscription($inscription)) {
+            throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
+        }
+
         $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
 
         $username = $inscription->getUsername();
@@ -425,6 +429,22 @@ class AuthorizeOneclick extends Action
     {
         $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
         return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
+    }
+
+    /**
+     * Validate that the user paying for the order is the same as the one who registered the card.
+     *
+     * @param OneclickInscriptionData $inscriptionData The card inscription data.
+     *
+     * @return bool True if the payer matches the card inscription, false otherwise.
+     */
+    private function validatePayerMatchesCardInscription(OneclickInscriptionData $inscriptionData)
+    {
+        $customerData = $this->customerSession->getCustomerData();
+        $customerEmail = $customerData->getEmail();
+        $inscriptionEmail = $inscriptionData->getEmail();
+
+        return $customerEmail == $inscriptionEmail;
     }
 
     /**
