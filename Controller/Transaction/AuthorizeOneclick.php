@@ -113,7 +113,7 @@ class AuthorizeOneclick extends Action
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
             if (!isset($_POST['inscription'])) {
-                throw new InvalidRequestException('Petición invalida: Falta el campo inscription');
+                throw new InvalidRequestException('Falta el campo inscription');
             }
 
             $inscriptionId = intval($request['inscription']);
@@ -309,9 +309,10 @@ class AuthorizeOneclick extends Action
     private function handleException(Exception $exception): Redirect
     {
         $message = self::ONECLICK_EXCEPTION_FLOW_MESSAGE;
+        $exceptionName = get_class($exception);
 
         $this->log->logError('Error al procesar el pago: ');
-        $this->log->logError($exception->getMessage());
+        $this->log->logError($exceptionName . ": " .$exception->getMessage());
         $this->log->logError($exception->getTraceAsString());
 
         $order = $this->checkoutSession->getLastRealOrder();
