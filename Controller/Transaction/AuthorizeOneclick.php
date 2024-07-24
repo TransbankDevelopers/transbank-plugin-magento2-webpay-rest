@@ -105,18 +105,18 @@ class AuthorizeOneclick extends Action
     public function execute()
     {
         try {
-            if (!isset($_POST['inscription'])) {
-                throw new InvalidRequestException('Petición invalida: Falta el campo inscription');
-            }
-
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
-
-            $inscriptionId = intval($request['inscription']);
 
             $this->log->logInfo('Autorizando transacción Oneclick.');
             $this->log->logInfo('Request: method -> ' . $requestMethod);
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
+
+            if (!isset($_POST['inscription'])) {
+                throw new InvalidRequestException('Petición invalida: Falta el campo inscription');
+            }
+
+            $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
         } catch (Exception $e) {
