@@ -100,6 +100,8 @@ class AuthorizeOneclick extends Action
     /**
      * This method handle the controller request.
      *
+     * @throws InvalidRequestException When inscription is not defined.
+     *
      * @return Page|Redirect The result of handling the request.
      */
     public function execute()
@@ -128,6 +130,8 @@ class AuthorizeOneclick extends Action
      * This method handle Oneclick Request
      *
      * @param int $inscriptionId The Id for the inscription.
+     *
+     * @throws InvalidRequestException When the user is not logged in or when the user pays with a card that is not registered
      *
      * @return Page|Redirect The result of handling Oneclick the request.
      */
