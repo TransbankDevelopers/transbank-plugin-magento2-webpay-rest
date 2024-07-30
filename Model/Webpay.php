@@ -5,6 +5,7 @@ namespace Transbank\Webpay\Model;
 class Webpay extends \Magento\Payment\Model\Method\AbstractMethod
 {
     const CODE = 'transbank_webpay';
+    const PRODUCT_NAME = 'webpay_plus';
 
     /**
      * Payment code.
