@@ -21,6 +21,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     protected $webpayOrderDataFactory;
     protected $log;
     protected $quoteRepository;
+    protected $webpayConfig;
 
     /**
      * CreateWebpayM22 constructor.
@@ -54,6 +55,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
+        $this->webpayConfig = $configProvider->getPluginConfig();
     }
 
     /**
@@ -67,14 +69,11 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
         $response = null;
         $order = null;
-        $config = $this->configProvider->getPluginConfig();
         $orderStatusCanceled = $this->configProvider->getOrderErrorStatus();
         $orderStatusPendingPayment = $this->configProvider->getOrderPendingStatus();
 
         try {
             $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;
-
-            $config = $this->configProvider->getPluginConfig();
 
             $tmpOrder = $this->getOrder();
 
@@ -102,13 +101,13 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
-            $returnUrl = $baseUrl . $config['URL_RETURN'];
+            $returnUrl = $baseUrl . $this->webpayConfig['URL_RETURN'];
             $quoteId = $quote->getId();
             $orderId = $this->getOrderId();
 
             $quote->save();
 
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->webpayConfig);
             $this->log->logInfo('B.2. Preparando datos antes de crear la transacción en Transbank');
             $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', buyOrder: ' . $orderId . ', returnUrl: ' . $returnUrl);
             $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $orderId, $returnUrl);
@@ -195,6 +194,9 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             'order_id'       => $order_id,
             'quote_id'       => $quote_id,
             'metadata'       => json_encode($this->checkoutSession->getData()),
+            'commerce_code'   => $this->webpayConfig['COMMERCE_CODE'],
+            'environment'     => $this->webpayConfig['ENVIRONMENT'],
+            'product'         => Webpay::PRODUCT_NAME
         ]);
         $webpayOrderData->save();
     }
