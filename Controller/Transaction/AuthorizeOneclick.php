@@ -446,10 +446,10 @@ class AuthorizeOneclick extends Action
     private function validatePayerMatchesCardInscription(OneclickInscriptionData $inscriptionData)
     {
         $customerData = $this->customerSession->getCustomerData();
-        $customerEmail = $customerData->getEmail();
-        $inscriptionEmail = $inscriptionData->getEmail();
+        $customerId = $customerData->getId();
+        $inscriptionUserId = $inscriptionData->getUserId();
 
-        return $customerEmail == $inscriptionEmail;
+        return $customerId == $inscriptionUserId;
     }
 
     /**
