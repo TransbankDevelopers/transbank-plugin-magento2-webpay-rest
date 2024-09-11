@@ -30,7 +30,7 @@ class Index extends \Magento\Backend\App\Action
 
                 echo json_encode(['success' => true, 'msg' => $response]);
             } catch (TransbankCreateException $e) {
-                echo json_encode(['success' => false, 'msg' => 'No se puedo crear la transacción de pruebas.']);
+                echo json_encode(['success' => false, 'msg' => 'No se pudo crear la transacción de pruebas.']);
             }
         }
     }
