@@ -26,7 +26,7 @@ class SubmitObserver implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         try {
-            
+
             $emailSettings = $this->configProvider->getEmailSettings();
             $oneclickEmailSettings = $this->configProvider->getOneclickEmailSettings();
             $this->_logger->debug($emailSettings);
@@ -40,8 +40,8 @@ class SubmitObserver implements ObserverInterface
             }
 
         } catch (\ErrorException $e) {
-            $this->_logger->critical($e);
+            $this->_logger->critical($e->getMessage());
         }
     }
-    
+
 }

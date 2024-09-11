@@ -19,7 +19,7 @@ class EmailObserver extends SuccessObserver implements ObserverInterface
             try {
                 $this->orderSender->send($order);
             } catch (\Exception $e) {
-                $this->logger->critical($e);
+                $this->logger->critical($e->getMessage());
             }
         }
 
