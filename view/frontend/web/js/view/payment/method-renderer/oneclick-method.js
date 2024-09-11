@@ -73,15 +73,16 @@ define([
 
 function checkTransaction(result) {
     if (result != undefined && result.token != undefined) {
-        let form = jQuery(
-            '<form action="' +
-                result.urlWebpay +
-                "?TBK_TOKEN=" +
-                result.token +
-                '" method="post">' +
-                "</form>"
-        );
-        jQuery("body").append(form);
+        const url = new URL(result.urlWebpay);
+        const params = new URLSearchParams();
+        params.append("TBK_TOKEN", result.token);
+
+        const form = document.createElement("form");
+        form.setAttribute("action", `${url}?${params.toString()}`);
+        form.setAttribute("method", "post");
+
+        document.body.appendChild(form);
+
         form.submit();
     } else {
         alert("Error al crear transacción");
@@ -89,19 +90,27 @@ function checkTransaction(result) {
 }
 
 function authorizeTransaction(selected_inscription) {
-    let url =
+    const url =
         window.checkoutConfig.pluginConfigOneclick.authorizeTransactionUrl;
 
-    let form = jQuery(
-        '<form action="' +
-            url +
-            '" method="post">' +
-            '<input type="hidden" name="inscription" value="' +
-            selected_inscription +
-            '" />' +
-            "</form>"
-    );
-    jQuery("body").append(form);
+    const form = document.createElement("form");
+    form.setAttribute("action", url);
+    form.setAttribute("method", "post");
+
+    const input = document.createElement("input");
+    input.setAttribute("type", "hidden");
+    input.setAttribute("name", "inscription");
+    input.setAttribute("value", selected_inscription);
+
+    const formKeyInput = document.createElement("input");
+    formKeyInput.setAttribute("type", "hidden");
+    formKeyInput.setAttribute("name", "form_key");
+    formKeyInput.setAttribute("value", jQuery.cookie("form_key"));
+
+    form.appendChild(input);
+    form.appendChild(formKeyInput);
+    document.body.appendChild(form);
+
     form.submit();
 }
 

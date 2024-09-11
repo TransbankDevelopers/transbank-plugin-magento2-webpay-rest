@@ -48,10 +48,18 @@ define(
 
 function submitForm (result) {
     if (result != undefined && result.token_ws != undefined) {
-        let form = jQuery('<form action="' + result.url + '" method="post">' +
-            '<input type="text" name="token_ws" value="' + result.token_ws + '" />' +
-            '</form>');
-        jQuery('body').append(form);
+        const form = document.createElement('form');
+        form.setAttribute('action', result.url);
+        form.setAttribute('method', 'post');
+
+        const input = document.createElement('input');
+        input.setAttribute('type', 'hidden');
+        input.setAttribute('name', 'token_ws');
+        input.setAttribute('value', result.token_ws);
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+
         form.submit();
     } else {
         alert('Error al crear transacción');
