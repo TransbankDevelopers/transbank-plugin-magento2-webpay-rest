@@ -272,6 +272,8 @@
 
         $(".check_conn").click(function() {
 
+            $(".check_conn").prop('disabled', true);
+
             $(".btn_status").hide();
             $(".check_conn").text("Verificando ...");
             $("#row_response_url").hide();
@@ -310,19 +312,29 @@
                         $(".status-label").text("ERROR");
                         $("#row_error_message").show();
                         $("#row_error_detail").show();
-                        $(".error-content").append(response.msg.response.error);
+                        $(".error_content").append(response.msg.response.error);
                         $(".error_detail_content").append('<pre><code>'+response.msg.response.detail+'</code></pre>');
                     }
                 } else {
                     $(".status-label").removeClass("tbk-label-success");
                     $(".status-label").removeClass("tbk-label-danger");
                     $(".status-label").addClass("tbk-label-danger");
-                    $(".status-label").append("ERROR");
+                    $(".status-label").text("ERROR");
+                    $(".error_content").append(response.msg.response.error);
                     $(".error_detail_content").append('<pre><code>'+response.msg+'</code></pre>');
                     $("#row_error_message").show();
                     $("#row_error_detail").show();
                 }
-            },'json');
+
+                $(".check_conn").prop('disabled', false);
+            },'json').fail(function() {
+                $(".status-label").removeClass("tbk-label-success");
+                $(".status-label").removeClass("tbk-label-danger");
+                $(".status-label").addClass("tbk-label-danger");
+                $(".status-label").text("ERROR");
+
+                $(".check_conn").prop('disabled', false);
+            });
         });
 
 	});
