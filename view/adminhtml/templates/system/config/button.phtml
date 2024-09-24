@@ -272,6 +272,8 @@
 
         $(".check_conn").click(function() {
 
+            $(".check_conn").prop('disabled', true);
+
             $(".btn_status").hide();
             $(".check_conn").text("Verificando ...");
             $("#row_response_url").hide();
@@ -322,7 +324,11 @@
                     $("#row_error_message").show();
                     $("#row_error_detail").show();
                 }
-            },'json');
+
+                $(".check_conn").prop('disabled', false);
+            },'json').fail(function() {
+                $(".check_conn").prop('disabled', false);
+            });
         });
 
 	});
