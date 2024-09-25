@@ -163,11 +163,15 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $webpayOrderData->setMetadata(json_encode($commitResponse));
 
+        $responseHandled = null;
+
         if ($commitResponse->isApproved()) {
-            return $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
+            $responseHandled = $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
+        } else {
+            $responseHandled = $this->handleUnauthorizedTransaction($order, $webpayOrderData, $commitResponse);
         }
 
-        return $this->handleUnauthorizedTransaction($order, $webpayOrderData, $commitResponse);
+        return $responseHandled;
     }
 
     private function handleFlowTimeout(string $buyOrder)
