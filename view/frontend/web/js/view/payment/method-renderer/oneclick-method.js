@@ -8,7 +8,7 @@ define([
     "Magento_Checkout/js/model/payment/additional-validators",
     "mage/url",
     "Magento_Checkout/js/model/quote",
-    "Magento_Checkout/js/action/set-payment-information",
+    "Magento_Checkout/js/action/set-payment-information"
 ], function (
     $,
     Component,
@@ -25,7 +25,7 @@ define([
 
     return Component.extend({
         defaults: {
-            template: "Transbank_Webpay/payment/oneclick",
+            template: "Transbank_Webpay/payment/oneclick"
         },
 
         getCode: function () {
@@ -54,7 +54,7 @@ define([
 
                 return {
                     key: `${inscription.card_type} terminada en ${last_digits}`,
-                    value: inscription.id,
+                    value: inscription.id
                 };
             });
 
@@ -67,7 +67,7 @@ define([
                 window.checkoutConfig.totalsData.oneclick_max_amount;
 
             return oneclickMaxAmount < grandTotal;
-        },
+        }
     });
 });
 
