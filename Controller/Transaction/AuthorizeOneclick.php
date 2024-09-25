@@ -478,7 +478,7 @@ class AuthorizeOneclick extends Action
         string $payment_status,
         int $order_id,
         int $quote_id
-    ): WebpayOrderData {
+    ): void {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'buy_order'       => $authorizeResponse->getBuyOrder(),
@@ -494,7 +494,5 @@ class AuthorizeOneclick extends Action
             'product'         => Oneclick::PRODUCT_NAME
         ]);
         $webpayOrderData->save();
-
-        return $webpayOrderData;
     }
 }
