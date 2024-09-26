@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
@@ -123,7 +124,7 @@ class AuthorizeOneclick extends Action
             $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
-        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException $e) {
+        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException $e) {
             return $this->handleException($e);
         }
     }
