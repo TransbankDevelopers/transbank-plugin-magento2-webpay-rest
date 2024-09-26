@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
@@ -11,6 +12,7 @@ use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
+use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -78,7 +80,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
             return $this->handleRequest($request);
-        } catch (Exception $exception) {
+        } catch (MissingArgumentException | GuzzleException $exception) {
             return $this->handleException($exception);
         }
     }
@@ -158,16 +160,20 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $commitResponse = $transbankSdkWebpay->commitTransaction($token);
 
         if (is_array($commitResponse) && isset($commitResponse['error'])) {
-            $this->handleFlowError($token);
+            return $this->handleFlowError($token);
         }
 
         $webpayOrderData->setMetadata(json_encode($commitResponse));
 
+        $responseHandled = null;
+
         if ($commitResponse->isApproved()) {
-            return $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
+            $responseHandled = $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
+        } else {
+            $responseHandled = $this->handleUnauthorizedTransaction($order, $webpayOrderData, $commitResponse);
         }
 
-        return $this->handleUnauthorizedTransaction($order, $webpayOrderData, $commitResponse);
+        return $responseHandled;
     }
 
     private function handleFlowTimeout(string $buyOrder)

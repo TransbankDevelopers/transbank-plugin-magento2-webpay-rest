@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
@@ -26,7 +27,9 @@ use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
+use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
+use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Magento\Customer\Model\Session as CustomerSession;
 
@@ -121,7 +124,7 @@ class AuthorizeOneclick extends Action
             $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
-        } catch (Exception $e) {
+        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException $e) {
             return $this->handleException($e);
         }
     }
@@ -478,7 +481,7 @@ class AuthorizeOneclick extends Action
         string $payment_status,
         int $order_id,
         int $quote_id
-    ): WebpayOrderData {
+    ): void {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'buy_order'       => $authorizeResponse->getBuyOrder(),
@@ -494,7 +497,5 @@ class AuthorizeOneclick extends Action
             'product'         => Oneclick::PRODUCT_NAME
         ]);
         $webpayOrderData->save();
-
-        return $webpayOrderData;
     }
 }
