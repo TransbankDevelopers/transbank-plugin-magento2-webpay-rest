@@ -8,7 +8,7 @@ use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\Config\ConfigProvider;
-use Transbank\Webpay\Helper\DateHelper;
+use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\PluginLogger;
 
 class RefundObserver implements ObserverInterface
@@ -164,7 +164,7 @@ class RefundObserver implements ObserverInterface
             '<strong>Monto</strong>: $' . $amount;
 
         if ($refundType == 'NULLIFIED'){
-            $transactionLocalDate = DateHelper::utcToLocalDate($refundResponse->getAuthorizationDate());
+            $transactionLocalDate = TbkResponseHelper::utcToLocalDate($refundResponse->getAuthorizationDate());
             $message .= '<br>
                 <strong>Saldo</strong>: $' . $refundResponse->getBalance() . '<br>
                 <strong>Fecha</strong>: ' . $transactionLocalDate . '<br>

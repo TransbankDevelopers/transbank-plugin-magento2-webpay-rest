@@ -4,6 +4,22 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [2.3.0] - 2024-10-04
+
+Esta versión no tiene cambios en el comportamiento de las operaciones de la API.
+
+## Agrega:
+- Se agrega la información de entorno para las transacciones de Webpay en la tabla de transacciones.
+
+## Actualiza:
+- Se refina el flujo de pago de Webpay y Onelick.
+- Se refina el flujo de envío de correo.
+- Se homologan los comprobantes de pago de Oneclick y Webpay.
+- Se aclara la información en caso de que de error la transacción de prueba en la pantalla de diagnóstico.
+
+## Borra:
+- Se elimina la creación de variables dinámicas para eliminar advertencias en PHP 8.
+
 # [2.2.1] - 2024-04-22
 ## Fixed
 - Se corrige el valor de path_config para que sea aceptado desde las versiones 2.4.6 en adelante.

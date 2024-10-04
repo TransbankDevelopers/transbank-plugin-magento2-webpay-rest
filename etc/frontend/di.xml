@@ -20,4 +20,14 @@
             </argument>
         </arguments>
     </type>
+    <type name="Transbank\Webpay\Model\WebpayOrderDataFactory">
+        <arguments>
+            <argument name="objectManager" xsi:type="object">Magento\Framework\ObjectManagerInterface</argument>
+        </arguments>
+    </type>
+    <type name="Transbank\Webpay\Model\ResourceModel\WebpayOrderData\CollectionFactory">
+        <arguments>
+            <argument name="objectManager" xsi:type="object">Magento\Framework\ObjectManagerInterface</argument>
+        </arguments>
+    </type>
 </config>
