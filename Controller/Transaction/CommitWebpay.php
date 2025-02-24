@@ -6,6 +6,7 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
+use Transbank\Webpay\Exceptions\EcommerceException;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
@@ -24,6 +25,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     const WEBPAY_TIMEOUT_FLOW = 'timeout';
     const WEBPAY_ABORTED_FLOW = 'aborted';
     const WEBPAY_ERROR_FLOW = 'error';
+    const WEBPAY_INVALID_FLOW = 'invalid';
 
     const WEBPAY_FAILED_FLOW_MESSAGE = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
     const WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE = 'Orden cancelada por el usuario.';
@@ -103,6 +105,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $webpayFlow = $this->getWebpayFlow($request);
 
+        if ($webpayFlow == self::WEBPAY_INVALID_FLOW) {
+            throw new EcommerceException('Flujo de pago no reconocido.');
+        }
+
         if ($webpayFlow == self::WEBPAY_NORMAL_FLOW) {
             return $this->handleNormalFlow($request['token_ws']);
         }
@@ -125,7 +131,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $tokenWs = $request['token_ws'] ?? null;
         $tbkToken = $request['TBK_TOKEN'] ?? null;
         $tbkIdSession = $request['TBK_ID_SESION'] ?? null;
-        $webpayFlow = self::WEBPAY_ERROR_FLOW;
+        $webpayFlow = self::WEBPAY_INVALID_FLOW;
 
         if (isset($tokenWs) && isset($tbkToken)) {
             $webpayFlow = self::WEBPAY_ERROR_FLOW;
@@ -427,7 +433,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
             $installmentsAmount = $commitResponse->getInstallmentsAmount();
             $balance = $commitResponse->getBalance();
-            $historyComment =  '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
+            $historyComment = '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
                 '<strong>VCI</strong>: ' . $commitResponse->getVci() . '<br>' .
                 '<strong>Estado</strong>: ' . $commitResponse->getStatus() . '<br>' .
                 '<strong>Código de respuesta</strong>: ' . $commitResponse->getResponseCode() . '<br>' .
