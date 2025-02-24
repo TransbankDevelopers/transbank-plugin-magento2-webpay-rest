@@ -10,3 +10,5 @@ plugin-transbank-webpay-magento2*.zip
 
 development-docker/.built
 development-docker/plugin/*
+
+.vscode
