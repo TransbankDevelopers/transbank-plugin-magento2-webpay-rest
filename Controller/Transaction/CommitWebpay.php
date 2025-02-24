@@ -125,22 +125,25 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $tokenWs = $request['token_ws'] ?? null;
         $tbkToken = $request['TBK_TOKEN'] ?? null;
         $tbkIdSession = $request['TBK_ID_SESION'] ?? null;
+        $webpayFlow = self::WEBPAY_FLOW_ERROR;
 
         if (isset($tokenWs) && isset($tbkToken)) {
-            return self::WEBPAY_FLOW_ERROR;
+            $webpayFlow = self::WEBPAY_FLOW_ERROR;
         }
 
         if (isset($tbkIdSession) && isset($tbkToken) && !isset($tokenWs)) {
-            return self::WEBPAY_FLOW_ABORTED;
+            $webpayFlow = self::WEBPAY_FLOW_ABORTED;
         }
 
         if (isset($tbkIdSession) && !isset($tbkToken) && !isset($tokenWs)) {
-            return self::WEBPAY_FLOW_TIMEOUT;
+            $webpayFlow = self::WEBPAY_FLOW_TIMEOUT;
         }
 
         if (isset($tokenWs) && !isset($tbkToken) && !isset($tbkIdSession)) {
-            return self::WEBPAY_NORMAL_FLOW;
+            $webpayFlow = self::WEBPAY_NORMAL_FLOW;
         }
+
+        return $webpayFlow;
     }
 
     private function handleNormalFlow(string $token)
