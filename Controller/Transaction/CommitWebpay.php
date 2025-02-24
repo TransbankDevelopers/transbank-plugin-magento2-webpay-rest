@@ -2,8 +2,7 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
+use Throwable;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Exceptions\EcommerceException;
@@ -13,7 +12,6 @@ use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
-use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -82,7 +80,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
             return $this->handleRequest($request);
-        } catch (MissingArgumentException | GuzzleException $exception) {
+        } catch (Throwable $exception) {
             return $this->handleException($exception);
         }
     }
@@ -309,7 +307,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->redirectWithErrorMessage($message);
     }
 
-    private function handleException(Exception $exception)
+    private function handleException(Throwable $exception)
     {
         $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
 
