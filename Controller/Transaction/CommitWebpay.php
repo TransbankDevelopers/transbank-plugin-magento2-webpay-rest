@@ -2,17 +2,16 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
+use Throwable;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
+use Transbank\Webpay\Exceptions\EcommerceException;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
-use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -21,9 +20,10 @@ use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 class CommitWebpay extends \Magento\Framework\App\Action\Action
 {
     const WEBPAY_NORMAL_FLOW = 'normal';
-    const WEBPAY_FLOW_TIMEOUT = 'timeout';
-    const WEBPAY_FLOW_ABORTED = 'aborted';
-    const WEBPAY_FLOW_ERROR = 'error';
+    const WEBPAY_TIMEOUT_FLOW = 'timeout';
+    const WEBPAY_ABORTED_FLOW = 'aborted';
+    const WEBPAY_ERROR_FLOW = 'error';
+    const WEBPAY_INVALID_FLOW = 'invalid';
 
     const WEBPAY_FAILED_FLOW_MESSAGE = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
     const WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE = 'Orden cancelada por el usuario.';
@@ -80,7 +80,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $this->log->logInfo('Request: payload -> ' . json_encode($request));
 
             return $this->handleRequest($request);
-        } catch (MissingArgumentException | GuzzleException $exception) {
+        } catch (Throwable $exception) {
             return $this->handleException($exception);
         }
     }
@@ -103,19 +103,23 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $webpayFlow = $this->getWebpayFlow($request);
 
+        if ($webpayFlow == self::WEBPAY_INVALID_FLOW) {
+            throw new EcommerceException('Flujo de pago no reconocido.');
+        }
+
         if ($webpayFlow == self::WEBPAY_NORMAL_FLOW) {
             return $this->handleNormalFlow($request['token_ws']);
         }
 
-        if ($webpayFlow == self::WEBPAY_FLOW_TIMEOUT) {
+        if ($webpayFlow == self::WEBPAY_TIMEOUT_FLOW) {
             return $this->handleFlowTimeout($request['TBK_ORDEN_COMPRA']);
         }
 
-        if ($webpayFlow == self::WEBPAY_FLOW_ABORTED) {
+        if ($webpayFlow == self::WEBPAY_ABORTED_FLOW) {
             return $this->handleFlowAborted($request['TBK_TOKEN']);
         }
 
-        if ($webpayFlow == self::WEBPAY_FLOW_ERROR) {
+        if ($webpayFlow == self::WEBPAY_ERROR_FLOW) {
             return $this->handleFlowError($request['token_ws']);
         }
     }
@@ -125,22 +129,25 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $tokenWs = $request['token_ws'] ?? null;
         $tbkToken = $request['TBK_TOKEN'] ?? null;
         $tbkIdSession = $request['TBK_ID_SESION'] ?? null;
+        $webpayFlow = self::WEBPAY_INVALID_FLOW;
 
         if (isset($tokenWs) && isset($tbkToken)) {
-            return self::WEBPAY_FLOW_ERROR;
+            $webpayFlow = self::WEBPAY_ERROR_FLOW;
         }
 
         if (isset($tbkIdSession) && isset($tbkToken) && !isset($tokenWs)) {
-            return self::WEBPAY_FLOW_ABORTED;
+            $webpayFlow = self::WEBPAY_ABORTED_FLOW;
         }
 
         if (isset($tbkIdSession) && !isset($tbkToken) && !isset($tokenWs)) {
-            return self::WEBPAY_FLOW_TIMEOUT;
+            $webpayFlow = self::WEBPAY_TIMEOUT_FLOW;
         }
 
         if (isset($tokenWs) && !isset($tbkToken) && !isset($tbkIdSession)) {
-            return self::WEBPAY_NORMAL_FLOW;
+            $webpayFlow = self::WEBPAY_NORMAL_FLOW;
         }
+
+        return $webpayFlow;
     }
 
     private function handleNormalFlow(string $token)
@@ -300,7 +307,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         return $this->redirectWithErrorMessage($message);
     }
 
-    private function handleException(Exception $exception)
+    private function handleException(Throwable $exception)
     {
         $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
 
@@ -424,7 +431,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $commitStatus = $commitResponse->getResponseCode() == 0 ? 'Aprobada' : 'Rechazada';
             $installmentsAmount = $commitResponse->getInstallmentsAmount();
             $balance = $commitResponse->getBalance();
-            $historyComment =  '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
+            $historyComment = '<strong>Transacción ' . $commitStatus . '</strong><br><br>' .
                 '<strong>VCI</strong>: ' . $commitResponse->getVci() . '<br>' .
                 '<strong>Estado</strong>: ' . $commitResponse->getStatus() . '<br>' .
                 '<strong>Código de respuesta</strong>: ' . $commitResponse->getResponseCode() . '<br>' .
