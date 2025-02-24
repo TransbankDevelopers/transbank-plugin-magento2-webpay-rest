@@ -21,9 +21,9 @@ use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 class CommitWebpay extends \Magento\Framework\App\Action\Action
 {
     const WEBPAY_NORMAL_FLOW = 'normal';
-    const WEBPAY_FLOW_TIMEOUT = 'timeout';
-    const WEBPAY_FLOW_ABORTED = 'aborted';
-    const WEBPAY_FLOW_ERROR = 'error';
+    const WEBPAY_TIMEOUT_FLOW = 'timeout';
+    const WEBPAY_ABORTED_FLOW = 'aborted';
+    const WEBPAY_ERROR_FLOW = 'error';
 
     const WEBPAY_FAILED_FLOW_MESSAGE = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
     const WEBPAY_CANCELED_BY_USER_FLOW_MESSAGE = 'Orden cancelada por el usuario.';
@@ -107,15 +107,15 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             return $this->handleNormalFlow($request['token_ws']);
         }
 
-        if ($webpayFlow == self::WEBPAY_FLOW_TIMEOUT) {
+        if ($webpayFlow == self::WEBPAY_TIMEOUT_FLOW) {
             return $this->handleFlowTimeout($request['TBK_ORDEN_COMPRA']);
         }
 
-        if ($webpayFlow == self::WEBPAY_FLOW_ABORTED) {
+        if ($webpayFlow == self::WEBPAY_ABORTED_FLOW) {
             return $this->handleFlowAborted($request['TBK_TOKEN']);
         }
 
-        if ($webpayFlow == self::WEBPAY_FLOW_ERROR) {
+        if ($webpayFlow == self::WEBPAY_ERROR_FLOW) {
             return $this->handleFlowError($request['token_ws']);
         }
     }
@@ -125,18 +125,18 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $tokenWs = $request['token_ws'] ?? null;
         $tbkToken = $request['TBK_TOKEN'] ?? null;
         $tbkIdSession = $request['TBK_ID_SESION'] ?? null;
-        $webpayFlow = self::WEBPAY_FLOW_ERROR;
+        $webpayFlow = self::WEBPAY_ERROR_FLOW;
 
         if (isset($tokenWs) && isset($tbkToken)) {
-            $webpayFlow = self::WEBPAY_FLOW_ERROR;
+            $webpayFlow = self::WEBPAY_ERROR_FLOW;
         }
 
         if (isset($tbkIdSession) && isset($tbkToken) && !isset($tokenWs)) {
-            $webpayFlow = self::WEBPAY_FLOW_ABORTED;
+            $webpayFlow = self::WEBPAY_ABORTED_FLOW;
         }
 
         if (isset($tbkIdSession) && !isset($tbkToken) && !isset($tokenWs)) {
-            $webpayFlow = self::WEBPAY_FLOW_TIMEOUT;
+            $webpayFlow = self::WEBPAY_TIMEOUT_FLOW;
         }
 
         if (isset($tokenWs) && !isset($tbkToken) && !isset($tbkIdSession)) {
