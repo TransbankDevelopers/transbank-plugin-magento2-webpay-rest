@@ -49,13 +49,13 @@ docker compose down
 
 ### Copiar e instalar el plugin
 Permite copiar el codigo actual del plugin hacia el contenedor e instalarlo
-el valor 'php8.1-mag2.4.6-apache_magento' es el nombre del contenedor (container_name) donde corre
+el valor 'php8.2-mag2.4.6-apache_magento' es el nombre del contenedor (container_name) donde corre
 Magento. Este debe ejecutarse desde la carpeta raiz del proyecto 
 
 
 ```
-docker cp . php8.1-mag2.4.6-apache_magento:/var/www/html/app/code/Transbank/Webpay
-docker exec php8.1-mag2.4.6-apache_magento /var/www/html/plugin_install.sh
+docker cp . php8.2-mag2.4.6-apache_magento:/var/www/html/app/code/Transbank/Webpay
+docker exec php8.2-mag2.4.6-apache_magento /var/www/html/plugin_install.sh
 ```
 
 **Web server:** http://localhost/
