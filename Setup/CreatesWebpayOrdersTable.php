@@ -22,10 +22,10 @@ trait CreatesWebpayOrdersTable
             ->addColumn('order_id', Table::TYPE_TEXT, 60, [
                 'nullable' => false,
             ], 'Order Id')
-            ->addColumn('buy_order', Table::TYPE_TEXT, 20, [
+            ->addColumn('buy_order', Table::TYPE_TEXT, 26, [
                 'nullable' => false,
             ], 'Buy order')
-            ->addColumn('child_buy_order', Table::TYPE_TEXT, 20, [
+            ->addColumn('child_buy_order', Table::TYPE_TEXT, 26, [
                 'nullable' => false,
             ], 'Child buy order')
             ->addColumn('commerce_code', Table::TYPE_TEXT, 60, [
