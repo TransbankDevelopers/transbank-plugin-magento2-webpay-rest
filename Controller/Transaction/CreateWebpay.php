@@ -6,6 +6,7 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\TransactionHelper;
 
 /**
  * Controller for create transaction Webpay.
@@ -104,15 +105,16 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             $returnUrl = $baseUrl . $this->webpayConfig['URL_RETURN'];
             $quoteId = $quote->getId();
             $orderId = $this->getOrderId();
+            $buyOrder = TransactionHelper::generateBuyOrder($orderId);
 
             $quote->save();
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->webpayConfig);
             $this->log->logInfo('B.2. Preparando datos antes de crear la transacción en Transbank');
-            $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', buyOrder: ' . $orderId . ', returnUrl: ' . $returnUrl);
-            $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $orderId, $returnUrl);
+            $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', orderId: ' . $orderId . ', buyOrder: ' . $buyOrder . ', returnUrl: ' . $returnUrl);
+            $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $buyOrder, $returnUrl);
 
-            $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId];
+            $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId, 'buyOrder' => $buyOrder];
             $message = '<h3>Esperando pago con Webpay</h3><br>' . json_encode($dataLog);
 
             if (isset($response['token_ws'])) {
@@ -120,6 +122,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
                     $response['token_ws'],
                     WebpayOrderData::PAYMENT_STATUS_WATING,
                     $orderId,
+                    $buyOrder,
                     $quoteId
                 );
 
@@ -128,7 +131,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
                 $order->setStatus($orderStatusPendingPayment);
             } else {
-                $this->saveWebpayData('', WebpayOrderData::PAYMENT_STATUS_ERROR, $orderId, $quoteId);
+                $this->saveWebpayData('', WebpayOrderData::PAYMENT_STATUS_ERROR, $orderId, $buyOrder, $quoteId);
                 $order->cancel();
                 $order->save();
                 $order->setStatus($orderStatusCanceled);
@@ -185,18 +188,19 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @throws \Exception
      *
      */
-    protected function saveWebpayData($token_ws, $payment_status, $order_id, $quote_id)
+    protected function saveWebpayData($token_ws, $payment_status, $order_id, $buyOrder, $quote_id)
     {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'token'          => $token_ws,
             'payment_status' => $payment_status,
             'order_id'       => $order_id,
+            'buy_order'      => $buyOrder,
             'quote_id'       => $quote_id,
             'metadata'       => json_encode($this->checkoutSession->getData()),
-            'commerce_code'   => $this->webpayConfig['COMMERCE_CODE'],
-            'environment'     => $this->webpayConfig['ENVIRONMENT'],
-            'product'         => Webpay::PRODUCT_NAME
+            'commerce_code'  => $this->webpayConfig['COMMERCE_CODE'],
+            'environment'    => $this->webpayConfig['ENVIRONMENT'],
+            'product'        => Webpay::PRODUCT_NAME
         ]);
         $webpayOrderData->save();
     }
