@@ -471,7 +471,7 @@ class AuthorizeOneclick extends Action
      * @param MallTransactionAuthorizeResponse $authorizeResponse The authorization response.
      * @param float $amount The amount of the order.
      * @param string $payment_status The payment status.
-     * @param int $order_id The order id.
+     * @param string $order_id The order id.
      * @param int $quote_id The quote id.
      *
      * @return WebpayOrderData
@@ -480,7 +480,7 @@ class AuthorizeOneclick extends Action
         MallTransactionAuthorizeResponse $authorizeResponse,
         float $amount,
         string $payment_status,
-        int $order_id,
+        string $order_id,
         int $quote_id
     ): void {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
