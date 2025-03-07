@@ -183,13 +183,19 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param $token_ws
      * @param $payment_status
      * @param $order_id
+     * @param $buyOrder
      * @param $quote_id
      *
      * @throws \Exception
      *
      */
-    protected function saveWebpayData($token_ws, $payment_status, $order_id, $buyOrder, $quote_id)
-    {
+    protected function saveWebpayData(
+        $token_ws, 
+        $payment_status, 
+        $order_id, 
+        $buyOrder, 
+        $quote_id
+    ): void {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
         $webpayOrderData->setData([
             'token'          => $token_ws,
@@ -206,11 +212,14 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @return string
+     * @return int
      */
     protected function getOrderId()
-    {
-        return $this->checkoutSession->getLastRealOrderId();
+    {   
+        $data = $this->checkoutSession->getLastRealOrderId();
+        $this->log->logInfo('$data: '.$data);
+        $this->log->logInfo('$data int: '.((int)$data));
+        return (int)$data;
     }
 
     /**
