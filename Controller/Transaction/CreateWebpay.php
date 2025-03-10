@@ -104,7 +104,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $returnUrl = $baseUrl . $this->webpayConfig['URL_RETURN'];
             $quoteId = $quote->getId();
-            $orderId = $this->getOrderId();
+            $orderId = $order->getId();
             $buyOrder = TransactionHelper::generateBuyOrder($orderId);
 
             $quote->save();
@@ -209,17 +209,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             'product'        => Webpay::PRODUCT_NAME
         ]);
         $webpayOrderData->save();
-    }
-
-    /**
-     * @return int
-     */
-    protected function getOrderId()
-    {   
-        $data = $this->checkoutSession->getLastRealOrderId();
-        $this->log->logInfo('$data: '.$data);
-        $this->log->logInfo('$data int: '.((int)$data));
-        return (int)$data;
     }
 
     /**
