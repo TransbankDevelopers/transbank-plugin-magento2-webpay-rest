@@ -109,7 +109,10 @@ class RefundObserver implements ObserverInterface
         $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
         $webpayOrderData = null;
         if ($paymentMethod == Webpay::CODE) {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+            $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
+            if (!isset($webpayOrderData)){
+                $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+            }
             $transactionData['token'] = $webpayOrderData->getToken();
         }
         else {
