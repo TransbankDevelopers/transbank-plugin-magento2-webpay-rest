@@ -113,6 +113,11 @@ class RefundObserver implements ObserverInterface
             if (!$webpayOrderData || !$webpayOrderData->getId()){
                 $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
             }
+            if (!$webpayOrderData || !$webpayOrderData->getId()){
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('No se encontró la transacción asociada a la orden')
+                );
+            }
             $transactionData['token'] = $webpayOrderData->getToken();
         }
         else {
