@@ -190,10 +190,10 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      *
      */
     protected function saveWebpayData(
-        $token_ws, 
-        $payment_status, 
-        $order_id, 
-        $buyOrder, 
+        $token_ws,
+        $payment_status,
+        $order_id,
+        $buyOrder,
         $quote_id
     ): void {
         $webpayOrderData = $this->webpayOrderDataFactory->create();
