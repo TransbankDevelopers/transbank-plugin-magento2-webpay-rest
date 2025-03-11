@@ -34,9 +34,14 @@ class TransactionHelper {
      * @param int $randomLength Length of the random component.
      * @return string Order identifier with a maximum of 26 characters.
      */
-    private static function generateBuyOrderBase(string $prefix, int|string $orderId, int $randomLength = self::DEFAULT_RANDOM_LENGTH): string {
+    private static function generateBuyOrderBase(
+        string $prefix, 
+        int|string $orderId, 
+        int $randomLength = self::DEFAULT_RANDOM_LENGTH
+    ): string {
         $orderIdStr = (string)$orderId;
-        $maxRandomLength = self::BUY_ORDER_MAX_LENGTH - (strlen($prefix) + strlen($orderIdStr) + self::SEPARATOR_CHAR_COUNT);
+        $maxRandomLength = self::BUY_ORDER_MAX_LENGTH - (strlen($prefix) + strlen($orderIdStr) 
+         + self::SEPARATOR_CHAR_COUNT);
         $random = self::generateRandomComponent(min($randomLength, $maxRandomLength));
         return "{$prefix}-{$random}-{$orderIdStr}";
     }
