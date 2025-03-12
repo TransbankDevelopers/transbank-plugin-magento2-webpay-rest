@@ -10,6 +10,7 @@ use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Exceptions\EcommerceException;
 
 class RefundObserver implements ObserverInterface
 {
@@ -114,9 +115,7 @@ class RefundObserver implements ObserverInterface
                 $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
             }
             if (!$webpayOrderData || !$webpayOrderData->getId()){
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __('No se encontró la transacción asociada a la orden')
-                );
+                throw new EcommerceException('No se encontró la transacción para realizar el reembolso');
             }
             $transactionData['token'] = $webpayOrderData->getToken();
         }
