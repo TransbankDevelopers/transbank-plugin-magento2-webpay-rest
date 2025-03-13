@@ -397,7 +397,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected function getOrder($orderId): Order
     {
         $order = ObjectManagerHelper::get(Order::class);
-        return $order->loadByIncrementId($orderId);
+        return $order->load($orderId);
     }
 
     /**
@@ -421,7 +421,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function getWebpayOrderDataByBuyOrder($buyOrder): WebpayOrderData
     {
         $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        return $webpayOrderDataModel->load($buyOrder, 'order_id');
+        return $webpayOrderDataModel->load($buyOrder, 'buy_order');
     }
 
     private function createCommitHistoryComment($commitResponse): string

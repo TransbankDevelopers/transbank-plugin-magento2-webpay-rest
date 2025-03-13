@@ -12,6 +12,7 @@ use Magento\Framework\View\Result\Page;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\TransactionHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\Config\ConfigProvider;
@@ -169,8 +170,8 @@ class AuthorizeOneclick extends Action
         $username = $inscription->getUsername();
         $tbkUser = $inscription->getTbkUser();
 
-        $buyOrder = "100000" . $orderId;
-        $childBuyOrder = "200000" . $orderId;
+        $buyOrder = TransactionHelper::generateBuyOrder($orderId);
+        $childBuyOrder = TransactionHelper::generateChildBuyOrder($orderId);
 
         $details = [
             [

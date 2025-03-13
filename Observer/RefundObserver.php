@@ -10,6 +10,7 @@ use Transbank\Webpay\Model\WebpayOrderDataFactory;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Exceptions\EcommerceException;
 
 class RefundObserver implements ObserverInterface
 {
@@ -109,7 +110,13 @@ class RefundObserver implements ObserverInterface
         $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
         $webpayOrderData = null;
         if ($paymentMethod == Webpay::CODE) {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+            $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
+            if (!$webpayOrderData || !$webpayOrderData->getId()){
+                $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+            }
+            if (!$webpayOrderData || !$webpayOrderData->getId()){
+                throw new EcommerceException('No se encontró la transacción para realizar el reembolso');
+            }
             $transactionData['token'] = $webpayOrderData->getToken();
         }
         else {
