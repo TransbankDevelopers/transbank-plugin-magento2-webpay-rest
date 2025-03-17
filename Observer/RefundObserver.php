@@ -107,28 +107,38 @@ class RefundObserver implements ObserverInterface
      */
     private function getTransactionData(string $paymentMethod, \Magento\Sales\Model\Order $order): array {
         $transactionData = [];
-        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        $webpayOrderData = null;
+        $webpayOrderData = $this->getTransaction($paymentMethod, $order);
+        $transactionData['metadata'] = $webpayOrderData->getMetadata();
+        $transactionData['webpayOrderData'] = $webpayOrderData;
         if ($paymentMethod == Webpay::CODE) {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
-            if (!$webpayOrderData || !$webpayOrderData->getId()){
-                $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
-            }
-            if (!$webpayOrderData || !$webpayOrderData->getId()){
-                throw new EcommerceException('No se encontró la transacción para realizar el reembolso');
-            }
             $transactionData['token'] = $webpayOrderData->getToken();
         }
         else {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
             $transactionData['buyOrder'] = $webpayOrderData->getBuyOrder();
             $transactionData['childBuyOrder'] = $webpayOrderData->getChildBuyOrder();
             $transactionData['childCommerceCode'] = $webpayOrderData->getChildCommerceCode();
         }
-        $transactionData['metadata'] = $webpayOrderData->getMetadata();
-        $transactionData['webpayOrderData'] = $webpayOrderData;
-
         return $transactionData;
+    }
+
+    /**
+     * @param string $paymentMethod
+     * @param \Magento\Sales\Model\Order $order
+     *
+     * @return \Transbank\Webpay\Model\WebpayOrderData
+     */
+    private function getTransaction(string $paymentMethod, \Magento\Sales\Model\Order $order): array {
+        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
+        $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
+        if ($paymentMethod == Webpay::CODE) {
+            if (!$webpayOrderData || !$webpayOrderData->getId()){
+                $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+            }
+        }
+        if (!$webpayOrderData || !$webpayOrderData->getId()){
+            throw new EcommerceException('No se encontró la transacción para realizar el reembolso');
+        }
+        return $webpayOrderData;
     }
 
     /**
