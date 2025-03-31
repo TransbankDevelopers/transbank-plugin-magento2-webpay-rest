@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
@@ -11,6 +12,7 @@ use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Exceptions\EcommerceException;
+use Magento\Framework\Message\ManagerInterface;
 
 class RefundObserver implements ObserverInterface
 {
@@ -18,19 +20,27 @@ class RefundObserver implements ObserverInterface
     protected $logger;
     protected $configProvider;
     protected $webpayOrderDataFactory;
+    protected $orderRepository;
+    protected $messageManager;
 
     public function __construct (
         ConfigProvider $configProvider,
-        WebpayOrderDataFactory $webpayOrderDataFactory
+        WebpayOrderDataFactory $webpayOrderDataFactory,
+        OrderRepositoryInterface $orderRepository,
+        ManagerInterface $messageManager
     )
     {
         $this->logger = new PluginLogger();
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->orderRepository = $orderRepository;
+        $this->messageManager = $messageManager;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer) {
-
+        $errorMessageBase = 'Ocurrió un error al realizar la anulación en Webpay. ';
+        $refundInstructions = 'Intente realizar la anulación mediante su portal privado de Transbank.
+          Para mayor información del error revise los logs de la transacción.';
         $creditMemo = $observer->getEvent()->getCreditmemo();
         $order = $creditMemo->getOrder();
         $grandTotal = $creditMemo->getGrandTotal();
@@ -45,7 +55,8 @@ class RefundObserver implements ObserverInterface
             $productConfig = $this->getProductConfig($paymentMethod);
             $transbankSdk = new TransbankSdkWebpayRest($productConfig);
             $transactionData = $this->getTransactionData($paymentMethod, $order);
-            $refundResponse = $this->refundTransaction($paymentMethod, $transbankSdk, $transactionData, $grandTotal);
+            $refundResponse = $this->refundTransaction($paymentMethod, $transbankSdk,
+            $transactionData, $grandTotal);
             $refundType = $refundResponse->getType();
             if ($refundType === 'REVERSED' ||
                 ($refundType === 'NULLIFIED') && (int) $refundResponse->getResponseCode() === 0) {
@@ -54,27 +65,28 @@ class RefundObserver implements ObserverInterface
                         $transactionData['metadata']);
                     $transactionData['webpayOrderData']->setPaymentStatus($refundType);
                     $transactionData['webpayOrderData']->save();
-                    $refundComment = $this->createHistoryComment($refundType, $refundResponse, $grandTotal);
+                    $refundComment = $this->createHistoryComment($refundType,
+                    $refundResponse, $grandTotal);
                     $order->addStatusHistoryComment($refundComment);
-                    $order->save();
+                    $this->orderRepository->save($order);
                     return;
             }
-            $errorMessage = 'Error en el reembolso. Código de respuesta Transbank: ' .
-                $refundResponse->getResponseCode();
-            $order->addStatusHistoryComment($errorMessage);
-            $order->save();
+            $errorMessage = $errorMessageBase . 'Código de respuesta Transbank: ' .
+                $refundResponse->getResponseCode() . '. ' . $refundInstructions;
             $this->logger->logError($errorMessage);
-            throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
+            $order->addStatusHistoryComment($errorMessage);
+            $this->orderRepository->save($order);
+            $this->messageManager->addErrorMessage($errorMessageBase . $refundInstructions);
+            return;
 
         }
         catch (\Exception $exception) {
-            $errorMessage = "Error en el reembolso: " . $exception->getMessage();
-            $order->addStatusHistoryComment($errorMessage);
-            $order->save();
+            $errorMessage = $errorMessageBase . $exception->getMessage() . '. ' . $refundInstructions;
             $this->logger->logError($errorMessage);
-            throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage), $exception);
+            $order->addStatusHistoryComment($errorMessage);
+            $this->orderRepository->save($order);
+            $this->messageManager->addErrorMessage($errorMessageBase . $refundInstructions);
         }
-
     }
 
     /**
@@ -107,28 +119,38 @@ class RefundObserver implements ObserverInterface
      */
     private function getTransactionData(string $paymentMethod, \Magento\Sales\Model\Order $order): array {
         $transactionData = [];
-        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        $webpayOrderData = null;
+        $webpayOrderData = $this->getTransaction($paymentMethod, $order);
+        $transactionData['metadata'] = $webpayOrderData->getMetadata();
+        $transactionData['webpayOrderData'] = $webpayOrderData;
         if ($paymentMethod == Webpay::CODE) {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
-            if (!$webpayOrderData || !$webpayOrderData->getId()){
-                $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
-            }
-            if (!$webpayOrderData || !$webpayOrderData->getId()){
-                throw new EcommerceException('No se encontró la transacción para realizar el reembolso');
-            }
             $transactionData['token'] = $webpayOrderData->getToken();
         }
         else {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
             $transactionData['buyOrder'] = $webpayOrderData->getBuyOrder();
             $transactionData['childBuyOrder'] = $webpayOrderData->getChildBuyOrder();
             $transactionData['childCommerceCode'] = $webpayOrderData->getChildCommerceCode();
         }
-        $transactionData['metadata'] = $webpayOrderData->getMetadata();
-        $transactionData['webpayOrderData'] = $webpayOrderData;
-
         return $transactionData;
+    }
+
+    /**
+     * @param string $paymentMethod
+     * @param \Magento\Sales\Model\Order $order
+     *
+     * @return \Transbank\Webpay\Model\WebpayOrderData
+     * @throws EcommerceException
+     */
+    private function getTransaction(string $paymentMethod, \Magento\Sales\Model\Order $order){
+        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
+        $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
+        if ($paymentMethod == Webpay::CODE && (!$webpayOrderData || !$webpayOrderData->getId())) {
+            $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+        }
+        if (!$webpayOrderData || !is_object($webpayOrderData) || !$webpayOrderData->getId()){
+            throw new EcommerceException(
+            'No se encontró la transacción con el número de orden: ' . $order->getIncrementId());
+        }
+        return $webpayOrderData;
     }
 
     /**
