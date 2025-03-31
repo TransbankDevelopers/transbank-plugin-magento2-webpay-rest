@@ -39,7 +39,7 @@ class RefundObserver implements ObserverInterface
 
     public function execute(\Magento\Framework\Event\Observer $observer) {
         $errorMessageBase = 'Ocurrió un error al realizar la anulación en Webpay. ';
-        $refundInstructions = 'Intente realizar la anulación mediante su portal privado de Transbank.  
+        $refundInstructions = 'Intente realizar la anulación mediante su portal privado de Transbank.
           Para mayor información del error revise los logs de la transacción.';
         $creditMemo = $observer->getEvent()->getCreditmemo();
         $order = $creditMemo->getOrder();
@@ -55,7 +55,7 @@ class RefundObserver implements ObserverInterface
             $productConfig = $this->getProductConfig($paymentMethod);
             $transbankSdk = new TransbankSdkWebpayRest($productConfig);
             $transactionData = $this->getTransactionData($paymentMethod, $order);
-            $refundResponse = $this->refundTransaction($paymentMethod, $transbankSdk, 
+            $refundResponse = $this->refundTransaction($paymentMethod, $transbankSdk,
             $transactionData, $grandTotal);
             $refundType = $refundResponse->getType();
             if ($refundType === 'REVERSED' ||
@@ -65,7 +65,7 @@ class RefundObserver implements ObserverInterface
                         $transactionData['metadata']);
                     $transactionData['webpayOrderData']->setPaymentStatus($refundType);
                     $transactionData['webpayOrderData']->save();
-                    $refundComment = $this->createHistoryComment($refundType, 
+                    $refundComment = $this->createHistoryComment($refundType,
                     $refundResponse, $grandTotal);
                     $order->addStatusHistoryComment($refundComment);
                     $this->orderRepository->save($order);
