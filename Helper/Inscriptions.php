@@ -40,10 +40,10 @@ class Inscriptions extends AbstractHelper
             $select = $connection->select()
                 ->from(
                     ['t' => $tableName],
-                    ['id', 'username', 'card_type', 'card_number'] // Columns to select
+                    ['id', 'username', 'card_type', 'card_number']
                 )
-                ->where('t.user_id = ?', $customerId) // Placeholder for customerId
-                ->where('t.status = ?', 'SUCCESS'); // Placeholder for status
+                ->where('t.user_id = ?', $customerId)
+                ->where('t.status = ?', 'SUCCESS');
 
             $result = $connection->fetchAll($select);
         } else {
