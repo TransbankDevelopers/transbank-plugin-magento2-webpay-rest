@@ -33,7 +33,6 @@ class Inscriptions extends AbstractHelper
         $customerId = $this->session->getCustomer()->getId();
 
         if (isset($customerId)) {
-            /** @var AdapterInterface $connection */
             $connection = $this->resourceConnection->getConnection();
             $tableName = $connection->getTableName(OneclickInscriptionData::TABLE_NAME);
 
