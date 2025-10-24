@@ -30,13 +30,13 @@ class TransactionHelper {
      * - Maximum of 26 characters due to API constraints.
      *
      * @param string $prefix Store prefix.
-     * @param int|string $orderId Unique order identifier.
+     * @param string $orderId Unique order identifier.
      * @param int $randomLength Length of the random component.
      * @return string Order identifier with a maximum of 26 characters.
      */
     private static function generateBuyOrderBase(
         string $prefix,
-        int|string $orderId,
+        string $orderId,
         int $randomLength = self::DEFAULT_RANDOM_LENGTH
     ): string {
         $orderIdStr = (string)$orderId;
@@ -49,7 +49,7 @@ class TransactionHelper {
     /**
      * Generates a standard purchase order identifier using the default store prefix.
      *
-     * @param int|string $orderId Unique order identifier.
+     * @param string $orderId Unique order identifier.
      * @param int $randomLength Length of the random component.
      * @return string Order identifier with a maximum of 26 characters.
      */
@@ -63,7 +63,7 @@ class TransactionHelper {
      *
      * The prefix is adjusted by appending "-child" to the default store prefix.
      *
-     * @param int|string $orderId Unique order identifier.
+     * @param string $orderId Unique order identifier.
      * @param int $randomLength Length of the random component.
      * @return string Child order identifier with a maximum of 26 characters.
      */
