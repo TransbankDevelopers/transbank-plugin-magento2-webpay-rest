@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\App\Response\RedirectInterface;
+use Transbank\Webpay\Observer\Util\ObserverGuard;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\ActionInterface;
@@ -19,31 +20,32 @@ class BlockSuccessWhenUnpaidObserver implements ObserverInterface
     private UrlInterface $url;
     private RedirectInterface $redirect;
     private ActionFlag $actionFlag;
+    private ObserverGuard $observerGuard;
 
     public function __construct(
         Session $checkoutSession,
         OrderRepositoryInterface $orderRepository,
         UrlInterface $url,
         RedirectInterface $redirect,
-        ActionFlag $actionFlag
+        ActionFlag $actionFlag,
+        ObserverGuard $observerGuard
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->orderRepository = $orderRepository;
         $this->url = $url;
         $this->redirect = $redirect;
         $this->actionFlag = $actionFlag;
+        $this->observerGuard = $observerGuard;
     }
 
     public function execute(Observer $observer)
     {
-        $lastOrderId = (int) $this->checkoutSession->getLastOrderId();
-        if ($lastOrderId <= 0) {
+        $order = $this->observerGuard->getOrderFromObserverOrSession($observer);
+        if (!$order) {
             return;
         }
 
-        $order = $this->orderRepository->get($lastOrderId);
-        $isMyMethod = $order->getPayment() && $order->getPayment()->getMethod() === 'transbank_webpay';
-        if (!$isMyMethod) {
+        if (!$this->observerGuard->isTransbankPayment($order)) {
             return;
         }
 
