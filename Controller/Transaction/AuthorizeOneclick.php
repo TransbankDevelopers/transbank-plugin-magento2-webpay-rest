@@ -68,6 +68,8 @@ class AuthorizeOneclick extends Action
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
      * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
+     * @param QuoteHelper $quoteHelper
+     * @param CustomerSession $customerSession
      */
     public function __construct(
         Context $context,

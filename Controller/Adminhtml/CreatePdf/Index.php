@@ -8,7 +8,7 @@ use Transbank\Webpay\Model\ReportPdfLog;
 class Index extends \Magento\Backend\App\Action
 {
     protected $configProvider;
-    
+
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider

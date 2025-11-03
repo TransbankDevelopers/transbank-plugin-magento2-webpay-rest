@@ -159,7 +159,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @return |null
+     * @return null
      */
     protected function getOrder()
     {

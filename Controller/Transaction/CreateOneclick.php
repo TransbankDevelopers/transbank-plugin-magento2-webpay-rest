@@ -167,7 +167,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @return |null
+     * @return null
      */
     protected function getOrder()
     {
@@ -185,13 +185,12 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @param $token_ws
-     * @param $payment_status
+     * @param $status
+     * @param $token
+     * @param $username
+     * @param $email
+     * @param $user_id
      * @param $order_id
-     * @param $quote_id
-     *
-     * @throws \Exception
-     *
      * @return OneclickInscriptionData
      */
     protected function saveOneclickInscriptionData( // Copiar esta funcion para guardar los datos en CommitOneClick.php
@@ -241,7 +240,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @param $username
+     * @param $customerId
+     * @return string
      */
     protected function createUsername($customerId) {
 

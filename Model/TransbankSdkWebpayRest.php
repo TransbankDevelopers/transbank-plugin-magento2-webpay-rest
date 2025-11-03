@@ -5,10 +5,10 @@ namespace Transbank\Webpay\Model;
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
-
 use Transbank\Webpay\Oneclick;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
@@ -39,6 +39,7 @@ class TransbankSdkWebpayRest
      * @var Oneclick\MallTransaction
      */
     public $mallTransaction;
+    private Options $options;
 
     /**
      * TransbankSdkWebpayRest constructor.
@@ -50,18 +51,19 @@ class TransbankSdkWebpayRest
     {
         $this->log = new PluginLogger();
         if (isset($config)) {
-            $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
+            $environment = $config['ENVIRONMENT'] ?? 'TEST';
 
-            $this->transaction = new WebpayPlus\Transaction();
-            $this->mallInscription = new Oneclick\MallInscription();
-            $this->mallTransaction = new Oneclick\MallTransaction();
+            $this->options = new Options($config['API_KEY'], $config['COMMERCE_CODE'], $environment);
+            $this->transaction = new WebpayPlus\Transaction($this->options);
+            $this->mallInscription = new Oneclick\MallInscription($this->options);
+            $this->mallTransaction = new Oneclick\MallTransaction($this->options);
 
             $this->log->logInfo('Environment: ' . json_encode($environment));
 
             if ($environment != 'TEST') {
-                $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->transaction->buildForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->mallInscription->buildForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
+                $this->mallTransaction->buildForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
             }
         }
     }

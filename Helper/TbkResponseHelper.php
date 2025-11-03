@@ -82,7 +82,7 @@ class TbkResponseHelper
      *
      * @return string|null date string in localtime representation, `null` if input cannot be transformed
      */
-    public static function utcToLocalDate($utcDate): string
+    public static function utcToLocalDate($utcDate): ?string
     {
         try {
             $scopeConfig = ObjectManagerHelper::get(ScopeConfigInterface::class);
