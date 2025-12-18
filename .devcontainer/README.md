@@ -12,20 +12,20 @@ Este **devcontainer** proporciona un entorno completo de desarrollo para el mód
 
 ## 📋 Servicios incluidos
 
-- **Magento 2.4.3** con **PHP 7.4**
-- **MySQL 8** como base de datos
-- **Elasticsearch** para la búsqueda optimizada del catálogo
-- **Apache** como servidor web
-- **Extensiones de VS Code** para trabajar con PHP y Magento
-- **Composer** para la gestión de dependencias PHP
+-   **Magento 2.4.3** con **PHP 7.4**
+-   **MySQL 8** como base de datos
+-   **Elasticsearch** para la búsqueda optimizada del catálogo
+-   **Apache** como servidor web
+-   **Extensiones de VS Code** para trabajar con PHP y Magento
+-   **Composer** para la gestión de dependencias PHP
 
 ## 🔗 URLs de acceso
 
-| Servicio      | URL                         | Credenciales |
-|---------------|-----------------------------|--------------|
+| Servicio      | URL                         | Credenciales                                    |
+| ------------- | --------------------------- | ----------------------------------------------- |
 | Magento       | http://localhost:8000       | cliente@cliente.com / <ver variable de entorno> |
-| Panel Admin   | http://localhost:8000/admin | admin / admin |
-| Base de datos | VS Code SQLTools / MySQL    | magento / magento |
+| Panel Admin   | http://localhost:8000/admin | admin / admin123                                |
+| Base de datos | VS Code SQLTools / MySQL    | magento / magento                               |
 
 ## 🛠️ Herramientas de desarrollo
 
@@ -35,14 +35,14 @@ El devcontainer incluye extensiones para trabajar directamente con la base de da
 
 #### SQLTools
 
-- **Acceso**: `Ctrl/Cmd + Shift + P` → `SQLTools: Connect`
-- **Conexiones preconfiguradas**:
-  - **Magento MySQL** – Base de datos principal
-  - **MySQL Root** – Acceso administrativo completo
-- **Funcionalidades**:
-  - Exploración de tablas
-  - Ejecución de consultas
-  - Exportación de datos
+-   **Acceso**: `Ctrl/Cmd + Shift + P` → `SQLTools: Connect`
+-   **Conexiones preconfiguradas**:
+    -   **Magento MySQL** – Base de datos principal
+    -   **MySQL Root** – Acceso administrativo completo
+-   **Funcionalidades**:
+    -   Exploración de tablas
+    -   Ejecución de consultas
+    -   Exportación de datos
 
 ## 📁 Estructura del proyecto en el contenedor
 
@@ -61,9 +61,10 @@ El módulo Webpay se monta automáticamente en:
 ```
 
 Además:
-- Se activa el módulo
-- Se instalan productos de prueba
-- Se configura la tienda automáticamente
+
+-   Se activa el módulo
+-   Se instalan productos de prueba
+-   Se configura la tienda automáticamente
 
 ### Desarrollo del módulo
 
@@ -76,8 +77,9 @@ chmod -R 777 var generated pub
 ```
 
 Notas adicionales:
-- Los logs se almacenan en `.devcontainer/logs/`
-- La carpeta de Magento está incluida en **Intelephense** para contar con referencias del core
+
+-   Los logs se almacenan en `.devcontainer/logs/`
+-   La carpeta de Magento está incluida en **Intelephense** para contar con referencias del core
 
 ## 📦 Dependencias
 
@@ -94,11 +96,11 @@ composer require nueva-dependencia
 
 ### Configuración por defecto
 
-- **Host**: `db`
-- **Puerto**: `3306`
-- **Base de datos**: `magento`
-- **Usuario**: `magento`
-- **Contraseña**: `magento`
+-   **Host**: `db`
+-   **Puerto**: `3306`
+-   **Base de datos**: `magento`
+-   **Usuario**: `magento`
+-   **Contraseña**: `magento`
 
 ## 📝 Notas de desarrollo
 
@@ -113,8 +115,8 @@ Si se realizan cambios en el devcontainer, es necesario reconstruir la imagen pa
 
 ### Reconstruir el devcontainer
 
-- VS Code → Paleta de comandos → **Dev Containers: Rebuild Container**
-- O desde el menú Remote → **Reopen in Container**
+-   VS Code → Paleta de comandos → **Dev Containers: Rebuild Container**
+-   O desde el menú Remote → **Reopen in Container**
 
 > ⚠️ **Nota**: la reconstrucción elimina datos no persistentes. Realiza respaldos si es necesario.
 
@@ -123,6 +125,7 @@ Si se realizan cambios en el devcontainer, es necesario reconstruir la imagen pa
 Para realizar una instalación completamente limpia:
 
 1. Elimina los contenedores:
+
 ```
 magento-transbank-plugin-mysql
 magento-transbank-plugin-elastic
@@ -130,11 +133,13 @@ magento-transbank-plugin
 ```
 
 2. Elimina la imagen:
+
 ```
 transbank-plugin-magento2-webpay-rest_devcontainer-magento
 ```
 
 3. Elimina los volúmenes:
+
 ```
 db_data
 es_data
