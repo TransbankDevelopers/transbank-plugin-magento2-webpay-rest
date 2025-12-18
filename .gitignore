@@ -12,3 +12,4 @@ development-docker/.built
 development-docker/plugin/*
 
 .vscode
+.devcontainer/logs

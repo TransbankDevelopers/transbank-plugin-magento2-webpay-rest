@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  db:
+    platform: linux/x86_64
+    image: mysql:8.0
+    container_name: magento-transbank-plugin-mysql
+    restart: on-failure:2
+    command: >
+      --default-time-zone='America/Santiago'
+      --default-authentication-plugin=mysql_native_password --sql-mode=""
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pmagento"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      MYSQL_ROOT_PASSWORD: magento
+      MYSQL_DATABASE: magento
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento
+    volumes:
+      - db_data:/var/lib/mysql
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
+    container_name: magento-transbank-plugin-elastic
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      TZ: America/Santiago
+    restart: on-failure:2
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow\\&timeout=5s >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+  magento:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: magento-transbank-plugin
+    depends_on:
+      - db
+      - elasticsearch
+    ports:
+      - "8000:80"
+    volumes:
+      - ..:/var/www/html/workspace:cached
+      - magento_data:/var/www/html
+      - ./logs/magento:/var/www/html/var/log
+      - ./logs/report:/var/www/html/var/report
+      - ./logs/apache:/var/log/apache2
+    environment:
+      CUSTOMER_EMAIL: cliente@cliente.com
+      CUSTOMER_PASSWORD: cliente123!
+      PLUGIN_NAME: transbank/webpay-magento2-rest
+      MAGENTO_DIR: /var/www/html
+      MAGENTO_STORE_PORT: 8000
+      INSTALL_PLUGIN_DEV_DEPS: 0
+      MAGENTO_DB_HOST: db
+      MAGENTO_DB_NAME: magento
+      MAGENTO_DB_USER: magento
+      MAGENTO_DB_PASSWORD: magento
+      MAGENTO_ADMIN_USER: admin
+      MAGENTO_ADMIN_PASSWORD: admin123
+      MAGENTO_ADMIN_EMAIL: admin@admin.com
+volumes:
+  db_data:
+  es_data:
+  magento_data:
