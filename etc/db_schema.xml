@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework/Setup/Declaration/Schema/etc/db_schema.xsd">
-    <table name="webpay_orders_data" resource="default" >
-        <column name="buy_order" xsi:type="varchar" nullable="false" length="26" comment="Updated column width"/>
-        <column name="child_buy_order" xsi:type="varchar" nullable="false" length="26" comment="Updated column width"/>
-    </table>
-</schema>
-
