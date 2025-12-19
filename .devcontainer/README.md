@@ -66,6 +66,8 @@ Además:
 -   Se instalan productos de prueba
 -   Se configura la tienda automáticamente
 
+> ⚠️ **Nota**: En caso de tener la carpeta vendor o el archivo composer.lock dentro de la carpeta root del plugin, eliminar ambos por que pueden generar inconsistencia en la instalación del plugin.
+
 ### Desarrollo del módulo
 
 Los cambios en el plugin **no se reflejan automáticamente** en Magento. Se recomienda ejecutar los siguientes comandos después de cada cambio:
@@ -141,7 +143,7 @@ transbank-plugin-magento2-webpay-rest_devcontainer-magento
 3. Elimina los volúmenes:
 
 ```
-db_data
-es_data
-magento_data
+transbank-plugin-magento2-webpay-rest_devcontainer_db_data
+transbank-plugin-magento2-webpay-rest_devcontainer_es_data
+transbank-plugin-magento2-webpay-rest_devcontainer_magento_data
 ```
