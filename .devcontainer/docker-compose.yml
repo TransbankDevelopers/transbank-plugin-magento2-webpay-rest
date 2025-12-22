@@ -72,6 +72,7 @@ services:
       MAGENTO_ADMIN_USER: admin
       MAGENTO_ADMIN_PASSWORD: admin123
       MAGENTO_ADMIN_EMAIL: admin@admin.com
+      MAGENTO_VERSION: 2.4.3
 volumes:
   db_data:
   es_data:

@@ -2,7 +2,6 @@
 set -euo pipefail
 
 # --- Environment Variables
-MAGENTO_VERSION="2.4.3"
 MAGENTO_ZIP_URL="https://github.com/magento/magento2/archive/refs/tags/${MAGENTO_VERSION}.zip"
 PLUGIN_SRC="${MAGENTO_DIR}/workspace"
 
