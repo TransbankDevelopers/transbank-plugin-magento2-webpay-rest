@@ -51,7 +51,7 @@ services:
       - db
       - elasticsearch
     ports:
-      - "8000:80"
+      - "8000:8080"
     volumes:
       - ..:/var/www/html/workspace:cached
       - magento_data:/var/www/html

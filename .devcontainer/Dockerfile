@@ -47,11 +47,20 @@ RUN docker-php-ext-configure gd \
 RUN echo "memory_limit=2G" > /usr/local/etc/php/conf.d/magento.ini \
  && echo "max_execution_time=1800" >> /usr/local/etc/php/conf.d/magento.ini \
  && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
- && echo "opcache.validate_timestamps=1" >> /usr/local/etc/php/conf.d/opcache.ini
+ && echo "opcache.validate_timestamps=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+ && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # ---------- Apache config ----------
 RUN a2enmod rewrite proxy proxy_fcgi headers
 COPY .devcontainer/apache.conf /etc/apache2/sites-available/000-default.conf
+
+RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf \
+    && sed -i 's/export APACHE_RUN_USER=www-data/export APACHE_RUN_USER=www-data/g' /etc/apache2/envvars \
+    && sed -i 's/export APACHE_RUN_GROUP=www-data/export APACHE_RUN_GROUP=www-data/g' /etc/apache2/envvars
+
+RUN mkdir -p /var/lock/apache2 /var/run/apache2 /var/www/html
+RUN chown -R www-data:www-data /var/lock/apache2 /var/run/apache2 /var/www/html
+RUN chmod -R 777 /var/lock/apache2 /var/run/apache2 /var/www/html
 
 # composer install
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
@@ -66,6 +75,8 @@ WORKDIR /var/www/html
 COPY .devcontainer/magento-setup.sh /usr/local/bin/magento-setup.sh
 RUN chmod +x /usr/local/bin/magento-setup.sh
 
-EXPOSE 80
+USER www-data
 
-CMD ["bash", "-c", "php-fpm -D && apachectl -D FOREGROUND"]
+EXPOSE 8080
+
+CMD ["bash", "-c", "php-fpm -D && . /etc/apache2/envvars && exec /usr/sbin/apache2 -DFOREGROUND"]
