@@ -1,21 +1,21 @@
 {
-  "name": "Magento 2.4.3 (PHP 7.4) + Transbank Module",
-  "dockerComposeFile": ["./docker-compose.yml"],
-  "service": "magento",
-  "workspaceFolder": "/var/www/html/workspace",
-  "runServices": ["db", "elasticsearch", "magento"],
-  "remoteUser": "root",
-  "shutdownAction": "stopCompose",
-  "postCreateCommand": "/usr/local/bin/magento-setup.sh",
-  "mounts": [
-    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
-  ],
-  "features": {
-    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
-      "plugins": "git zsh-autosuggestions zsh-syntax-highlighting"
-    }
-  },
-  "customizations": {
+    "name": "Magento 2.4.3 (PHP 7.4) + Transbank Module",
+    "dockerComposeFile": ["./docker-compose.yml"],
+    "service": "magento",
+    "workspaceFolder": "/var/www/html/workspace",
+    "runServices": ["db", "elasticsearch", "magento"],
+    "remoteUser": "root",
+    "shutdownAction": "stopCompose",
+    "postCreateCommand": "/usr/local/bin/magento-setup.sh",
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+    ],
+    "features": {
+        "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+            "plugins": "git zsh-autosuggestions zsh-syntax-highlighting"
+        }
+    },
+    "customizations": {
         "vscode": {
             "settings": {
                 "explorer.confirmDelete": false,
@@ -42,7 +42,9 @@
                 "settingsSync.enabled": false,
                 "remote.extensionKind": {
                     "github.copilot": ["ui"],
-                    "github.copilot-chat": ["ui"]
+                    "github.copilot-chat": ["ui"],
+                    "mtxr.sqltools": ["ui", "workspace"],
+                    "mtxr.sqltools-driver-mysql": ["workspace"]
                 },
                 "files.watcherExclude": {
                     "**/vendor/**": true,
