@@ -53,6 +53,25 @@ WHERE path LIKE 'payment/transbank_%'
   return 0
 }
 
+configure_chile_store() {
+  log "Configurando tienda solo para Chile (CL)..."
+
+  php bin/magento config:set general/country/default CL
+  php bin/magento config:set general/country/allow CL
+
+  php bin/magento config:set shipping/origin/country_id CL
+  php bin/magento config:set shipping/origin/city Santiago
+  php bin/magento config:set shipping/origin/postcode 0000000
+  php bin/magento config:set shipping/origin/region_id 0
+
+  php bin/magento config:set general/locale/code es_CL
+  php bin/magento config:set currency/options/base CLP
+  php bin/magento config:set currency/options/default CLP
+  php bin/magento config:set currency/options/allow CLP
+
+  return 0
+}
+
 # --- Wait for MySQL and Elasticsearch
 wait_port db 3306 "MySQL" || exit 1
 wait_es_yellow || exit 1
@@ -131,6 +150,8 @@ else
     log "Magento ya instalado. Sincronizando posibles cambios en el plugin..."
     php bin/magento setup:upgrade --keep-generated
 fi
+
+configure_chile_store
 
 # --- 5. Code and Cache Refresh
 log "Limpiando archivos generados y compilando..."

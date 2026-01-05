@@ -76,4 +76,32 @@ try {
     echo "Producto creado: {$productSku}\n";
 }
 
+$pageRepo = $objectManager->get(\Magento\Cms\Api\PageRepositoryInterface::class);
+$pageFactory = $objectManager->get(\Magento\Cms\Api\Data\PageInterfaceFactory::class);
+
+$widget = '{{widget type="Magento\Catalog\Block\Product\Widget\NewWidget" title="Catálogo" display_type="all_products" products_count="12" template="product/widget/new/content/new_grid.phtml"}}';
+
+try {
+    $page = $pageRepo->getById('home');
+    $content = (string) ($page->getContent() ?? '');
+
+    if (strpos($content, 'Magento\Catalog\Block\Product\Widget\NewWidget') === false) {
+        $page->setContent(rtrim($content) . "\n\n" . $widget . "\n");
+        $pageRepo->save($page);
+        echo "Home actualizada: widget agregado\n";
+    } else {
+        echo "Home ya tiene el widget\n";
+    }
+} catch (\Exception $e) {
+    $page = $pageFactory->create();
+    $page->setIdentifier('home');
+    $page->setTitle('Home Page');
+    $page->setIsActive(true);
+    $page->setPageLayout('1column');
+    $page->setStores([$storeId]);
+    $page->setContent($widget);
+    $pageRepo->save($page);
+    echo "Home creada con el widget\n";
+}
+
 echo "\nDemo data OK\n";
