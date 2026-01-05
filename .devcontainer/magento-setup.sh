@@ -144,15 +144,14 @@ if [[ ! -f "app/etc/env.php" ]]; then
         --cleanup-database \
         --enable-modules=Transbank_Webpay
 
-    configure_chile_store
-
     log "Instalando cron"
     php bin/magento cron:install || true
 else
     log "Magento ya instalado. Sincronizando posibles cambios en el plugin..."
     php bin/magento setup:upgrade --keep-generated
-    configure_chile_store
 fi
+
+configure_chile_store
 
 # --- 5. Code and Cache Refresh
 log "Limpiando archivos generados y compilando..."
