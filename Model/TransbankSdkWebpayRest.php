@@ -6,6 +6,7 @@ use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\WebpayPlus;
+use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
 
@@ -49,21 +50,42 @@ class TransbankSdkWebpayRest
     public function __construct($config)
     {
         $this->log = new PluginLogger();
-        if (isset($config)) {
-            $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
 
-            $this->transaction = new WebpayPlus\Transaction();
-            $this->mallInscription = new Oneclick\MallInscription();
-            $this->mallTransaction = new Oneclick\MallTransaction();
-
-            $this->log->logInfo('Environment: ' . json_encode($environment));
-
-            if ($environment != 'TEST') {
-                $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-            }
+        if (!isset($config)) {
+            return;
         }
+
+        $env = $config['ENVIRONMENT'] ?? 'TEST';
+        $isProd = $env !== 'TEST';
+        $apiKeyFromConfig = $config['API_KEY'] ?? null;
+        $commerceCodeFromConfig = $config['COMMERCE_CODE'] ?? null;
+
+        $this->log->logInfo("Environment: " . json_encode($env));
+
+        $integrationType = Options::ENVIRONMENT_PRODUCTION;
+
+        $webpayApiKey = $apiKeyFromConfig;
+        $webpayCommerceCode = $commerceCodeFromConfig;
+
+        $oneclickApiKey = $apiKeyFromConfig;
+        $oneclickCommerceCode = $commerceCodeFromConfig;
+
+        if(!$isProd) {
+            $integrationType = Options::ENVIRONMENT_INTEGRATION;
+
+            $webpayApiKey = $webpayApiKey ?? WebpayPlus::INTEGRATION_API_KEY;
+            $webpayCommerceCode = $webpayCommerceCode ?? WebpayPlus::INTEGRATION_COMMERCE_CODE;
+
+            $oneclickApiKey =  $oneclickApiKey ?? Oneclick::INTEGRATION_API_KEY;
+            $oneclickCommerceCode = $oneclickCommerceCode ?? Oneclick::INTEGRATION_COMMERCE_CODE;
+        }
+
+        $optionsWebPay = new Options($webpayApiKey, $webpayCommerceCode, $integrationType);
+        $optionsOneClick = new Options($oneclickApiKey, $oneclickCommerceCode, $integrationType);
+
+        $this->transaction = new WebpayPlus\Transaction($optionsWebPay);
+        $this->mallInscription = new Oneclick\MallInscription($optionsOneClick);
+        $this->mallTransaction = new Oneclick\MallTransaction($optionsOneClick);
     }
 
     /**

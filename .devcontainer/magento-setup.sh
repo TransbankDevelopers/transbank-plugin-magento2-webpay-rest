@@ -4,6 +4,8 @@ set -euo pipefail
 # --- Environment Variables
 MAGENTO_ZIP_URL="https://github.com/magento/magento2/archive/refs/tags/${MAGENTO_VERSION}.zip"
 PLUGIN_SRC="${MAGENTO_DIR}/workspace"
+CAPTURE_BUTTON_BLOCK_FILE="${MAGENTO_DIR}/app/code/Magento/Sales/Block/Adminhtml/Order/Invoice/View.php"
+CAPTURE_CONTROLLER_FILE="${MAGENTO_DIR}/app/code/Magento/Sales/Controller/Adminhtml/Order/Invoice/Capture.php"
 
 log() {
   echo -e "\n\033[1;32m==>\033[0m $*"
@@ -153,16 +155,29 @@ fi
 
 configure_chile_store
 
-# --- 5. Code and Cache Refresh
-log "Limpiando archivos generados y compilando..."
+# --- 5. Modify capture button for invoice
+log "Modificando el botón de captura para las facturas..."
 
+if grep -Eq "confirmSetLocation\(.*getCaptureUrl" "$CAPTURE_BUTTON_BLOCK_FILE"; then
+  echo "El botón ya ha sido modificado, no se requiere ninguna acción."
+
+elif grep -Eq "implements[[:space:]]+HttpPostActionInterface" "$CAPTURE_CONTROLLER_FILE"; then
+  echo "Corrigiendo el botón en el bloque..."
+  sed -i "s/'onclick' => 'setLocation(\\\'' . \$this->getCaptureUrl() . '\\\')'/'onclick' => \"confirmSetLocation('\" . __('Are you sure you want to capture this invoice?') . \"', '\" . \$this->getCaptureUrl() . \"', {'data': {}})\"/" "$CAPTURE_BUTTON_BLOCK_FILE"
+
+else
+  echo "El controller Capture no implementa HttpPostActionInterface. No se aplican cambios."
+fi
+
+# --- 6. Code and Cache Refresh
+log "Limpiando archivos generados y compilando..."
 rm -rf generated/code/* generated/metadata/* var/cache/* var/page_cache/* var/view_preprocessed/* pub/static/frontend/* pub/static/adminhtml/*
 
 php bin/magento deploy:mode:set developer || true
 cleanup_transbank_null_config
 php bin/magento setup:di:compile
 
-# --- 6. Demo Data
+# --- 7. Demo Data
 DEMO_FLAG="${MAGENTO_DIR}/var/.demo-data-installed"
 if [[ ! -f "${DEMO_FLAG}" ]] && [[ -f "${PLUGIN_SRC}/.devcontainer/setup-demo-data.php" ]]; then
     log "Instalando datos demo..."

@@ -1,4 +1,4 @@
-FROM php:7.4-fpm-bullseye
+FROM php:8.3-fpm-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_VERSION=2.9.2
@@ -42,7 +42,8 @@ RUN set -eux; \
         zip \
         sockets \
         opcache \
-        gd; \
+        gd \
+        pcntl; \
     \
     # ---------- PHP config ----------
     echo "memory_limit=2G" > /usr/local/etc/php/conf.d/magento.ini; \
