@@ -70,14 +70,14 @@ class TransbankSdkWebpayRest
         $oneclickApiKey = $apiKeyFromConfig;
         $oneclickCommerceCode = $commerceCodeFromConfig;
 
-        if(!$isProd) {
+        if (!$isProd) {
             $integrationType = Options::ENVIRONMENT_INTEGRATION;
 
-            $webpayApiKey = $webpayApiKey ?? WebpayPlus::INTEGRATION_API_KEY;
-            $webpayCommerceCode = $webpayCommerceCode ?? WebpayPlus::INTEGRATION_COMMERCE_CODE;
+            $webpayApiKey = WebpayPlus::INTEGRATION_API_KEY;
+            $webpayCommerceCode = WebpayPlus::INTEGRATION_COMMERCE_CODE;
 
-            $oneclickApiKey =  $oneclickApiKey ?? Oneclick::INTEGRATION_API_KEY;
-            $oneclickCommerceCode = $oneclickCommerceCode ?? Oneclick::INTEGRATION_COMMERCE_CODE;
+            $oneclickApiKey = Oneclick::INTEGRATION_API_KEY;
+            $oneclickCommerceCode = Oneclick::INTEGRATION_COMMERCE_CODE;
         }
 
         $optionsWebPay = new Options($webpayApiKey, $webpayCommerceCode, $integrationType);
