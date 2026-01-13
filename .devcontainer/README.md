@@ -12,7 +12,7 @@ Este **devcontainer** proporciona un entorno completo de desarrollo para el mód
 
 ## 📋 Servicios incluidos
 
--   **Magento 2.4.3** con **PHP 7.4**
+-   **Magento 2.4.7-p8** con **PHP 8.3**
 -   **MySQL 8** como base de datos
 -   **Elasticsearch** para la búsqueda optimizada del catálogo
 -   **Apache** como servidor web
@@ -147,3 +147,14 @@ transbank-plugin-magento2-webpay-rest_devcontainer_db_data
 transbank-plugin-magento2-webpay-rest_devcontainer_es_data
 transbank-plugin-magento2-webpay-rest_devcontainer_magento_data
 ```
+
+## Nota sobre la captura de facturas en Magento
+
+A partir de la versión **Magento 2.4.6-p8**, la captura de facturas se realiza mediante una **petición POST** asociada a la orden.
+
+En el botón **Capture** del panel de administración, ubicado en **Órdenes → Facturas**, se aplicó un **fix** dentro del *shell* de configuración de la tienda (paso **5 – Modify capture button for invoice**) para asegurar que la acción de captura se ejecute correctamente mediante **POST**.
+
+De forma nativa, el botón de captura ejecuta la acción mediante una petición **GET**. Como consecuencia, al intentar capturar una factura, el flujo redirigía a una vista de **error 404**.
+
+> ⚠️ **Importante**  
+> Si al intentar capturar una factura vuelve a presentarse la vista **404**, revisar que el *fix* del botón **Capture** se haya aplicado correctamente y que no haya sido sobrescrito por una actualización o reinstalación de Magento o haya quedado desactualizado el fix.

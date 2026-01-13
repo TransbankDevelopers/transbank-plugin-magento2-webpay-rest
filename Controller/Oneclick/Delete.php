@@ -20,8 +20,7 @@ class Delete extends Action
         PageFactory $resultPageFactory,
         \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->configProvider = $configProvider;
         $this->resultPageFactory = $resultPageFactory;
@@ -45,7 +44,7 @@ class Delete extends Action
 
                 $response = $transbankSdkWebpay->deleteInscription($username, $tbkUser);
 
-                if ($response->success) {
+                if (is_bool($response) && $response) {
                     $this->messageManager->addSuccessMessage(__("Tarjeta inscrita eliminada exitosamente."));
                 } else {
                     $this->messageManager->addErrorMessage(__("Error al eliminar tarjeta inscrita."));
@@ -54,7 +53,7 @@ class Delete extends Action
                 $this->messageManager->addErrorMessage(__("Tarjeta inscrita no encontrada"));
             }
         } catch (\Exception $e) {
-            $this->messageManager->addErrorMessage($e, __("Error al eliminar tarjeta inscrita, contacta con soporte."));
+            $this->messageManager->addErrorMessage(__("Error al eliminar tarjeta inscrita, contacta con soporte."));
         }
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $resultRedirect->setUrl($this->_redirect->getRefererUrl());

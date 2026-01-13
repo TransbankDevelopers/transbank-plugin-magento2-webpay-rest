@@ -9,6 +9,7 @@ services:
     command: >
       --default-time-zone='America/Santiago'
       --default-authentication-plugin=mysql_native_password --sql-mode=""
+      --log-bin-trust-function-creators=1
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pmagento"]
       interval: 5s
@@ -72,7 +73,7 @@ services:
       MAGENTO_ADMIN_USER: admin
       MAGENTO_ADMIN_PASSWORD: admin123
       MAGENTO_ADMIN_EMAIL: admin@admin.com
-      MAGENTO_VERSION: 2.4.3
+      MAGENTO_VERSION: 2.4.7-p8
 volumes:
   db_data:
   es_data:
