@@ -79,10 +79,10 @@ class TransbankSdkWebpayRest
      * If the environment is PRODUCTION, API key and commerce code are required.
      *
      * @param string $environment Environment name ('TEST' or 'PRODUCTION')
-     * @param string|null $apiKey Production API key (required in PROD)
-     * @param string|null $commerceCode Production commerce code (required in PROD)
      * @param string $defaultApiKey Integration API key (used in TEST)
      * @param string $defaultCommerceCode Integration commerce code (used in TEST)
+     * @param string|null $apiKey Production API key (required in PROD)
+     * @param string|null $commerceCode Production commerce code (required in PROD)
      *
      * @throws MissingArgumentException If required production credentials are missing
      *
@@ -90,10 +90,10 @@ class TransbankSdkWebpayRest
      */
     private function buildOptions(
         string $environment,
+        string $defaultApiKey,
+        string $defaultCommerceCode,
         ?string $apiKey,
         ?string $commerceCode,
-        string $defaultApiKey,
-        string $defaultCommerceCode
     ): Options {
         $isProd = strtoupper(trim($environment)) !== 'TEST';
 
@@ -112,68 +112,29 @@ class TransbankSdkWebpayRest
     }
 
     /**
-     * Lazily initializes a client instance only once.
-     *
-     * This method centralizes the lazy-loading logic for SDK clients.
-     * It builds the corresponding Options object and instantiates the client
-     * using the provided factory callback.
-     *
-     * @template T of object
-     *
-     * @param T|null $instance instance reference
-     * @param callable(Options):T $callbackFactory Factory that creates the client
-     * @param string $environment Environment name
-     * @param string|null $apiKey Production API key
-     * @param string|null $commerceCode Production commerce code
-     * @param string $defaultApiKey Integration API key
-     * @param string $defaultCommerceCode Integration commerce code
-     *
-     * @return void
-     */
-    private function initOnce(
-        ?object &$instance,
-        callable $callbackFactory,
-        string $environment,
-        ?string $apiKey,
-        ?string $commerceCode,
-        string $defaultApiKey,
-        string $defaultCommerceCode
-    ): void {
-        if ($instance !== null) {
-            return;
-        }
-
-        $options = $this->buildOptions(
-            $environment,
-            $apiKey,
-            $commerceCode,
-            $defaultApiKey,
-            $defaultCommerceCode
-        );
-
-        $instance = $callbackFactory($options);
-    }
-
-    /**
      * Initializes the Webpay Plus Transaction client if not already created.
      *
      * Uses integration credentials in TEST and production credentials otherwise.
      *
      * @return void
      */
-    private function configureWebpayTransaction(): void
+    private function configureTransactionCredentials(): void
     {
+        if(!is_null($this->transaction)) {
+            return;
+        }
+ 
         $config = $this->requireConfig();
 
-        $this->initOnce(
-            $this->transaction,
-            fn(Options $options): Transaction => new Transaction($options),
+        $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
+            WebpayPlus::INTEGRATION_API_KEY,
+            WebpayPlus::INTEGRATION_COMMERCE_CODE,
             $config['API_KEY'] ?? null,
             $config['COMMERCE_CODE'] ?? null,
-            WebpayPlus::INTEGRATION_API_KEY,
-            WebpayPlus::INTEGRATION_COMMERCE_CODE
         );
+
+        $this->transaction = new Transaction($options);
     }
 
     /**
@@ -183,18 +144,24 @@ class TransbankSdkWebpayRest
      *
      * @return void
      */
-    private function configureMallInscription(): void
+    private function configureMallInscriptionCredentials(): void
     {
+
+        if(!is_null($this->mallInscription)) {
+            return;
+        }
+ 
         $config = $this->requireConfig();
-        $this->initOnce(
-            $this->mallInscription,
-            fn(Options $options): MallInscription => new MallInscription($options),
+
+        $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
+            Oneclick::INTEGRATION_API_KEY,
+            Oneclick::INTEGRATION_COMMERCE_CODE,
             $config['API_KEY'] ?? null,
             $config['COMMERCE_CODE'] ?? null,
-            Oneclick::INTEGRATION_API_KEY,
-            Oneclick::INTEGRATION_COMMERCE_CODE
         );
+
+        $this->mallInscription = new MallInscription($options);
     }
 
     /**
@@ -204,18 +171,24 @@ class TransbankSdkWebpayRest
      *
      * @return void
      */
-    private function configureMallTransaction(): void
+    private function configureMallTransactionCredentials(): void
     {
+
+        if(!is_null($this->mallTransaction)) {
+            return;
+        }
+ 
         $config = $this->requireConfig();
-        $this->initOnce(
-            $this->mallTransaction,
-            fn(Options $options): MallTransaction => new MallTransaction($options),
+
+        $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
+            Oneclick::INTEGRATION_API_KEY,
+            Oneclick::INTEGRATION_COMMERCE_CODE,
             $config['API_KEY'] ?? null,
             $config['COMMERCE_CODE'] ?? null,
-            Oneclick::INTEGRATION_API_KEY,
-            Oneclick::INTEGRATION_COMMERCE_CODE
         );
+
+        $this->mallTransaction = new MallTransaction($options);
     }
 
     /**
@@ -238,7 +211,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('createTransaction - amount: ' . $amount . ', sessionId: ' . $sessionId .
                 ', buyOrder: ' . $buyOrder . ', txDate: ' . $txDate . ', txTime: ' . $txTime);
 
-            $this->configureWebpayTransaction();
+            $this->configureTransactionCredentials();
             $createResult = $this->transaction->create($buyOrder, $sessionId, $amount, $returnUrl);
 
             $this->log->logInfo('createTransaction - createResult: ' . json_encode($createResult));
@@ -275,7 +248,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token webpay es requerido');
             }
 
-            $this->configureWebpayTransaction();
+            $this->configureTransactionCredentials();
             $transaction = $this->transaction->commit($tokenWs);
 
             $this->log->logInfo('commitTransaction: ' . json_encode($transaction));
@@ -308,7 +281,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('initInscription - Username: ' . $username . ', email: ' . $email .
                 ', responseUrl: ' . $responseUrl);
 
-            $this->configureMallInscription();
+            $this->configureMallInscriptionCredentials();
             $initResult = $this->mallInscription->start($username, $email, $responseUrl);
 
             $this->log->logInfo('createInscription - initResult: ' . json_encode($initResult));
@@ -346,7 +319,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token tokenWs es requerido');
             }
 
-            $this->configureMallInscription();
+            $this->configureMallInscriptionCredentials();
             $inscription = $this->mallInscription->finish($tbkToken);
             $this->log->logInfo('finishInscription: ' . json_encode($inscription));
 
@@ -384,7 +357,7 @@ class TransbankSdkWebpayRest
             throw new MissingArgumentException('El token tbkUser y el username son requeridos');
         }
 
-        $this->configureMallTransaction();
+        $this->configureMallTransactionCredentials();
         $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
         $this->log->logInfo('authorizeTransaction: ' . json_encode($transaction));
 
@@ -406,7 +379,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token tbkUser y el username son requerido');
             }
 
-            $this->configureMallInscription();
+            $this->configureMallInscriptionCredentials();
             $delInscription = $this->mallInscription->delete($tbkUser, $username);
             $this->log->logInfo('deleteInscription: ' . json_encode($delInscription));
 
@@ -438,7 +411,7 @@ class TransbankSdkWebpayRest
         string $childBuyOrder,
         int $amount
     ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse {
-        $this->configureMallTransaction();
+        $this->configureMallTransactionCredentials();
         return $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
     }
 
@@ -455,7 +428,7 @@ class TransbankSdkWebpayRest
         string $token,
         int $amount
     ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse {
-        $this->configureWebpayTransaction();
+        $this->configureTransactionCredentials();
         return $this->transaction->refund($token, $amount);
     }
 }
