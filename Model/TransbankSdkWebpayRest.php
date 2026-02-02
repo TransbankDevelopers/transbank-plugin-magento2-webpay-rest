@@ -161,7 +161,7 @@ class TransbankSdkWebpayRest
      *
      * @return void
      */
-    private function initTransaction(): void
+    private function configureWebpayTransaction(): void
     {
         $config = $this->requireConfig();
 
@@ -183,7 +183,7 @@ class TransbankSdkWebpayRest
      *
      * @return void
      */
-    private function initMallInscription(): void
+    private function configureMallInscription(): void
     {
         $config = $this->requireConfig();
         $this->initOnce(
@@ -204,7 +204,7 @@ class TransbankSdkWebpayRest
      *
      * @return void
      */
-    private function initMallTransaction(): void
+    private function configureMallTransaction(): void
     {
         $config = $this->requireConfig();
         $this->initOnce(
@@ -238,7 +238,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('createTransaction - amount: ' . $amount . ', sessionId: ' . $sessionId .
                 ', buyOrder: ' . $buyOrder . ', txDate: ' . $txDate . ', txTime: ' . $txTime);
 
-            $this->initTransaction();
+            $this->configureWebpayTransaction();
             $createResult = $this->transaction->create($buyOrder, $sessionId, $amount, $returnUrl);
 
             $this->log->logInfo('createTransaction - createResult: ' . json_encode($createResult));
@@ -275,7 +275,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token webpay es requerido');
             }
 
-            $this->initTransaction();
+            $this->configureWebpayTransaction();
             $transaction = $this->transaction->commit($tokenWs);
 
             $this->log->logInfo('commitTransaction: ' . json_encode($transaction));
@@ -308,7 +308,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('initInscription - Username: ' . $username . ', email: ' . $email .
                 ', responseUrl: ' . $responseUrl);
 
-            $this->initMallInscription();
+            $this->configureMallInscription();
             $initResult = $this->mallInscription->start($username, $email, $responseUrl);
 
             $this->log->logInfo('createInscription - initResult: ' . json_encode($initResult));
@@ -346,7 +346,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token tokenWs es requerido');
             }
 
-            $this->initMallInscription();
+            $this->configureMallInscription();
             $inscription = $this->mallInscription->finish($tbkToken);
             $this->log->logInfo('finishInscription: ' . json_encode($inscription));
 
@@ -384,7 +384,7 @@ class TransbankSdkWebpayRest
             throw new MissingArgumentException('El token tbkUser y el username son requeridos');
         }
 
-        $this->initMallTransaction();
+        $this->configureMallTransaction();
         $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
         $this->log->logInfo('authorizeTransaction: ' . json_encode($transaction));
 
@@ -406,7 +406,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token tbkUser y el username son requerido');
             }
 
-            $this->initMallInscription();
+            $this->configureMallInscription();
             $delInscription = $this->mallInscription->delete($tbkUser, $username);
             $this->log->logInfo('deleteInscription: ' . json_encode($delInscription));
 
@@ -438,7 +438,7 @@ class TransbankSdkWebpayRest
         string $childBuyOrder,
         int $amount
     ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse {
-        $this->initMallTransaction();
+        $this->configureMallTransaction();
         return $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
     }
 
@@ -455,7 +455,7 @@ class TransbankSdkWebpayRest
         string $token,
         int $amount
     ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse {
-        $this->initTransaction();
+        $this->configureWebpayTransaction();
         return $this->transaction->refund($token, $amount);
     }
 }
