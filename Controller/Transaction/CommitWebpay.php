@@ -158,7 +158,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function handleNormalFlow(string $token)
     {
         $lockAcquired = false;
-        $responseHandled = null;
         $this->log->logInfo('Procesando transacción por flujo Normal => token: ' . $token);
 
         try {
@@ -172,30 +171,33 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 return $this->handleTransactionAlreadyProcessed($token);
             }
 
-            $config = $this->configProvider->getPluginConfig();
-            $webpayOrderData = $this->getWebpayOrderData($token);
-            $orderId = $webpayOrderData->getOrderId();
-            $order = $this->getOrder($orderId);
-
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
-            $commitResponse = $transbankSdkWebpay->commitTransaction($token);
-
-            if (is_array($commitResponse) && isset($commitResponse['error'])) {
-                return $this->handleFlowError($token);
-            }
-
-            $webpayOrderData->setMetadata(json_encode($commitResponse));
-
-            if ($commitResponse->isApproved()) {
-                $responseHandled = $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
-            } else {
-                $responseHandled = $this->handleUnauthorizedTransaction($order, $webpayOrderData, $commitResponse);
-            }
+            return $this->processTransaction($token);
         } finally {
             $this->releaseWebpayReturnLock($token, $lockAcquired);
         }
+    }
 
-        return $responseHandled;
+    private function processTransaction(string $token)
+    {
+        $config = $this->configProvider->getPluginConfig();
+        $webpayOrderData = $this->getWebpayOrderData($token);
+        $orderId = $webpayOrderData->getOrderId();
+        $order = $this->getOrder($orderId);
+
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+        $commitResponse = $transbankSdkWebpay->commitTransaction($token);
+
+        if (is_array($commitResponse) && isset($commitResponse['error'])) {
+            return $this->handleFlowError($token);
+        }
+
+        $webpayOrderData->setMetadata(json_encode($commitResponse));
+
+        if ($commitResponse->isApproved()) {
+            return $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
+        }
+
+        return $this->handleUnauthorizedTransaction($order, $webpayOrderData, $commitResponse);
     }
 
     /**
@@ -206,16 +208,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
      */
     private function acquireWebpayReturnLock(string $token): bool
     {
-        $lockAcquired = false;
+        $lockAcquired = $this->webpayReturnLock->acquire($token);
 
-        try {
-            $lockAcquired = $this->webpayReturnLock->acquire($token);
-
-            if (!$lockAcquired) {
-                $this->log->logInfo("Retorno de Webpay ya se encuentra en procesamiento => token: {$token}");
-            }
-        } catch (\Throwable $e) {
-            $this->log->logError("Error al adquirir el lock de retorno de Webpay token => {$token} - Error: {$e->getMessage()}");
+        if (!$lockAcquired) {
+            $this->log->logInfo("Retorno de Webpay ya se encuentra en procesamiento => token: {$token}");
         }
 
         return $lockAcquired;
