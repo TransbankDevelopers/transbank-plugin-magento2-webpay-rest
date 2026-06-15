@@ -208,13 +208,18 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
      */
     private function acquireWebpayReturnLock(string $token): bool
     {
-        $lockAcquired = $this->webpayReturnLock->acquire($token);
+        try {
+            $lockAcquired = $this->webpayReturnLock->acquire($token);
 
-        if (!$lockAcquired) {
-            $this->log->logInfo("Retorno de Webpay ya se encuentra en procesamiento => token: {$token}");
+            if (!$lockAcquired) {
+                $this->log->logInfo("Retorno de Webpay ya se encuentra en procesamiento => token: {$token}");
+            }
+
+            return $lockAcquired;
+        } catch (\Throwable $e) {
+            $this->log->logError("Error al adquirir el lock de retorno de Webpay => token: {$token} - Error: {$e->getMessage()}");
+            throw $e;
         }
-
-        return $lockAcquired;
     }
 
     /**
