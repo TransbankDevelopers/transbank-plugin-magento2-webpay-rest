@@ -87,6 +87,11 @@ class PluginLogger implements ILogger
         $this->logger->error($msg);
     }
 
+    public function logWarning(string $msg): void
+    {
+        $this->logger->warning($msg);
+    }
+
     /**
      * Retrieve information about log files.
      *
