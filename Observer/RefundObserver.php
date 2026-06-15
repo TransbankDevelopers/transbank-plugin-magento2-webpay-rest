@@ -95,7 +95,6 @@ class RefundObserver implements ObserverInterface
             $this->orderRepository->save($order);
             $this->messageManager->addErrorMessage($errorMessageBase . $refundInstructions);
             return;
-
         } catch (\Exception $exception) {
             $errorMessage = $errorMessageBase . $exception->getMessage() . '. ' . $refundInstructions;
             $this->logger->logError($errorMessage);
@@ -103,16 +102,6 @@ class RefundObserver implements ObserverInterface
             $this->orderRepository->save($order);
             $this->messageManager->addErrorMessage($errorMessageBase . $refundInstructions);
         }
-    }
-
-    /**
-     * @param string $paymentMethod
-     *
-     * @return bool
-     */
-    private function shouldProcessRefund($paymentMethod): bool
-    {
-        return $paymentMethod == Webpay::CODE || $paymentMethod == OneClick::CODE;
     }
 
     /**
@@ -126,7 +115,6 @@ class RefundObserver implements ObserverInterface
             return $this->configProvider->getPluginConfig();
         }
         return $this->configProvider->getPluginConfigOneclick();
-
     }
 
     /**
@@ -225,5 +213,4 @@ class RefundObserver implements ObserverInterface
 
         return $message;
     }
-
 }
