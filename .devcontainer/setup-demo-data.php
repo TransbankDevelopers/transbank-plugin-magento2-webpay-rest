@@ -34,7 +34,7 @@ $accountManagement = $objectManager->get(\Magento\Customer\Api\AccountManagement
 
 try {
     $customerRepo->get($customerEmail);
-    echo "Cliente ya existe: {$customerEmail}\n";
+    echo "Cliente ya existe\n";
 } catch (NoSuchEntityException $e) {
     $customer = $customerFactory->create();
     $customer->setWebsiteId($websiteId);
@@ -42,7 +42,7 @@ try {
     $customer->setFirstname('Cliente');
     $customer->setLastname('Demo');
     $accountManagement->createAccount($customer, $customerPassword);
-    echo "Cliente creado: {$customerEmail}\n";
+    echo "Cliente creado\n";
 }
 
 /** PRODUCTO */
