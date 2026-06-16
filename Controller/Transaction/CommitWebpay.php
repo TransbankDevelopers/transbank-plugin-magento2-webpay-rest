@@ -217,8 +217,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
             return $lockAcquired;
         } catch (\Throwable $e) {
-            $this->log->logError("Error al adquirir el lock de retorno de Webpay => token: {$token} - Error: {$e->getMessage()}");
-            throw $e;
+            $this->log->logError("Error al adquirir el lock de retorno de Webpay token => {$token} - Error: {$e->getMessage()}");
         }
     }
 
@@ -242,7 +241,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
                 $this->log->logWarning("No se pudo liberar el lock de retorno de Webpay token => {$token}");
             }
         } catch (\Throwable $e) {
-            $this->log->logWarning("Error al liberar el lock de retorno de Webpay token => {$token} - Error: {$e->getMessage()}");
+            $this->log->logError("Error al liberar el lock de retorno de Webpay token => {$token} - Error: {$e->getMessage()}");
         }
     }
 
