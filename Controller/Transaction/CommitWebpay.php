@@ -6,6 +6,7 @@ use Throwable;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Exceptions\EcommerceException;
+use Transbank\Webpay\Exceptions\MySqlNamedLockException;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
