@@ -6,7 +6,6 @@ use Throwable;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Exceptions\EcommerceException;
-use Transbank\Webpay\Exceptions\MySqlNamedLockException;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
@@ -237,7 +236,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             if (!$released) {
                 $this->log->logWarning("No se pudo liberar el lock de retorno de Webpay token => {$token}");
             }
-        } catch (MySqlNamedLockException $e) {
+        } catch (\Throwable $e) {
             $this->log->logError("Error al liberar el lock de retorno de Webpay token => {$token} - Error: {$e->getMessage()}");
         }
     }
