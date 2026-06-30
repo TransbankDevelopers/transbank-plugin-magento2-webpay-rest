@@ -1,12 +1,12 @@
-name: Build
+name: Release
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  release:
+    types: [created]
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
@@ -20,3 +20,12 @@ jobs:
           set -Eeuo pipefail
           chmod +x package.sh
           ./package.sh
+      - name: Upload plugin zip to release
+        run: |
+          gh release upload "$RELEASE_TAG" \
+            "plugin-transbank-webpay-magento2-${RELEASE_TAG}.zip" \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
