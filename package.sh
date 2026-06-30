@@ -3,9 +3,8 @@
 #Script for create the plugin artifact
 echo "Release tag: $RELEASE_TAG"
 
-if [ "$RELEASE_TAG" = "" ]
-then
-   RELEASE_TAG='1.0.1'
+if [[ -z "$RELEASE_TAG" ]]; then
+  RELEASE_TAG="1.0.1"
 fi
 
 SRC_DIR="."
