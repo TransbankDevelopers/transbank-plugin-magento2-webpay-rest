@@ -1,5 +1,4 @@
 import mysql from "mysql2/promise";
-import { createHash } from "crypto";
 
 const DB_CONFIG = {
     host: process.env.DB_HOST,
@@ -36,17 +35,11 @@ const queryScalar = async (sql, params = []) => {
     return rows[0] ? Object.values(rows[0])[0] : null;
 };
 
-function buildLockName(token) {
-    const hash = createHash("sha256").update(token).digest("hex").slice(0, 40);
-    return "transbank_webpay_lock_" + hash;
-}
-
 export async function holdLock(token) {
-    const lockName = buildLockName(token);
     const connection = await mysql.createConnection(DB_CONFIG);
     const [rows] = await connection.execute(
         "SELECT GET_LOCK(?, 0) AS acquired",
-        [lockName],
+        [token],
     );
     const acquired = rows[0].acquired === 1;
 
@@ -57,15 +50,14 @@ export async function holdLock(token) {
 
     return {
         release: async () => {
-            await connection.execute("SELECT RELEASE_LOCK(?)", [lockName]);
+            await connection.execute("SELECT RELEASE_LOCK(?)", [token]);
             await connection.end();
         },
     };
 }
 
 export async function isLockHeld(token) {
-    const lockName = buildLockName(token);
-    const result = await queryScalar("SELECT IS_USED_LOCK(?)", [lockName]);
+    const result = await queryScalar("SELECT IS_USED_LOCK(?)", [token]);
 
     return result !== null;
 }
