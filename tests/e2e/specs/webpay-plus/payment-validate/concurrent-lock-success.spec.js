@@ -22,7 +22,7 @@ const captureAndDuplicateReturn = async (context, page, returnHolder) => {
         .poll(() => returnHolder.commerceReturns.length, {
             message: "Waiting for first intercepted return",
             timeout: 45_000,
-            intervals: [500],
+            intervals: [500]
         })
         .toBeGreaterThanOrEqual(1);
 
@@ -31,14 +31,14 @@ const captureAndDuplicateReturn = async (context, page, returnHolder) => {
     const duplicatePage = await context.newPage();
     const duplicateNavigation = duplicatePage.goto(commerceReturnUrl, {
         waitUntil: "commit",
-        timeout: 45_000,
+        timeout: 45_000
     });
 
     await expect
         .poll(() => returnHolder.commerceReturns.length, {
             message: "Waiting for both returns to be intercepted",
             timeout: 45_000,
-            intervals: [500],
+            intervals: [500]
         })
         .toBeGreaterThanOrEqual(2);
 
@@ -49,12 +49,12 @@ const captureAndDuplicateReturn = async (context, page, returnHolder) => {
 
     await Promise.all([
         page.waitForLoadState("load").catch(() => {}),
-        duplicateNavigation?.catch(() => {}),
+        duplicateNavigation?.catch(() => {})
     ]);
 
     await Promise.all([
         page.waitForLoadState("networkidle").catch(() => {}),
-        duplicatePage.waitForLoadState("networkidle").catch(() => {}),
+        duplicatePage.waitForLoadState("networkidle").catch(() => {})
     ]);
 
     return duplicatePage;
@@ -63,13 +63,13 @@ const captureAndDuplicateReturn = async (context, page, returnHolder) => {
 const verifyBothPagesResolved = async (page, duplicatePage) => {
     for (const { label, p } of [
         { label: "Request 1 (original)", p: page },
-        { label: "Request 2 (duplicate)", p: duplicatePage },
+        { label: "Request 2 (duplicate)", p: duplicatePage }
     ]) {
         await expect
             .poll(() => hasNavigatedPastValidation(p), {
                 timeout: 45_000,
                 intervals: [1_000],
-                message: `${label}: waiting for navigation to finish`,
+                message: `${label}: waiting for navigation to finish`
             })
             .toBe(true);
 
@@ -86,12 +86,12 @@ const verifyBothPagesResolved = async (page, duplicatePage) => {
 test.describe("Webpay Plus — Lock prevents duplicate orders", () => {
     test("Both requests resolve without error when the return URL receives the same token twice", async ({
         browser,
-        baseURL,
+        baseURL
     }) => {
         console.log("═══ START: Lock prevents duplicate orders ═══");
         const context = await browser.newContext({
             baseURL,
-            ignoreHTTPSErrors: true,
+            ignoreHTTPSErrors: true
         });
         const returnHolder = await holdReturnRequests(context);
         const page = await context.newPage();

@@ -23,7 +23,7 @@ const captureAndDuplicateWithLock = async (context, page, returnHolder) => {
         .poll(() => returnHolder.commerceReturns.length, {
             message: "Waiting for first intercepted return",
             timeout: 45_000,
-            intervals: [500],
+            intervals: [500]
         })
         .toBeGreaterThanOrEqual(1);
 
@@ -32,14 +32,14 @@ const captureAndDuplicateWithLock = async (context, page, returnHolder) => {
     const duplicatePage = await context.newPage();
     const duplicateNavigation = duplicatePage.goto(commerceReturnUrl, {
         waitUntil: "commit",
-        timeout: 120_000,
+        timeout: 120_000
     });
 
     await expect
         .poll(() => returnHolder.commerceReturns.length, {
             message: "Waiting for both returns to be intercepted",
             timeout: 45_000,
-            intervals: [500],
+            intervals: [500]
         })
         .toBeGreaterThanOrEqual(2);
 
@@ -73,7 +73,7 @@ test.describe("Webpay Plus — Max retries exhausted", () => {
             console.log("═══ START: Max retries exhausted ═══");
             const context = await browser.newContext({
                 baseURL,
-                ignoreHTTPSErrors: true,
+                ignoreHTTPSErrors: true
             });
             const returnHolder = await holdReturnRequests(context);
             const page = await context.newPage();
@@ -101,7 +101,7 @@ test.describe("Webpay Plus — Max retries exhausted", () => {
                             timeout: 60_000,
                             intervals: [1_000],
                             message:
-                                "Waiting for Request B error page to render",
+                                "Waiting for Request B error page to render"
                         })
                         .toBe(true);
                 });

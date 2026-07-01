@@ -49,7 +49,7 @@ const waitForRetryAndReleaseLock = async (externalLock, page) => {
         .poll(() => hasNavigatedPastValidation(page), {
             timeout: 60_000,
             intervals: [1_000],
-            message: "Waiting for the retry to finish processing",
+            message: "Waiting for the retry to finish processing"
         })
         .toBe(true);
 };
@@ -57,12 +57,12 @@ const waitForRetryAndReleaseLock = async (externalLock, page) => {
 test.describe("Webpay Plus — Retry when lock is busy", () => {
     test("Internal retry processes the transaction after GET_LOCK times out", async ({
         browser,
-        baseURL,
+        baseURL
     }) => {
         console.log("═══ START: Retry when lock is busy ═══");
         const context = await browser.newContext({
             baseURL,
-            ignoreHTTPSErrors: true,
+            ignoreHTTPSErrors: true
         });
         const returnHolder = await holdReturnRequests(context);
         const page = await context.newPage();
@@ -82,7 +82,7 @@ test.describe("Webpay Plus — Retry when lock is busy", () => {
                     .poll(isIntercepted, {
                         message: "Waiting for intercepted return",
                         timeout: 45_000,
-                        intervals: [500],
+                        intervals: [500]
                     })
                     .toBe(true);
 

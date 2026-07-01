@@ -1,6 +1,6 @@
 const CUSTOMER = {
     email: process.env.CUSTOMER_EMAIL,
-    password: process.env.CUSTOMER_PASSWORD,
+    password: process.env.CUSTOMER_PASSWORD
 };
 
 export async function login(page) {
@@ -65,6 +65,6 @@ export async function goThroughCheckoutWithWebpay(page) {
 
     await page.getByRole("button", { name: "Place Order" }).click();
     await page.waitForURL(/webpay3gint\.transbank\.cl|tbk\.cl/, {
-        timeout: 45_000,
+        timeout: 45_000
     });
 }

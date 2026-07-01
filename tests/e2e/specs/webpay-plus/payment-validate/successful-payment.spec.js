@@ -33,7 +33,7 @@ test.describe("Webpay Plus — Normal payment flow", () => {
         await test.step("Return to commerce and verify confirmation", async () => {
             await continueToCommerce(page);
             await page.waitForURL(/checkout\/transaction\/commitwebpay/, {
-                timeout: 45_000,
+                timeout: 45_000
             });
             await page.waitForLoadState("networkidle", { timeout: 45_000 });
             await expectOrderConfirmation(page);

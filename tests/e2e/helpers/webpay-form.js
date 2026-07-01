@@ -3,12 +3,12 @@ import { expect } from "@playwright/test";
 const TEST_CARD = {
     number: "4051885600446623",
     expiry: "12/30",
-    cvv: "123",
+    cvv: "123"
 };
 
 const BANK_SIM = {
     rut: "11.111.111-1",
-    password: "123",
+    password: "123"
 };
 
 const S = {
@@ -21,7 +21,7 @@ const S = {
     bankPassword: "#passwordClient",
     bankAccept: 'input[type="submit"][value="Aceptar"]',
     resultVci: "#vci",
-    continueBtn: 'input[type="submit"][value="Continuar"]',
+    continueBtn: 'input[type="submit"][value="Continuar"]'
 };
 
 export async function fillCardAndAuthenticate(page) {
@@ -63,7 +63,7 @@ export async function fillCardAndAuthenticate(page) {
 
 export async function continueToCommerce(page) {
     await expect(page.locator(S.resultVci)).toHaveValue("TSY", {
-        timeout: 30_000,
+        timeout: 30_000
     });
     await page.locator(S.continueBtn).click();
 }

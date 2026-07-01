@@ -56,7 +56,7 @@ export async function holdReturnRequests(context) {
         release() {
             returnsReleased = true;
             releaseReturns();
-        },
+        }
     };
 }
 
