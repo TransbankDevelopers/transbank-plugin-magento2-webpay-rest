@@ -13,6 +13,7 @@ use Transbank\Webpay\Exceptions\MySqlNamedLockException;
 class MySqlNamedLock
 {
     private const LOCK_PREFIX = 'transbank_webpay_lock_';
+    private const GET_LOCK_TIMEOUT_SECONDS = 5;
 
     private $connection;
 
@@ -24,7 +25,7 @@ class MySqlNamedLock
     public function acquire(string $key): bool
     {
         $lockName = $this->buildLockName($key);
-        $result = $this->connection->fetchOne('SELECT GET_LOCK(?, 0)', [$lockName]);
+        $result = $this->connection->fetchOne('SELECT GET_LOCK(?, ?)', [$lockName, self::GET_LOCK_TIMEOUT_SECONDS]);
 
         if ($result === null) {
             throw new MySqlNamedLockException(

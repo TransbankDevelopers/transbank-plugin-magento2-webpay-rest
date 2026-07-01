@@ -161,10 +161,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logInfo('Procesando transacción por flujo Normal => token: ' . $token);
 
         try {
-            $lockAcquired = $this->acquireWebpayReturnLock($token);
+            $lockAcquired = $this->acquireWebpayReturnLockWithRetries($token);
 
             if (!$lockAcquired) {
-                return $this->redirectWithErrorMessage(self::WEBPAY_OPERATION_IN_PROGRESS_MESSAGE);
+                throw new EcommerceException('No se pudo adquirir el lock de retorno de Webpay.');
             }
 
             if ($this->checkTransactionIsAlreadyProcessed($token)) {
@@ -201,20 +201,28 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * Tries to acquire the return lock for a token.
+     * Tries to acquire the return lock with internal retries.
      *
-     * @param string $token
-     * @return bool True when the lock is acquired, false when another request is already processing.
+     * @param string $token The transaction token.
+     * @return bool True when the lock is acquired, false when all retries are exhausted.
      */
-    private function acquireWebpayReturnLock(string $token): bool
+    private function acquireWebpayReturnLockWithRetries(string $token): bool
     {
-        $lockAcquired = $this->webpayReturnLock->acquire($token);
+        $maxAttempts = 4;
 
-        if (!$lockAcquired) {
-            $this->log->logInfo("Retorno de Webpay ya se encuentra en procesamiento => token: {$token}");
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                if ($this->webpayReturnLock->acquire($token)) {
+                    return true;
+                }
+
+                $this->log->logInfo("Lock de retorno ocupado, intento {$attempt}/{$maxAttempts} => token: {$token}");
+            } catch (\Throwable $e) {
+                $this->log->logError("Error al adquirir lock de retorno, intento {$attempt}/{$maxAttempts} => token: {$token} - Error: {$e->getMessage()}");
+            }
         }
 
-        return $lockAcquired;
+        return false;
     }
 
     /**
