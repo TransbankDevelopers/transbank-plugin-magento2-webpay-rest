@@ -5,7 +5,7 @@ const DB_CONFIG = {
     port: Number.parseInt(process.env.DB_PORT, 10),
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    database: process.env.DB_NAME
 };
 
 let pool;
@@ -15,7 +15,7 @@ function getPool() {
         pool = mysql.createPool({
             ...DB_CONFIG,
             waitForConnections: true,
-            connectionLimit: 5,
+            connectionLimit: 5
         });
     }
 
@@ -52,7 +52,7 @@ export async function holdLock(token) {
         release: async () => {
             await connection.execute("SELECT RELEASE_LOCK(?)", [token]);
             await connection.end();
-        },
+        }
     };
 }
 
