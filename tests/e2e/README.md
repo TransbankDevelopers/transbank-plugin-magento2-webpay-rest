@@ -100,7 +100,7 @@ tests/e2e/
 ## Notas de implementación
 
 - El retorno de Transbank llega como **POST** a `/checkout/transaction/commitwebpay`. El interceptor extrae el `token_ws` del body y construye una URL GET equivalente para poder duplicar el request (el controlador acepta ambos métodos).
-- El lock name se calcula igual que en PHP: `transbank_webpay_lock_` + primeros 40 caracteres de `sha256(token)`. La función `buildLockName` en `database.js` replica exactamente esa lógica.
+- El lock name es el token de Webpay directamente. `database.js` pasa el token crudo a `GET_LOCK`/`RELEASE_LOCK`/`IS_USED_LOCK`, igual que PHP, por lo que los nombres de lock coinciden sin transformación.
 - El estado de transacción exitosa en Magento2 es `SUCCESS` (en WooCommerce es `approved`).
 - Los tests corren con `workers: 1` y `fullyParallel: false` porque comparten estado en la base de datos.
 - El timeout general es de 120 segundos por test dado que involucran redirecciones externas a Transbank.
