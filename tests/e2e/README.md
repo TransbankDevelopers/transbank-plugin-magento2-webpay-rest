@@ -2,6 +2,8 @@
 
 Tests end-to-end con Playwright que validan los flujos de pago del plugin Transbank sobre una instancia real de Magento2 + MySQL corriendo en el devcontainer.
 
+Los tests se ejecutan **desde tu máquina** (no dentro del devcontainer); Docker solo se usa para levantar Magento2 y MySQL.
+
 ## Qué se valida actualmente
 
 ### Webpay Plus
@@ -22,8 +24,6 @@ Tests end-to-end con Playwright que validan los flujos de pago del plugin Transb
 
 ## Setup
 
-Los tests deben ejecutarse **desde dentro del devcontainer** para tener acceso a la base de datos MySQL.
-
 ```bash
 cd tests/e2e
 pnpm install
@@ -43,7 +43,7 @@ cp .env.example .env
 | `BASE_URL`          | `http://localhost:8000`  | URL de la instancia Magento2        |
 | `CUSTOMER_EMAIL`    | `cliente@cliente.com`    | Email del cliente de prueba         |
 | `CUSTOMER_PASSWORD` | `cliente123!`            | Contraseña del cliente de prueba    |
-| `DB_HOST`           | `db`                     | Host de MySQL (nombre del servicio) |
+| `DB_HOST`           | `localhost`              | Host de MySQL (puerto publicado por Docker) |
 | `DB_PORT`           | `3306`                   | Puerto de MySQL                     |
 | `DB_USER`           | `magento`                | Usuario de MySQL                    |
 | `DB_PASSWORD`       | `magento`                | Contraseña de MySQL                 |

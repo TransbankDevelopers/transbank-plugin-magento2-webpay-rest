@@ -57,13 +57,13 @@ export async function goThroughCheckoutWithWebpay(page) {
         .locator("#checkout-step-payment")
         .waitFor({ state: "visible", timeout: 20_000 });
     await page.waitForLoadState("networkidle", { timeout: 10_000 });
+    await page.getByRole("button", { name: "Next" }).click();
 
-    const webpayRadio = page.locator('input[value="transbank_webpay"]');
-    await webpayRadio.waitFor({ state: "visible", timeout: 15_000 });
-    await webpayRadio.click();
+    const webpayRadio = page.locator("#transbank_webpay");
+    await webpayRadio.waitFor({ state: "visible", timeout: 10_000 });
+    await webpayRadio.check();
 
-    await page.locator(".action.primary.checkout").click();
-
+    await page.getByRole("button", { name: "Place Order" }).click();
     await page.waitForURL(/webpay3gint\.transbank\.cl|tbk\.cl/, {
         timeout: 45_000,
     });
