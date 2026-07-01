@@ -12,7 +12,8 @@ use Transbank\Webpay\Exceptions\MySqlNamedLockException;
  */
 class MySqlNamedLock
 {
-    private const LOCK_PREFIX = 'transbank_webpay_lock_';
+    private const GET_LOCK_TIMEOUT_SECONDS = 5;
+    private const MAX_LOCK_NAME_LENGTH = 64;
 
     private $connection;
 
@@ -23,8 +24,8 @@ class MySqlNamedLock
 
     public function acquire(string $key): bool
     {
-        $lockName = $this->buildLockName($key);
-        $result = $this->connection->fetchOne('SELECT GET_LOCK(?, 0)', [$lockName]);
+        $this->validateKeyLength($key);
+        $result = $this->connection->fetchOne('SELECT GET_LOCK(?, ?)', [$key, self::GET_LOCK_TIMEOUT_SECONDS]);
 
         if ($result === null) {
             throw new MySqlNamedLockException(
@@ -37,8 +38,8 @@ class MySqlNamedLock
 
     public function release(string $key): bool
     {
-        $lockName = $this->buildLockName($key);
-        $result = $this->connection->fetchOne('SELECT RELEASE_LOCK(?)', [$lockName]);
+        $this->validateKeyLength($key);
+        $result = $this->connection->fetchOne('SELECT RELEASE_LOCK(?)', [$key]);
 
         if ($result === null) {
             throw new MySqlNamedLockException(
@@ -49,8 +50,12 @@ class MySqlNamedLock
         return $result === '1';
     }
 
-    private function buildLockName(string $key): string
+    private function validateKeyLength(string $key): void
     {
-        return self::LOCK_PREFIX . substr(hash('sha256', $key), 0, 40);
+        if (strlen($key) > self::MAX_LOCK_NAME_LENGTH) {
+            throw new MySqlNamedLockException(
+                'El nombre del lock excede el límite de ' . self::MAX_LOCK_NAME_LENGTH . ' caracteres de MySQL.'
+            );
+        }
     }
 }

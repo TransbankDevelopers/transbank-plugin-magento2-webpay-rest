@@ -26,6 +26,7 @@ RUN set -eux; \
         bash \
         ca-certificates \
         default-mysql-client \
+        ripgrep \
         tzdata; \
     \
     # ---------- PHP extensions ----------

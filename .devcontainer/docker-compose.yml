@@ -20,6 +20,8 @@ services:
       MYSQL_DATABASE: magento
       MYSQL_USER: magento
       MYSQL_PASSWORD: magento
+    ports:
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
   elasticsearch:
