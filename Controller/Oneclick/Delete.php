@@ -8,23 +8,24 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\App\Action\Action;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 
 class Delete extends Action
 {
     protected $configProvider;
-    protected $oneclickInscriptionDataFactory;
+    protected $oneclickInscriptionDataRepository;
     protected $resultPageFactory;
 
     public function __construct(
         Context $context,
         PageFactory $resultPageFactory,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
     ) {
         parent::__construct($context);
         $this->configProvider = $configProvider;
         $this->resultPageFactory = $resultPageFactory;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
     }
 
     public function execute()
@@ -36,7 +37,7 @@ class Delete extends Action
                 list($username, $tbkUser, $OneclickInscriptionData) = $this->getOneclickInscriptionData($inscriptionId);
 
                 $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_DELETED);
-                $OneclickInscriptionData->save();
+                $this->oneclickInscriptionDataRepository->save($OneclickInscriptionData);
 
                 $config = $this->configProvider->getPluginConfigOneclick();
 
@@ -69,11 +70,10 @@ class Delete extends Action
      */
     protected function getOneclickInscriptionData($inscriptionId)
     {
-        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($inscriptionId, 'id');
+        $oneclickInscriptionData = $this->oneclickInscriptionDataRepository->getById($inscriptionId);
         $tbkUser = $oneclickInscriptionData->getTbkUser();
         $username = $oneclickInscriptionData->getUsername();
 
-        return [$username, $tbkUser, $oneclickInscriptionDataModel];
+        return [$username, $tbkUser, $oneclickInscriptionData];
     }
 }

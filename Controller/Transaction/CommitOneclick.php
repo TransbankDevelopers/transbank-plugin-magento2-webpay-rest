@@ -7,6 +7,7 @@ use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 use Transbank\Webpay\Oneclick\Responses\InscriptionFinishResponse;
 
 /**
@@ -39,7 +40,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected $checkoutSession;
     protected $resultJsonFactory;
     protected $resultRawFactory;
-    protected $oneclickInscriptionDataFactory;
+    protected $oneclickInscriptionDataRepository;
     protected $log;
     protected $messageManager;
     private $quoteHelper;
@@ -50,7 +51,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
         QuoteHelper $quoteHelper
     ) {
         parent::__construct($context);
@@ -60,7 +61,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->log = new PluginLogger();
         $this->quoteHelper = $quoteHelper;
     }
@@ -99,7 +100,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $OneclickInscriptionData->setCardType($inscriptionResult->cardType);
                     $OneclickInscriptionData->setCardNumber($inscriptionResult->cardNumber);
 
-                    $OneclickInscriptionData->save();
+                    $this->oneclickInscriptionDataRepository->save($OneclickInscriptionData);
 
                     $message = "Tarjeta inscrita exitosamente";
                     $this->messageManager->addSuccess(__($message));
@@ -114,7 +115,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     $this->messageManager->addError(__(self::REJECT_MESSAGE));
 
-                    $OneclickInscriptionData->save();
+                    $this->oneclickInscriptionDataRepository->save($OneclickInscriptionData);
 
                     $order->cancel();
                     $order->save();
@@ -144,7 +145,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } elseif ($status == OneclickInscriptionData::PAYMENT_STATUS_FAILED) {
                     $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-                    $OneclickInscriptionData->save();
+                    $this->oneclickInscriptionDataRepository->save($OneclickInscriptionData);
 
                     $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
                     $message = $this->getRejectMessage($inscriptionResult, $oneclickTitle);
@@ -199,8 +200,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     private function getOrderByToken($tbkToken)
     {
-        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($tbkToken, 'token');
+        $oneclickInscriptionData = $this->oneclickInscriptionDataRepository->getByToken($tbkToken);
         $orderId = $oneclickInscriptionData->getOrderId();
         $order = $this->getOrder($orderId);
 

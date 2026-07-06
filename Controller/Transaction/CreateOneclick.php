@@ -5,7 +5,9 @@ namespace Transbank\Webpay\Controller\Transaction;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
-use Transbank\Webpay\Helper\Inscriptions;
+use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
+use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Helper\PluginLogger;
 
 /**
@@ -20,8 +22,9 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected $quoteManagement;
     protected $storeManager;
     protected $oneclickInscriptionDataFactory;
+    protected $oneclickInscriptionDataRepository;
     protected $log;
-    protected $_getInscriptions;
+    protected $oneclickInscriptionService;
     protected $oneClickConfig;
 
     /**
@@ -34,7 +37,9 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
-     * @param \Transbank\Webpay\Model\OneclickInscriptionDataFactory   $oneclickInscriptionDataFactory
+     * @param OneclickInscriptionDataFactory                   $oneclickInscriptionDataFactory
+     * @param OneclickInscriptionDataRepository                $oneclickInscriptionDataRepository
+     * @param OneclickInscriptionService                       $oneclickInscriptionService
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -44,8 +49,9 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
-        Inscriptions $getInscriptions
+        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
+        OneclickInscriptionService $oneclickInscriptionService
     ) {
         parent::__construct($context);
 
@@ -56,8 +62,9 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->log = new PluginLogger();
-        $this->_getInscriptions = $getInscriptions;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
     }
 
     /**
@@ -215,8 +222,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             'commerce_code'  => $this->oneClickConfig['COMMERCE_CODE'],
             'metadata'       => json_encode($this->checkoutSession->getData()),
         ]);
-        $oneclickInscriptionData->save();
-
+        $this->oneclickInscriptionDataRepository->save($oneclickInscriptionData);
     }
 
     /**
@@ -244,9 +250,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param $username
      */
     protected function createUsername($customerId) {
-
         // seleccionar insripciones y crear un username
-        $inscriptions = $this->_getInscriptions->getInscriptions();
+        $inscriptions = $this->oneclickInscriptionService->getInscriptionsForCurrentCustomer();
 
         if (empty($inscriptions)){
             $username = 'U_'.$customerId.'_1';

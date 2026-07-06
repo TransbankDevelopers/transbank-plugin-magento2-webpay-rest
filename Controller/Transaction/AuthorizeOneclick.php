@@ -25,7 +25,7 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
-use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
+use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
@@ -45,7 +45,7 @@ class AuthorizeOneclick extends Action
 
     private $cart;
     private $checkoutSession;
-    private $oneclickInscriptionDataFactory;
+    private $oneclickInscriptionDataRepository;
     private $log;
     private $webpayOrderDataFactory;
     protected $webpayOrderDataRepository;
@@ -65,7 +65,7 @@ class AuthorizeOneclick extends Action
      * @param PageFactory $resultPageFactory
      * @param ConfigProvider $configProvider
      * @param EventManagerInterface $eventManager
-     * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
+     * @param OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
      * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
@@ -77,7 +77,7 @@ class AuthorizeOneclick extends Action
         PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
         EventManagerInterface $eventManager,
-        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
         WebpayOrderDataFactory $webpayOrderDataFactory,
         WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
@@ -90,7 +90,7 @@ class AuthorizeOneclick extends Action
         $this->checkoutSession = $checkoutSession;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->webpayOrderDataRepository = $webpayOrderDataRepository;
         $this->resultPageFactory = $resultPageFactory;
@@ -159,7 +159,7 @@ class AuthorizeOneclick extends Action
             throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
         }
 
-        $inscription = $this->getOneclickInscriptionData($inscriptionId);
+        $inscription = $this->oneclickInscriptionDataRepository->getById($inscriptionId);
 
         if (!$this->validatePayerMatchesCardInscription($inscription)) {
             throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
@@ -419,7 +419,7 @@ class AuthorizeOneclick extends Action
      * This method return the WebpayOrderData base on the order id and quote id.
      *
      * @param int $orderId The order id.
-     * @param int $quoteId The quite id.
+     * @param int $quoteId The quote id.
      *
      * @return WebpayOrderData The Webpay order data object.
      */
@@ -427,18 +427,8 @@ class AuthorizeOneclick extends Action
     {
         return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
+    
 
-    /**
-     * This method return the OneclickInscriptionData based on the id.
-     * @param $inscriptionId The OneclickInscriptionData id.
-     *
-     * @return OneclickInscriptionData The Oneclick inscription data object.
-     */
-    protected function getOneclickInscriptionData(int $inscriptionId): OneclickInscriptionData
-    {
-        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        return $oneclickInscriptionDataModel->load($inscriptionId, 'id');
-    }
 
     /**
      * Validate that the user paying for the order is the same as the one who registered the card.
