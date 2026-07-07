@@ -114,7 +114,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $returnUrl = $baseUrl.$this->oneClickConfig['URL_RETURN'];
             $orderId = $this->getOrderId();
 
-            $username = $this->createUsername($order->getCustomerId()); // Generate new Username
+            $username = $this->oneclickInscriptionService->generateInscriptionUsername($order->getCustomerId()); // Generate new Username
             $this->log->logInfo('New username: '.json_encode($username));
 
             $quote->save();
@@ -244,25 +244,5 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $quote->setData('customer_firstname', $quote->getBillingAddress()->getFirstName());
         $quote->setData('customer_lastname', $quote->getBillingAddress()->getLastName());
         $quote->setData('customer_is_guest', 1);
-    }
-
-    /**
-     * @param $username
-     */
-    protected function createUsername($customerId) {
-        // seleccionar insripciones y crear un username
-        $inscriptions = $this->oneclickInscriptionService->getInscriptionsForCurrentCustomer();
-
-        if (empty($inscriptions)){
-            $username = 'U_'.$customerId.'_1';
-        } else {
-            $last_inscription = end($inscriptions);
-            $last_username = $last_inscription['username'];
-            $last_correlative = intval(substr($last_username, -1));
-            $new_correlative = $last_correlative + 1;
-            $username = 'U_'.$customerId.'_'.$new_correlative;
-        }
-
-        return $username;
     }
 }

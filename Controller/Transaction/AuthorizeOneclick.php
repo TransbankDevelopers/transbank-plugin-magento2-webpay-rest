@@ -25,7 +25,7 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
-use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
@@ -45,7 +45,7 @@ class AuthorizeOneclick extends Action
 
     private $cart;
     private $checkoutSession;
-    private $oneclickInscriptionDataRepository;
+    private $oneclickInscriptionService;
     private $log;
     private $webpayOrderDataFactory;
     protected $webpayOrderDataRepository;
@@ -65,7 +65,7 @@ class AuthorizeOneclick extends Action
      * @param PageFactory $resultPageFactory
      * @param ConfigProvider $configProvider
      * @param EventManagerInterface $eventManager
-     * @param OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
+     * @param OneclickInscriptionService $oneclickInscriptionService
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
      * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
@@ -77,7 +77,7 @@ class AuthorizeOneclick extends Action
         PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
         EventManagerInterface $eventManager,
-        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
+        OneclickInscriptionService $oneclickInscriptionService,
         WebpayOrderDataFactory $webpayOrderDataFactory,
         WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
@@ -90,7 +90,7 @@ class AuthorizeOneclick extends Action
         $this->checkoutSession = $checkoutSession;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
-        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->webpayOrderDataRepository = $webpayOrderDataRepository;
         $this->resultPageFactory = $resultPageFactory;
@@ -159,9 +159,9 @@ class AuthorizeOneclick extends Action
             throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
         }
 
-        $inscription = $this->oneclickInscriptionDataRepository->getById($inscriptionId);
+        $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
 
-        if (!$this->validatePayerMatchesCardInscription($inscription)) {
+        if (!$this->oneclickInscriptionService->isPayerMatchingInscription($inscription)) {
             throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
         }
 
@@ -429,22 +429,6 @@ class AuthorizeOneclick extends Action
     }
     
 
-
-    /**
-     * Validate that the user paying for the order is the same as the one who registered the card.
-     *
-     * @param OneclickInscriptionData $inscriptionData The card inscription data.
-     *
-     * @return bool True if the payer matches the card inscription, false otherwise.
-     */
-    private function validatePayerMatchesCardInscription(OneclickInscriptionData $inscriptionData)
-    {
-        $customerData = $this->customerSession->getCustomerData();
-        $customerId = $customerData->getId();
-        $inscriptionUserId = $inscriptionData->getUserId();
-
-        return $customerId == $inscriptionUserId;
-    }
 
     /**
      * This method check if customer is logged in.
