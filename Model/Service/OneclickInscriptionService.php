@@ -9,7 +9,7 @@ use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 
 /**
  * Class OneclickInscriptionService
- * Business rules around OneClick inscriptions that depend on the current customer session.
+ * Business rules and data-access orchestration for OneClick inscriptions.
  */
 class OneclickInscriptionService
 {
