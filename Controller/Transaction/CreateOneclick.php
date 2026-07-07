@@ -5,8 +5,6 @@ namespace Transbank\Webpay\Controller\Transaction;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
-use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
-use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Helper\PluginLogger;
 
@@ -21,8 +19,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected $resultJsonFactory;
     protected $quoteManagement;
     protected $storeManager;
-    protected $oneclickInscriptionDataFactory;
-    protected $oneclickInscriptionDataRepository;
     protected $log;
     protected $oneclickInscriptionService;
     protected $oneClickConfig;
@@ -37,8 +33,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
-     * @param OneclickInscriptionDataFactory                   $oneclickInscriptionDataFactory
-     * @param OneclickInscriptionDataRepository                $oneclickInscriptionDataRepository
      * @param OneclickInscriptionService                       $oneclickInscriptionService
      */
     public function __construct(
@@ -49,8 +43,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
-        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
         OneclickInscriptionService $oneclickInscriptionService
     ) {
         parent::__construct($context);
@@ -61,8 +53,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->quoteManagement = $quoteManagement;
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
-        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->log = new PluginLogger();
         $this->oneclickInscriptionService = $oneclickInscriptionService;
     }
@@ -125,23 +115,29 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>".json_encode($dataLog);
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
-                $this->saveOneclickInscriptionData(
+                $this->oneclickInscriptionService->createInscriptionRecord(
                     OneclickInscriptionData::PAYMENT_STATUS_WATING,     // status
                     $response['token'],             // token
                     $username,                    // username
                     $order->getCustomerEmail(),     // email
                     $order->getCustomerId(),        // user_id
                     $this->getOrderId(),            // order_id
+                    $this->oneClickConfig['ENVIRONMENT'],    // environment
+                    $this->oneClickConfig['COMMERCE_CODE'],  // commerce_code
+                    json_encode($this->checkoutSession->getData()) // metadata
                 );
                 $order->setStatus($orderStatusPendingPayment);
             } else {
-                $this->saveOneclickInscriptionData(
+                $this->oneclickInscriptionService->createInscriptionRecord(
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
                     $response['token'],             // token
                     '',                             // username
                     $order->getCustomerEmail(),     // email
                     $order->getCustomerId(),        // user_id
                     $this->getOrderId(),            // order_id
+                    $this->oneClickConfig['ENVIRONMENT'],    // environment
+                    $this->oneClickConfig['COMMERCE_CODE'],  // commerce_code
+                    json_encode($this->checkoutSession->getData()) // metadata
                 );
                 $order->cancel();
                 $order->save();
@@ -189,40 +185,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         } catch (\Exception $e) {
             return null;
         }
-    }
-
-    /**
-     * @param $token_ws
-     * @param $payment_status
-     * @param $order_id
-     * @param $quote_id
-     *
-     * @throws \Exception
-     *
-     * @return OneclickInscriptionData
-     */
-    protected function saveOneclickInscriptionData( // Copiar esta funcion para guardar los datos en CommitOneClick.php
-        $status,
-        $token,
-        $username,
-        $email,
-        $user_id,
-        $order_id
-    )
-    {
-        $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData->setData([
-            'status'          => $status,
-            'token'          => $token,
-            'username'       => $username,
-            'email'          => $email,
-            'user_id'        => $user_id,
-            'order_id'       => $order_id,
-            'environment'    => $this->oneClickConfig['ENVIRONMENT'],
-            'commerce_code'  => $this->oneClickConfig['COMMERCE_CODE'],
-            'metadata'       => json_encode($this->checkoutSession->getData()),
-        ]);
-        $this->oneclickInscriptionDataRepository->save($oneclickInscriptionData);
     }
 
     /**

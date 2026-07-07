@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model\Service;
 
 use Magento\Customer\Model\Session as CustomerSession;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 
 /**
@@ -14,19 +15,23 @@ class OneclickInscriptionService
 {
     protected $oneclickInscriptionDataRepository;
     protected $customerSession;
+    protected $oneclickInscriptionDataFactory;
 
     /**
      * Constructor
      *
      * @param OneclickInscriptionDataRepository
      * @param CustomerSession
+     * @param OneclickInscriptionDataFactory
      */
     public function __construct(
         OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
     ) {
         $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->customerSession = $customerSession;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
     }
 
     /**
@@ -139,5 +144,44 @@ class OneclickInscriptionService
         }
 
         return $username;
+    }
+
+    /**
+     * Create and persist a new OneclickInscriptionData record.
+     *
+     * @param $status
+     * @param $token
+     * @param $username
+     * @param $email
+     * @param $user_id
+     * @param $order_id
+     * @param $environment
+     * @param $commerce_code
+     * @param $metadata
+     */
+    public function createInscriptionRecord(
+        $status,
+        $token,
+        $username,
+        $email,
+        $user_id,
+        $order_id,
+        $environment,
+        $commerce_code,
+        $metadata
+    ) {
+        $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData->setData([
+            'status'          => $status,
+            'token'          => $token,
+            'username'       => $username,
+            'email'          => $email,
+            'user_id'        => $user_id,
+            'order_id'       => $order_id,
+            'environment'    => $environment,
+            'commerce_code'  => $commerce_code,
+            'metadata'       => $metadata,
+        ]);
+        $this->oneclickInscriptionDataRepository->save($oneclickInscriptionData);
     }
 }
