@@ -31,7 +31,7 @@ class Delete extends Action
     {
         try {
             $data = (array)$this->getRequest()->getParams();
-            if ($data) {
+            if (isset($data['id'])) {
                 $inscriptionId = $data['id'];
                 $oneclickInscriptionData = $this->oneclickInscriptionService->setInscriptionAsDeleted($inscriptionId);
                 $username = $oneclickInscriptionData->getUsername();
