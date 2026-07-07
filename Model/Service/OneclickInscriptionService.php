@@ -184,4 +184,40 @@ class OneclickInscriptionService
         ]);
         $this->oneclickInscriptionDataRepository->save($oneclickInscriptionData);
     }
+
+    /**
+     * Interpret the SDK's finishInscription() result and update the inscription accordingly.
+     *
+     * @param OneclickInscriptionData $inscription The inscription being resolved
+     * @param $inscriptionResult The SDK response from finishInscription()
+     *
+     * @return bool True if the inscription finished successfully, false otherwise
+     */
+    public function applyInscriptionFinishResult(OneclickInscriptionData $inscription, $inscriptionResult): bool
+    {
+        $inscription->setMetadata(json_encode($inscriptionResult));
+
+        if (isset($inscriptionResult->tbkUser) && isset($inscriptionResult->responseCode) && $inscriptionResult->responseCode == 0) {
+            $inscription->setStatus(OneclickInscriptionData::PAYMENT_STATUS_SUCCESS);
+            $inscription->setResponseCode($inscriptionResult->responseCode);
+            $inscription->setTbkUser($inscriptionResult->tbkUser);
+            $inscription->setAuthorizationCode($inscriptionResult->authorizationCode);
+            $inscription->setCardType($inscriptionResult->cardType);
+            $inscription->setCardNumber($inscriptionResult->cardNumber);
+
+            $this->oneclickInscriptionDataRepository->save($inscription);
+
+            return true;
+        } else {
+            $inscription->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
+
+            if (isset($inscriptionResult->responseCode)) {
+                $inscription->setResponseCode($inscriptionResult->responseCode);
+            }
+
+            $this->oneclickInscriptionDataRepository->save($inscription);
+
+            return false;
+        }
+    }
 }
