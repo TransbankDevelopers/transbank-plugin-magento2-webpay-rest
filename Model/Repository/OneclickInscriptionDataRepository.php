@@ -3,7 +3,6 @@
 namespace Transbank\Webpay\Model\Repository;
 
 use Transbank\Webpay\Model\OneclickInscriptionData;
-use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData\CollectionFactory;
 
 /**
@@ -12,20 +11,16 @@ use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData\CollectionFacto
  */
 class OneclickInscriptionDataRepository
 {
-    protected $oneclickInscriptionDataFactory;
     protected $collectionFactory;
 
     /**
      * Constructor
      *
-     * @param OneclickInscriptionDataFactory
      * @param CollectionFactory
      */
     public function __construct(
-        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         CollectionFactory $collectionFactory
     ) {
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->collectionFactory = $collectionFactory;
     }
 
@@ -38,7 +33,10 @@ class OneclickInscriptionDataRepository
      */
     public function getById(int $id): OneclickInscriptionData
     {
-        return $this->oneclickInscriptionDataFactory->create()->load($id, 'id');
+        $collection = $this->collectionFactory->create();
+        $collection->addFieldToFilter('id', $id);
+
+        return $collection->getFirstItem();
     }
 
     /**
@@ -50,7 +48,10 @@ class OneclickInscriptionDataRepository
      */
     public function getByToken(string $token): OneclickInscriptionData
     {
-        return $this->oneclickInscriptionDataFactory->create()->load($token, 'token');
+        $collection = $this->collectionFactory->create();
+        $collection->addFieldToFilter('token', $token);
+
+        return $collection->getFirstItem();
     }
 
     /**
