@@ -193,7 +193,7 @@ class OneclickInscriptionService
      *
      * @return bool True if the inscription finished successfully, false otherwise
      */
-    public function applyInscriptionFinishResult(OneclickInscriptionData $inscription, $inscriptionResult): bool
+    public function resolveInscriptionFinishResult(OneclickInscriptionData $inscription, $inscriptionResult): bool
     {
         $inscription->setMetadata(json_encode($inscriptionResult));
 

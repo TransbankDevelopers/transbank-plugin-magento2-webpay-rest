@@ -91,7 +91,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                 $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
                 $inscriptionResult = $transbankSdkWebpay->finishInscription($tbkToken);
 
-                if ($this->oneclickInscriptionService->applyInscriptionFinishResult($oneclickInscriptionData, $inscriptionResult)) {
+                if ($this->oneclickInscriptionService->resolveInscriptionFinishResult($oneclickInscriptionData, $inscriptionResult)) {
                     $message = "Tarjeta inscrita exitosamente";
                     $this->messageManager->addSuccess(__($message));
 
