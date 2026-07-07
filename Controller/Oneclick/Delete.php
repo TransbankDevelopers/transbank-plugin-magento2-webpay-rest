@@ -7,25 +7,24 @@ use Magento\Framework\View\Result\PageFactory;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\App\Action\Action;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
-use Transbank\Webpay\Model\OneclickInscriptionData;
-use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 
 class Delete extends Action
 {
     protected $configProvider;
-    protected $oneclickInscriptionDataRepository;
+    protected $oneclickInscriptionService;
     protected $resultPageFactory;
 
     public function __construct(
         Context $context,
         PageFactory $resultPageFactory,
-        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
+        OneclickInscriptionService $oneclickInscriptionService,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
     ) {
         parent::__construct($context);
         $this->configProvider = $configProvider;
         $this->resultPageFactory = $resultPageFactory;
-        $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
     }
 
     public function execute()
@@ -34,10 +33,9 @@ class Delete extends Action
             $data = (array)$this->getRequest()->getParams();
             if ($data) {
                 $inscriptionId = $data['id'];
-                list($username, $tbkUser, $OneclickInscriptionData) = $this->getOneclickInscriptionData($inscriptionId);
-
-                $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_DELETED);
-                $this->oneclickInscriptionDataRepository->save($OneclickInscriptionData);
+                $oneclickInscriptionData = $this->oneclickInscriptionService->setInscriptionAsDeleted($inscriptionId);
+                $username = $oneclickInscriptionData->getUsername();
+                $tbkUser = $oneclickInscriptionData->getTbkUser();
 
                 $config = $this->configProvider->getPluginConfigOneclick();
 
@@ -59,21 +57,5 @@ class Delete extends Action
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $resultRedirect->setUrl($this->_redirect->getRefererUrl());
         return $resultRedirect;
-    }
-
-    /**
-     * @param $inscriptionId
-     *
-     * @throws \Exception
-     *
-     * @return OneclickInscriptionData
-     */
-    protected function getOneclickInscriptionData($inscriptionId)
-    {
-        $oneclickInscriptionData = $this->oneclickInscriptionDataRepository->getById($inscriptionId);
-        $tbkUser = $oneclickInscriptionData->getTbkUser();
-        $username = $oneclickInscriptionData->getUsername();
-
-        return [$username, $tbkUser, $oneclickInscriptionData];
     }
 }

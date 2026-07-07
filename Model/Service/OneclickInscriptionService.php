@@ -99,6 +99,25 @@ class OneclickInscriptionService
     }
 
     /**
+     * Mark an inscription as deleted and persist it.
+     *
+     * Note: if the given id does not match any row, the underlying model stays "new"
+     * and save() performs an INSERT instead of failing — this preserves the existing
+     * (buggy) behavior, it is not corrected here.
+     *
+     * @param int $inscriptionId The inscription id
+     *
+     * @return OneclickInscriptionData The updated inscription
+     */
+    public function setInscriptionAsDeleted(int $inscriptionId): OneclickInscriptionData
+    {
+        $inscription = $this->getById($inscriptionId);
+        $inscription->setStatus(OneclickInscriptionData::PAYMENT_STATUS_DELETED);
+
+        return $this->oneclickInscriptionDataRepository->save($inscription);
+    }
+
+    /**
      * Generate the next incremental username for a customer, based on their previous inscriptions.
      *
      * @param $customerId
