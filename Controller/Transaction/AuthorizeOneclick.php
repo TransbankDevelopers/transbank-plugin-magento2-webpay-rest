@@ -160,9 +160,8 @@ class AuthorizeOneclick extends Action
         }
 
         $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
-        $customerId = $this->customerSession->getCustomerData()->getId();
 
-        if (!$this->oneclickInscriptionService->isPayerMatchingInscription($inscription, $customerId)) {
+        if (!$this->validatePayerMatchesCardInscription($inscription)) {
             throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
         }
 
@@ -436,6 +435,22 @@ class AuthorizeOneclick extends Action
      */
     private function isCustomerLoggedIn(): bool {
         return $this->customerSession->isLoggedIn();
+    }
+
+    /**
+     * Validate that the user paying for the order is the same as the one who registered the card.
+     *
+     * @param OneclickInscriptionData $inscriptionData The card inscription data.
+     *
+     * @return bool True if the payer matches the card inscription, false otherwise.
+     */
+    private function validatePayerMatchesCardInscription(OneclickInscriptionData $inscriptionData)
+    {
+        $customerData = $this->customerSession->getCustomerData();
+        $customerId = $customerData->getId();
+        $inscriptionUserId = $inscriptionData->getUserId();
+
+        return $customerId == $inscriptionUserId;
     }
 
     /**

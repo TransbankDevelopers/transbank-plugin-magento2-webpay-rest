@@ -3,7 +3,6 @@
 namespace Transbank\Webpay\Model\Service;
 
 use Transbank\Webpay\Model\OneclickInscriptionData;
-use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 
 /**
@@ -13,20 +12,16 @@ use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 class OneclickInscriptionService
 {
     protected $oneclickInscriptionDataRepository;
-    protected $oneclickInscriptionDataFactory;
 
     /**
      * Constructor
      *
      * @param OneclickInscriptionDataRepository
-     * @param OneclickInscriptionDataFactory
      */
     public function __construct(
-        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
-        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
+        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
     ) {
         $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
     }
 
     /**
@@ -67,21 +62,6 @@ class OneclickInscriptionService
         }
 
         return $this->oneclickInscriptionDataRepository->getActiveInscriptionsByCustomerId((int) $customerId);
-    }
-
-    /**
-     * Validate that the given customer is the same one who registered the card.
-     *
-     * @param OneclickInscriptionData $inscriptionData The card inscription data
-     * @param $customerId The id of the customer to validate against
-     *
-     * @return bool True if the payer matches the card inscription, false otherwise
-     */
-    public function isPayerMatchingInscription(OneclickInscriptionData $inscriptionData, $customerId): bool
-    {
-        $inscriptionUserId = $inscriptionData->getUserId();
-
-        return $customerId == $inscriptionUserId;
     }
 
     /**
@@ -141,44 +121,15 @@ class OneclickInscriptionService
     }
 
     /**
-     * Create and persist a new OneclickInscriptionData record.
+     * Persist a OneclickInscriptionData record.
      *
-     * @param $status The inscription payment status (e.g. WAITING, FAILED)
-     * @param $token The Webpay token for this inscription
-     * @param $username The OneClick username assigned to this inscription
-     * @param $email The customer's email
-     * @param $user_id The customer id, or null for guests
-     * @param $order_id The Magento order increment id associated with this inscription
-     * @param $environment The Transbank environment (e.g. TEST, PRODUCTION)
-     * @param $commerce_code The Transbank commerce code
-     * @param $metadata JSON-encoded metadata about the inscription attempt
+     * @param OneclickInscriptionData $inscriptionData The inscription record to persist
      *
      * @return void
      */
-    public function createInscriptionRecord(
-        $status,
-        $token,
-        $username,
-        $email,
-        $user_id,
-        $order_id,
-        $environment,
-        $commerce_code,
-        $metadata
-    ) {
-        $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData->setData([
-            'status'          => $status,
-            'token'          => $token,
-            'username'       => $username,
-            'email'          => $email,
-            'user_id'        => $user_id,
-            'order_id'       => $order_id,
-            'environment'    => $environment,
-            'commerce_code'  => $commerce_code,
-            'metadata'       => $metadata,
-        ]);
-        $this->oneclickInscriptionDataRepository->save($oneclickInscriptionData);
+    public function save(OneclickInscriptionData $inscriptionData): void
+    {
+        $this->oneclickInscriptionDataRepository->save($inscriptionData);
     }
 
     /**
