@@ -80,7 +80,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
             $tbkToken = $_POST['TBK_TOKEN'] ?? $_GET['TBK_TOKEN'] ?? null;
 
-            if (is_null($tbkToken)) {
+            if (!is_string($tbkToken)) {
                 throw new \Exception('Token no encontrado');
             }
 
