@@ -160,8 +160,9 @@ class AuthorizeOneclick extends Action
         }
 
         $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
+        $customerId = $this->customerSession->getCustomerData()->getId();
 
-        if (!$this->oneclickInscriptionService->isPayerMatchingInscription($inscription)) {
+        if (!$this->oneclickInscriptionService->isPayerMatchingInscription($inscription, $customerId)) {
             throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
         }
 
@@ -427,8 +428,6 @@ class AuthorizeOneclick extends Action
     {
         return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
-    
-
 
     /**
      * This method check if customer is logged in.

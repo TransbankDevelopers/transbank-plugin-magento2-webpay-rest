@@ -55,20 +55,6 @@ class OneclickInscriptionDataRepository
     }
 
     /**
-     * Persist a OneclickInscriptionData entity
-     *
-     * @param OneclickInscriptionData $oneclickInscriptionData The entity to persist
-     *
-     * @return OneclickInscriptionData
-     */
-    public function save(OneclickInscriptionData $oneclickInscriptionData): OneclickInscriptionData
-    {
-        $oneclickInscriptionData->save();
-
-        return $oneclickInscriptionData;
-    }
-
-    /**
      * Get the active (successfully finished) inscriptions for a given customer
      *
      * @param int $customerId The customer id
@@ -89,5 +75,19 @@ class OneclickInscriptionDataRepository
         }
 
         return $inscriptions;
+    }
+
+    /**
+     * Persist a OneclickInscriptionData entity
+     *
+     * @param OneclickInscriptionData $oneclickInscriptionData The entity to persist
+     *
+     * @return OneclickInscriptionData
+     */
+    public function save(OneclickInscriptionData $oneclickInscriptionData): OneclickInscriptionData
+    {
+        $oneclickInscriptionData->save();
+
+        return $oneclickInscriptionData;
     }
 }

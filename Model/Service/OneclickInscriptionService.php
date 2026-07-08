@@ -2,7 +2,6 @@
 
 namespace Transbank\Webpay\Model\Service;
 
-use Magento\Customer\Model\Session as CustomerSession;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
@@ -14,40 +13,20 @@ use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 class OneclickInscriptionService
 {
     protected $oneclickInscriptionDataRepository;
-    protected $customerSession;
     protected $oneclickInscriptionDataFactory;
 
     /**
      * Constructor
      *
      * @param OneclickInscriptionDataRepository
-     * @param CustomerSession
      * @param OneclickInscriptionDataFactory
      */
     public function __construct(
         OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
-        CustomerSession $customerSession,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
     ) {
         $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
-        $this->customerSession = $customerSession;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
-    }
-
-    /**
-     * Get the active inscriptions of the customer currently logged in, or an empty array for guests.
-     *
-     * @return array
-     */
-    public function getInscriptionsForCurrentCustomer(): array
-    {
-        $customerId = $this->customerSession->getCustomer()->getId();
-
-        if (!isset($customerId)) {
-            return [];
-        }
-
-        return $this->oneclickInscriptionDataRepository->getActiveInscriptionsByCustomerId((int) $customerId);
     }
 
     /**
@@ -75,19 +54,58 @@ class OneclickInscriptionService
     }
 
     /**
-     * Validate that the customer currently logged in is the same one who registered the card.
+     * Get the active inscriptions of a given customer, or an empty array for guests.
+     *
+     * @param $customerId The customer id, or null for guests
+     *
+     * @return array
+     */
+    public function getActiveInscriptionsByCustomerId($customerId): array
+    {
+        if (!isset($customerId)) {
+            return [];
+        }
+
+        return $this->oneclickInscriptionDataRepository->getActiveInscriptionsByCustomerId((int) $customerId);
+    }
+
+    /**
+     * Validate that the given customer is the same one who registered the card.
      *
      * @param OneclickInscriptionData $inscriptionData The card inscription data
+     * @param $customerId The id of the customer to validate against
      *
      * @return bool True if the payer matches the card inscription, false otherwise
      */
-    public function isPayerMatchingInscription(OneclickInscriptionData $inscriptionData): bool
+    public function isPayerMatchingInscription(OneclickInscriptionData $inscriptionData, $customerId): bool
     {
-        $customerData = $this->customerSession->getCustomerData();
-        $customerId = $customerData->getId();
         $inscriptionUserId = $inscriptionData->getUserId();
 
         return $customerId == $inscriptionUserId;
+    }
+
+    /**
+     * Generate the next incremental username for a customer, based on their previous inscriptions.
+     *
+     * @param $customerId The customer id, or null for guests
+     *
+     * @return string
+     */
+    public function generateInscriptionUsername($customerId)
+    {
+        $inscriptions = $this->getActiveInscriptionsByCustomerId($customerId);
+
+        if (empty($inscriptions)){
+            $username = 'U_'.$customerId.'_1';
+        } else {
+            $last_inscription = end($inscriptions);
+            $last_username = $last_inscription['username'];
+            $last_correlative = intval(substr($last_username, -1));
+            $new_correlative = $last_correlative + 1;
+            $username = 'U_'.$customerId.'_'.$new_correlative;
+        }
+
+        return $username;
     }
 
     /**
@@ -123,41 +141,19 @@ class OneclickInscriptionService
     }
 
     /**
-     * Generate the next incremental username for a customer, based on their previous inscriptions.
-     *
-     * @param $customerId
-     *
-     * @return string
-     */
-    public function generateInscriptionUsername($customerId)
-    {
-        $inscriptions = $this->getInscriptionsForCurrentCustomer();
-
-        if (empty($inscriptions)){
-            $username = 'U_'.$customerId.'_1';
-        } else {
-            $last_inscription = end($inscriptions);
-            $last_username = $last_inscription['username'];
-            $last_correlative = intval(substr($last_username, -1));
-            $new_correlative = $last_correlative + 1;
-            $username = 'U_'.$customerId.'_'.$new_correlative;
-        }
-
-        return $username;
-    }
-
-    /**
      * Create and persist a new OneclickInscriptionData record.
      *
-     * @param $status
-     * @param $token
-     * @param $username
-     * @param $email
-     * @param $user_id
-     * @param $order_id
-     * @param $environment
-     * @param $commerce_code
-     * @param $metadata
+     * @param $status The inscription payment status (e.g. WAITING, FAILED)
+     * @param $token The Webpay token for this inscription
+     * @param $username The OneClick username assigned to this inscription
+     * @param $email The customer's email
+     * @param $user_id The customer id, or null for guests
+     * @param $order_id The Magento order increment id associated with this inscription
+     * @param $environment The Transbank environment (e.g. TEST, PRODUCTION)
+     * @param $commerce_code The Transbank commerce code
+     * @param $metadata JSON-encoded metadata about the inscription attempt
+     *
+     * @return void
      */
     public function createInscriptionRecord(
         $status,
