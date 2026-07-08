@@ -95,14 +95,14 @@ class OneclickInscriptionService
     {
         $inscriptions = $this->getActiveInscriptionsByCustomerId($customerId);
 
-        if (empty($inscriptions)){
-            $username = 'U_'.$customerId.'_1';
+        if (empty($inscriptions)) {
+            $username = 'U_' . $customerId . '_1';
         } else {
             $last_inscription = end($inscriptions);
             $last_username = $last_inscription['username'];
             $last_correlative = intval(substr($last_username, -1));
             $new_correlative = $last_correlative + 1;
-            $username = 'U_'.$customerId.'_'.$new_correlative;
+            $username = 'U_' . $customerId . '_' . $new_correlative;
         }
 
         return $username;
