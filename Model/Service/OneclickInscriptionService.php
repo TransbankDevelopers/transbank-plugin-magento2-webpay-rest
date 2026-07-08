@@ -57,7 +57,7 @@ class OneclickInscriptionService
      */
     public function getActiveInscriptionsByCustomerId($customerId): array
     {
-        if (!isset($customerId)) {
+        if (empty($customerId)) {
             return [];
         }
 
