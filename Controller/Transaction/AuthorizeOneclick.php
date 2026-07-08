@@ -429,15 +429,6 @@ class AuthorizeOneclick extends Action
     }
 
     /**
-     * This method check if customer is logged in.
-     *
-     * @return bool True if customer is logged in, otherwise false.
-     */
-    private function isCustomerLoggedIn(): bool {
-        return $this->customerSession->isLoggedIn();
-    }
-
-    /**
      * Validate that the user paying for the order is the same as the one who registered the card.
      *
      * @param OneclickInscriptionData $inscriptionData The card inscription data.
@@ -451,6 +442,15 @@ class AuthorizeOneclick extends Action
         $inscriptionUserId = $inscriptionData->getUserId();
 
         return $customerId == $inscriptionUserId;
+    }
+
+    /**
+     * This method check if customer is logged in.
+     *
+     * @return bool True if customer is logged in, otherwise false.
+     */
+    private function isCustomerLoggedIn(): bool {
+        return $this->customerSession->isLoggedIn();
     }
 
     /**

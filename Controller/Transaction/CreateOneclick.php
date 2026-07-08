@@ -120,34 +120,24 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>".json_encode($dataLog);
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
-                $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
-                $oneclickInscriptionData->setData([
-                    'status'         => OneclickInscriptionData::PAYMENT_STATUS_WATING,
-                    'token'          => $response['token'],
-                    'username'       => $username,
-                    'email'          => $order->getCustomerEmail(),
-                    'user_id'        => $order->getCustomerId(),
-                    'order_id'       => $this->getOrderId(),
-                    'environment'    => $this->oneClickConfig['ENVIRONMENT'],
-                    'commerce_code'  => $this->oneClickConfig['COMMERCE_CODE'],
-                    'metadata'       => json_encode($this->checkoutSession->getData()),
-                ]);
-                $this->oneclickInscriptionService->save($oneclickInscriptionData);
+                $this->saveOneclickInscriptionData(
+                    OneclickInscriptionData::PAYMENT_STATUS_WATING,     // status
+                    $response['token'],             // token
+                    $username,                    // username
+                    $order->getCustomerEmail(),     // email
+                    $order->getCustomerId(),        // user_id
+                    $this->getOrderId(),            // order_id
+                );
                 $order->setStatus($orderStatusPendingPayment);
             } else {
-                $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
-                $oneclickInscriptionData->setData([
-                    'status'         => OneclickInscriptionData::PAYMENT_STATUS_FAILED,
-                    'token'          => $response['token'],
-                    'username'       => '',
-                    'email'          => $order->getCustomerEmail(),
-                    'user_id'        => $order->getCustomerId(),
-                    'order_id'       => $this->getOrderId(),
-                    'environment'    => $this->oneClickConfig['ENVIRONMENT'],
-                    'commerce_code'  => $this->oneClickConfig['COMMERCE_CODE'],
-                    'metadata'       => json_encode($this->checkoutSession->getData()),
-                ]);
-                $this->oneclickInscriptionService->save($oneclickInscriptionData);
+                $this->saveOneclickInscriptionData(
+                    OneclickInscriptionData::PAYMENT_STATUS_FAILED,
+                    $response['token'],             // token
+                    '',                             // username
+                    $order->getCustomerEmail(),     // email
+                    $order->getCustomerId(),        // user_id
+                    $this->getOrderId(),            // order_id
+                );
                 $order->cancel();
                 $order->save();
                 $order->setStatus($orderStatusCanceled); // Debería de cancelar la orden?
@@ -194,6 +184,40 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * @param $token_ws
+     * @param $payment_status
+     * @param $order_id
+     * @param $quote_id
+     *
+     * @throws \Exception
+     *
+     * @return OneclickInscriptionData
+     */
+    protected function saveOneclickInscriptionData(
+        $status,
+        $token,
+        $username,
+        $email,
+        $user_id,
+        $order_id
+    )
+    {
+        $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
+        $oneclickInscriptionData->setData([
+            'status'          => $status,
+            'token'          => $token,
+            'username'       => $username,
+            'email'          => $email,
+            'user_id'        => $user_id,
+            'order_id'       => $order_id,
+            'environment'    => $this->oneClickConfig['ENVIRONMENT'],
+            'commerce_code'  => $this->oneClickConfig['COMMERCE_CODE'],
+            'metadata'       => json_encode($this->checkoutSession->getData()),
+        ]);
+        $this->oneclickInscriptionService->save($oneclickInscriptionData);
     }
 
     /**
