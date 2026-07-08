@@ -196,7 +196,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      *
      * @return OneclickInscriptionData
      */
-    protected function saveOneclickInscriptionData(
+    protected function saveOneclickInscriptionData( // Copiar esta funcion para guardar los datos en CommitOneClick.php
         $status,
         $token,
         $username,
