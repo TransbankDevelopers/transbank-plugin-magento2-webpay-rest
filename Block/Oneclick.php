@@ -1,31 +1,35 @@
 <?php
 
 namespace Transbank\Webpay\Block;
- 
+
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\View\Element\Template;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 
 class Oneclick extends Template
 {
- 
-    protected $getInscriptions;
- 
+
+    protected $oneclickInscriptionService;
+    protected $customerSession;
+
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
-        \Transbank\Webpay\Helper\Inscriptions $getInscriptions,
+        OneclickInscriptionService $oneclickInscriptionService,
+        CustomerSession $customerSession,
         array $data = [])
     {
-        $this->getInscriptions = $getInscriptions;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
+        $this->customerSession = $customerSession;
         parent::__construct($context, $data);
     }
- 
+
     public function getCards()
     {
-        return $this->getInscriptions->getInscriptions();
+        return $this->oneclickInscriptionService->getActiveInscriptionsByCustomerId($this->customerSession->getCustomer()->getId());
     }
 
     public function getDeleteAction()
     {
         return $this->getUrl('checkout/oneclick/delete', ['_secure' => true]);
     }
- 
 }
