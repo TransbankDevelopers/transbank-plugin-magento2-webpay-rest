@@ -45,15 +45,7 @@ class Delete extends Action
                 return $this->redirectToReferer();
             }
 
-            if (!$this->customerSession->isLoggedIn()) {
-                $this->messageManager->addErrorMessage(__(self::UNAUTHORIZED_MESSAGE));
-                return $this->redirectToReferer();
-            }
-
-            $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
-            $customerId = $this->customerSession->getCustomerId();
-
-            if (!$this->oneclickInscriptionService->isOwnedByCustomer($inscription->getUserId(), $customerId)) {
+            if (!$this->isAuthorizedToDelete($inscriptionId)) {
                 $this->messageManager->addErrorMessage(__(self::UNAUTHORIZED_MESSAGE));
                 return $this->redirectToReferer();
             }
@@ -75,6 +67,20 @@ class Delete extends Action
         }
 
         return $this->redirectToReferer();
+    }
+
+    private function isAuthorizedToDelete(int $inscriptionId): bool
+    {
+        if (!$this->customerSession->isLoggedIn()) {
+            return false;
+        }
+
+        $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
+
+        return $this->oneclickInscriptionService->isOwnedByCustomer(
+            $inscription->getUserId(),
+            $this->customerSession->getCustomerId()
+        );
     }
 
     private function redirectToReferer()
