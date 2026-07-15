@@ -97,7 +97,9 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } else {
-                    $this->messageManager->addError(__(self::REJECT_MESSAGE));
+                    $statusFields = $this->getInscriptionResponseFields($inscriptionResult);
+                    $message = $this->getRejectMessage($statusFields, $oneclickTitle);
+                    $this->messageManager->addError(__($message));
 
                     $order->cancel();
                     $order->save();
@@ -105,7 +107,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
-                    $statusFields = $this->getInscriptionResponseFields($inscriptionResult);
                     $historyComment = $this->createHistoryComment(
                         'Inscripción rechazada',
                         $statusFields,
@@ -215,6 +216,10 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
         if (isset($transactionResult['responseCode'])) {
+            if (!isset($this->responseCodeArray[$transactionResult['responseCode']])) {
+                return self::REJECT_MESSAGE;
+            }
+
             $message = "<h2>Transacci&oacute;n rechazada con {$oneclickTitle}</h2>
             <p>
                 <br>
