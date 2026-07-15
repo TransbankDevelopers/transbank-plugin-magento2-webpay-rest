@@ -80,7 +80,8 @@ class OneclickInscriptionService
         } else {
             $last_inscription = end($inscriptions);
             $last_username = $last_inscription['username'];
-            $last_correlative = intval(substr($last_username, -1));
+            $username_parts = explode('_', $last_username);
+            $last_correlative = intval(end($username_parts));
             $new_correlative = $last_correlative + 1;
             $username = 'U_' . $customerId . '_' . $new_correlative;
         }
