@@ -58,7 +58,7 @@ class Delete extends Action
                         $this->messageManager->addErrorMessage(__("Error al eliminar tarjeta inscrita."));
                     }
                 } else {
-                    $this->messageManager->addErrorMessage(__("No posees permisos suficientes para eliminar esta tarjeta inscrita."));
+                    $this->messageManager->addErrorMessage(__("No posee permisos suficientes para eliminar esta tarjeta inscrita."));
                 }
             } else {
                 $this->messageManager->addErrorMessage(__("Tarjeta inscrita no encontrada"));
