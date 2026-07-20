@@ -226,7 +226,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             $message = self::REJECT_MESSAGE;
         } elseif (isset($transactionResult['error'])) {
             $error = $transactionResult['error'];
-            $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
+            $detail = $transactionResult['detail'] ?? 'Sin detalles';
             $message = "<b>Transacci&oacute;n fallida por {$oneclickTitle}</b>
                 <div>
                     {$error}
