@@ -46,7 +46,9 @@ class OneclickInscriptionService
      */
     public function isOwnedByCustomer($inscriptionOwnerId, $customerId): bool
     {
-        return $customerId !== null && $inscriptionOwnerId == $customerId;
+        $customerId = (int) $customerId;
+
+        return $customerId !== 0 && (int) $inscriptionOwnerId === $customerId;
     }
 
     /**
