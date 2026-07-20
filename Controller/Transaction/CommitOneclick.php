@@ -220,27 +220,27 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                 return self::REJECT_MESSAGE;
             }
 
-            $message = "<h2>Transacci&oacute;n rechazada con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult['responseCode']]}<br>
-            </p>";
+            $message = "<b>Transacci&oacute;n rechazada por {$oneclickTitle}</b>
+            <div>
+                {$this->responseCodeArray[$transactionResult['responseCode']]}
+            </div>";
 
             return $message;
         } else {
             if (isset($transactionResult['error'])) {
                 $error = $transactionResult['error'];
                 $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
+                $message = "<b>Transacci&oacute;n fallida por {$oneclickTitle}</b>
+            <div>
+                {$error}
+            </div>
+            <div>
                 <b>Mensaje: </b>{$detail}
-            </p>";
+            </div>";
 
                 return $message;
             } else {
-                $message = '<h2>Transacci&oacute;n Fallida</h2>';
+                $message = '<b>Transacci&oacute;n Fallida</b>';
 
                 return $message;
             }
