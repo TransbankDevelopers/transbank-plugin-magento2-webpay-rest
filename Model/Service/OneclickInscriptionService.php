@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Model\Service;
 
+use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 
@@ -29,6 +30,8 @@ class OneclickInscriptionService
      *
      * @param int $id The inscription id
      *
+     * @throws OneclickInscriptionNotFoundException When no inscription matches the given id
+     *
      * @return OneclickInscriptionData
      */
     public function getById(int $id): OneclickInscriptionData
@@ -40,6 +43,8 @@ class OneclickInscriptionService
      * Get a OneclickInscriptionData by Webpay token
      *
      * @param string $token The Webpay token
+     *
+     * @throws OneclickInscriptionNotFoundException When no inscription matches the given token
      *
      * @return OneclickInscriptionData
      */
@@ -105,11 +110,9 @@ class OneclickInscriptionService
     /**
      * Mark an inscription as deleted and persist it.
      *
-     * Note: if the given id does not match any row, the underlying model stays "new"
-     * and save() performs an INSERT instead of failing — this preserves the existing
-     * (buggy) behavior, it is not corrected here.
-     *
      * @param int $inscriptionId The inscription id
+     *
+     * @throws OneclickInscriptionNotFoundException When no inscription matches the given id
      *
      * @return OneclickInscriptionData The updated inscription
      */

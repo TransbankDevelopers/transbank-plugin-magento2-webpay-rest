@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Model\Repository;
 
+use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData\CollectionFactory;
 
@@ -29,14 +30,21 @@ class OneclickInscriptionDataRepository
      *
      * @param int $id The inscription id
      *
+     * @throws OneclickInscriptionNotFoundException When no inscription matches the given id
+     *
      * @return OneclickInscriptionData
      */
     public function getById(int $id): OneclickInscriptionData
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('id', $id);
+        $inscription = $collection->getFirstItem();
 
-        return $collection->getFirstItem();
+        if (!$inscription->getId()) {
+            throw new OneclickInscriptionNotFoundException();
+        }
+
+        return $inscription;
     }
 
     /**
@@ -44,14 +52,21 @@ class OneclickInscriptionDataRepository
      *
      * @param string $token The Webpay token
      *
+     * @throws OneclickInscriptionNotFoundException When no inscription matches the given token
+     *
      * @return OneclickInscriptionData
      */
     public function getByToken(string $token): OneclickInscriptionData
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('token', $token);
+        $inscription = $collection->getFirstItem();
 
-        return $collection->getFirstItem();
+        if (!$inscription->getId()) {
+            throw new OneclickInscriptionNotFoundException();
+        }
+
+        return $inscription;
     }
 
     /**

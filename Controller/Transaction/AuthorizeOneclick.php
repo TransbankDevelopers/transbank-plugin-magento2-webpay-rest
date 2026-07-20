@@ -31,6 +31,7 @@ use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\MissingArgumentException;
+use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Magento\Customer\Model\Session as CustomerSession;
 
@@ -125,7 +126,7 @@ class AuthorizeOneclick extends Action
             $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
-        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException $e) {
+        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException | OneclickInscriptionNotFoundException $e) {
             return $this->handleException($e);
         }
     }
