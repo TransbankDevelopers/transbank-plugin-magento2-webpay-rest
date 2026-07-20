@@ -215,35 +215,28 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
-        if (isset($transactionResult['responseCode'])) {
-            if (!isset($this->responseCodeArray[$transactionResult['responseCode']])) {
-                return self::REJECT_MESSAGE;
-            }
-
+        if (isset($transactionResult['responseCode'], $this->responseCodeArray[$transactionResult['responseCode']])) {
             $message = "<b>Transacci&oacute;n rechazada por {$oneclickTitle}</b>
                 <div>
                     {$this->responseCodeArray[$transactionResult['responseCode']]}
                 </div>";
-
-            return $message;
+        } elseif (isset($transactionResult['responseCode'])) {
+            $message = self::REJECT_MESSAGE;
+        } elseif (isset($transactionResult['error'])) {
+            $error = $transactionResult['error'];
+            $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
+            $message = "<b>Transacci&oacute;n fallida por {$oneclickTitle}</b>
+                <div>
+                    {$error}
+                </div>
+                <div>
+                    <b>Mensaje: </b>{$detail}
+                </div>";
         } else {
-            if (isset($transactionResult['error'])) {
-                $error = $transactionResult['error'];
-                $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<b>Transacci&oacute;n fallida por {$oneclickTitle}</b>
-                    <div>
-                        {$error}
-                    </div>
-                    <div>
-                        <b>Mensaje: </b>{$detail}
-                    </div>";
-                return $message;
-            } else {
-                $message = '<b>Transacci&oacute;n Fallida</b>';
-
-                return $message;
-            }
+            $message = '<b>Transacci&oacute;n Fallida</b>';
         }
+
+        return $message;
     }
 
     /**
