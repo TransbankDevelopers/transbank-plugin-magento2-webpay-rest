@@ -97,7 +97,9 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } else {
-                    $this->messageManager->addError(__(self::REJECT_MESSAGE));
+                    $statusFields = $this->getInscriptionResponseFields($inscriptionResult);
+                    $message = $this->getRejectMessage($statusFields, $oneclickTitle);
+                    $this->messageManager->addError(__($message));
 
                     $order->cancel();
                     $order->save();
@@ -105,7 +107,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
-                    $statusFields = $this->getInscriptionResponseFields($inscriptionResult);
                     $historyComment = $this->createHistoryComment(
                         'Inscripción rechazada',
                         $statusFields,
@@ -214,32 +215,31 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
-        if (isset($transactionResult['responseCode'])) {
-            $message = "<h2>Transacci&oacute;n rechazada con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult['responseCode']]}<br>
-            </p>";
+        $hasResponseCode = isset($transactionResult['responseCode']);
+        $oneclickTitle = htmlspecialchars($oneclickTitle, ENT_QUOTES, 'UTF-8');
 
-            return $message;
+        if ($hasResponseCode && isset($this->responseCodeArray[$transactionResult['responseCode']])) {
+            $message = "<b>Transacci&oacute;n rechazada por {$oneclickTitle}</b>
+                <div>
+                    {$this->responseCodeArray[$transactionResult['responseCode']]}
+                </div>";
+        } elseif ($hasResponseCode) {
+            $message = self::REJECT_MESSAGE;
+        } elseif (isset($transactionResult['error'])) {
+            $error = htmlspecialchars($transactionResult['error'], ENT_QUOTES, 'UTF-8');
+            $detail = htmlspecialchars($transactionResult['detail'] ?? 'Sin detalles', ENT_QUOTES, 'UTF-8');
+            $message = "<b>Transacci&oacute;n fallida por {$oneclickTitle}</b>
+                <div>
+                    {$error}
+                </div>
+                <div>
+                    <b>Mensaje: </b>{$detail}
+                </div>";
         } else {
-            if (isset($transactionResult['error'])) {
-                $error = $transactionResult['error'];
-                $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
-                <b>Mensaje: </b>{$detail}
-            </p>";
-
-                return $message;
-            } else {
-                $message = '<h2>Transacci&oacute;n Fallida</h2>';
-
-                return $message;
-            }
+            $message = '<b>Transacci&oacute;n Fallida</b>';
         }
+
+        return $message;
     }
 
     /**
