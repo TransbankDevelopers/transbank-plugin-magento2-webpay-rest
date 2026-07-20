@@ -215,12 +215,14 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
-        if (isset($transactionResult['responseCode'], $this->responseCodeArray[$transactionResult['responseCode']])) {
+        $hasResponseCode = isset($transactionResult['responseCode']);
+
+        if ($hasResponseCode && isset($this->responseCodeArray[$transactionResult['responseCode']])) {
             $message = "<b>Transacci&oacute;n rechazada por {$oneclickTitle}</b>
                 <div>
                     {$this->responseCodeArray[$transactionResult['responseCode']]}
                 </div>";
-        } elseif (isset($transactionResult['responseCode'])) {
+        } elseif ($hasResponseCode) {
             $message = self::REJECT_MESSAGE;
         } elseif (isset($transactionResult['error'])) {
             $error = $transactionResult['error'];
