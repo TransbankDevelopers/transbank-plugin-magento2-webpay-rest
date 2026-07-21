@@ -37,6 +37,21 @@ class OneclickInscriptionService
     }
 
     /**
+     * Determine whether an inscription owner id matches the given customer.
+     *
+     * @param int|string|null $inscriptionOwnerId The user_id stored on the inscription
+     * @param int|string|null $customerId The id of the customer attempting the operation
+     *
+     * @return bool True if the inscription is owned by the customer, false otherwise
+     */
+    public function isOwnedByCustomer($inscriptionOwnerId, $customerId): bool
+    {
+        $customerId = (int) $customerId;
+
+        return $customerId !== 0 && (int) $inscriptionOwnerId === $customerId;
+    }
+
+    /**
      * Get a OneclickInscriptionData by Webpay token
      *
      * @param string $token The Webpay token
