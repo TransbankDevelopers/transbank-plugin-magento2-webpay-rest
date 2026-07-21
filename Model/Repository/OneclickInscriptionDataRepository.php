@@ -81,7 +81,8 @@ class OneclickInscriptionDataRepository
         $collection = $this->collectionFactory->create();
         $collection->addFieldToSelect(['id', 'username', 'card_type', 'card_number'])
             ->addFieldToFilter('user_id', $customerId)
-            ->addFieldToFilter('status', OneclickInscriptionData::PAYMENT_STATUS_SUCCESS);
+            ->addFieldToFilter('status', OneclickInscriptionData::PAYMENT_STATUS_SUCCESS)
+            ->setOrder('id', 'ASC');
 
         $inscriptions = [];
 
