@@ -8,6 +8,7 @@ use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
+use Transbank\Webpay\Model\Service\OrderService;
 use Transbank\Webpay\Oneclick\Responses\InscriptionFinishResponse;
 
 /**
@@ -41,6 +42,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected $resultJsonFactory;
     protected $resultRawFactory;
     protected $oneclickInscriptionService;
+    protected $orderService;
     protected $log;
     protected $messageManager;
     private $quoteHelper;
@@ -52,6 +54,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionService $oneclickInscriptionService,
+        OrderService $orderService,
         QuoteHelper $quoteHelper
     ) {
         parent::__construct($context);
@@ -62,6 +65,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->oneclickInscriptionService = $oneclickInscriptionService;
+        $this->orderService = $orderService;
         $this->log = new PluginLogger();
         $this->quoteHelper = $quoteHelper;
     }
@@ -101,20 +105,14 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     $message = $this->getRejectMessage($statusFields, $oneclickTitle);
                     $this->messageManager->addError(__($message));
 
-                    $order->cancel();
-                    $order->save();
-                    $order->setStatus($orderStatusCanceled);
-
-                    $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
-
                     $historyComment = $this->createHistoryComment(
                         'Inscripción rechazada',
                         $statusFields,
                         true
                     );
 
-                    $order->addStatusToHistory($order->getStatus(), $historyComment);
-                    $order->save();
+                    $this->orderService->cancel($order, $orderStatusCanceled, $historyComment);
+                    $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -168,13 +166,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         ];
     }
 
-    protected function getOrder($orderId)
-    {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
-        return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
-    }
-
     /**
      * @param $tokenWs
      *
@@ -184,7 +175,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     {
         $oneclickInscriptionData = $this->oneclickInscriptionService->getByToken($tbkToken);
         $orderId = $oneclickInscriptionData->getOrderId();
-        $order = $this->getOrder($orderId);
+        $order = $this->orderService->getById($orderId);
 
         return [$oneclickInscriptionData, $order];
     }
@@ -203,11 +194,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->checkoutSession->restoreQuote();
         $this->messageManager->addError(__($message));
         if ($order != null && $order->getState() != Order::STATE_PROCESSING) {
-            $order->cancel();
-            $order->save();
-            $order->setStatus($orderStatusCanceled);
-            $order->addStatusToHistory($order->getStatus(), $message);
-            $order->save();
+            $this->orderService->cancel($order, $orderStatusCanceled, $message);
         }
 
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
