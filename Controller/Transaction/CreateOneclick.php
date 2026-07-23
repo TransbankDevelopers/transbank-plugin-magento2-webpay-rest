@@ -10,6 +10,7 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Service\OrderService;
+use Transbank\Webpay\Model\Service\QuoteService;
 use Transbank\Webpay\Helper\PluginLogger;
 
 /**
@@ -27,6 +28,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected $log;
     protected $oneclickInscriptionService;
     protected $orderService;
+    protected $quoteService;
     protected $oneClickConfig;
 
     /**
@@ -42,6 +44,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param OneclickInscriptionDataFactory                   $oneclickInscriptionDataFactory
      * @param OneclickInscriptionService                       $oneclickInscriptionService
      * @param OrderService                                     $orderService
+     * @param QuoteService                                     $quoteService
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -53,7 +56,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         OneclickInscriptionService $oneclickInscriptionService,
-        OrderService $orderService
+        OrderService $orderService,
+        QuoteService $quoteService
     ) {
         parent::__construct($context);
 
@@ -67,6 +71,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->log = new PluginLogger();
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->orderService = $orderService;
+        $this->quoteService = $quoteService;
     }
 
     /**
@@ -96,8 +101,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                 $this->setQuoteData($quote, $guestEmail);
             }
 
-            $quote->getPayment()->importData(['method' => Oneclick::CODE]);
-            $quote->collectTotals();
+            $this->quoteService->setPaymentMethod($quote, Oneclick::CODE);
             $order = $tmpOrder;
             if ($tmpOrder != null && $this->orderService->isCanceled($tmpOrder, $orderStatusCanceled)) {
                 $order = $this->quoteManagement->submit($quote);
@@ -118,8 +122,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
 
             $username = $this->oneclickInscriptionService->generateInscriptionUsername($order->getCustomerId()); // Generate new Username
             $this->log->logInfo('New username: '.json_encode($username));
-
-            $quote->save();
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
             $response = $transbankSdkWebpay->createInscription($username, $order->getCustomerEmail(), $returnUrl);
@@ -149,8 +151,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                 $this->orderService->cancel($order, $orderStatusCanceled, $message);
             }
 
-            $this->checkoutSession->getQuote()->setIsActive(true)->save();
-            $this->cart->getQuote()->setIsActive(true)->save();
+            $this->quoteService->activate($this->cart->getQuote());
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: '.$e->getMessage();
             $this->log->logError($message);

@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Magento\Sales\Model\Order;
 use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
+use Magento\Quote\Model\Quote;
 use Transbank\Webpay\Model\Oneclick;
 use Magento\Framework\View\Result\Page;
 use Magento\Framework\App\Action\Action;
@@ -23,9 +24,9 @@ use Transbank\Webpay\Model\WebpayOrderDataRepository;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\View\Result\PageFactory;
-use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Service\OrderService;
+use Transbank\Webpay\Model\Service\QuoteService;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
@@ -56,7 +57,7 @@ class AuthorizeOneclick extends Action
     protected $eventManager;
     protected $messageManager;
     private $oneclickConfig;
-    private $quoteHelper;
+    private $quoteService;
     protected $customerSession;
 
     /**
@@ -73,6 +74,7 @@ class AuthorizeOneclick extends Action
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
      * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
+     * @param QuoteService $quoteService
      */
     public function __construct(
         Context $context,
@@ -86,7 +88,7 @@ class AuthorizeOneclick extends Action
         WebpayOrderDataFactory $webpayOrderDataFactory,
         WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
-        QuoteHelper $quoteHelper,
+        QuoteService $quoteService,
         CustomerSession $customerSession
     ) {
         parent::__construct($context);
@@ -103,7 +105,7 @@ class AuthorizeOneclick extends Action
         $this->eventManager = $eventManager;
         $this->log = new PluginLogger();
         $this->oneclickConfig = $configProvider->getPluginConfigOneclick();
-        $this->quoteHelper = $quoteHelper;
+        $this->quoteService = $quoteService;
         $this->customerSession = $customerSession;
     }
 
@@ -149,9 +151,7 @@ class AuthorizeOneclick extends Action
     {
         $this->checkoutSession->restoreQuote();
         $quote = $this->cart->getQuote();
-        $quote->getPayment()->importData(['method' => Oneclick::CODE]);
-        $quote->collectTotals();
-        $quote->save();
+        $this->quoteService->setPaymentMethod($quote, Oneclick::CODE);
 
         $order = $this->orderService->getById($this->checkoutSession->getLastOrderId());
         $orderId = $order->getId();
@@ -195,7 +195,7 @@ class AuthorizeOneclick extends Action
             isset($authorizeResponse->details) &&
             $authorizeResponse->details[0]->responseCode == self::AUTHORIZED_RESPONSE_CODE
         ) {
-            return $this->handleAuthorizedTransaction($order, $authorizeResponse, $grandTotal);
+            return $this->handleAuthorizedTransaction($order, $quote, $authorizeResponse, $grandTotal);
         } else {
             return $this->handleUnauthorizedTransaction($order, $authorizeResponse, $grandTotal);
         }
@@ -205,6 +205,7 @@ class AuthorizeOneclick extends Action
      * This method handle de authorized transaction flow.
      *
      * @param Order                            $order             The Magento order.
+     * @param Quote                            $quote             The quote tied to the order.
      * @param MallTransactionAuthorizeResponse $authorizeResponse The Oneclick authorization response.
      * @param float                            $totalAmount       The total amount of the order.
      *
@@ -212,6 +213,7 @@ class AuthorizeOneclick extends Action
      */
     private function handleAuthorizedTransaction(
         Order $order,
+        Quote $quote,
         MallTransactionAuthorizeResponse $authorizeResponse,
         float $totalAmount
     ): Page {
@@ -231,8 +233,7 @@ class AuthorizeOneclick extends Action
         $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
         $this->checkoutSession->setLastOrderStatus($order->getStatus());
         $this->checkoutSession->setGrandTotal($totalAmount);
-        $this->checkoutSession->getQuote()->setIsActive(true)->save();
-        $this->cart->getQuote()->setIsActive(true)->save();
+        $this->quoteService->activate($quote);
 
         $orderLogs = '<h3>Pago autorizado exitosamente con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
         $payment = $order->getPayment();
@@ -251,7 +252,7 @@ class AuthorizeOneclick extends Action
 
         $responseData = TbkResponseHelper::getOneclickFormattedResponse($authorizeResponse);
 
-        $this->checkoutSession->getQuote()->setIsActive(false)->save();
+        $this->quoteService->deactivate($quote);
 
         return $this->redirectToSuccess($responseData);
     }
@@ -283,7 +284,7 @@ class AuthorizeOneclick extends Action
 
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $this->orderService->cancel($order, $orderStatusCanceled, $message);
-        $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+        $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
 
         $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
         return $this->redirectWithErrorMessage($message);
@@ -334,7 +335,7 @@ class AuthorizeOneclick extends Action
         if ($order->getId()) {
             $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
             $this->orderService->cancel($order, $orderStatusCanceled, $message);
-            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+            $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
         }
 
         return $this->redirectWithErrorMessage($message);
