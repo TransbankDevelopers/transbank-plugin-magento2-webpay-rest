@@ -14,7 +14,6 @@ use Magento\Framework\App\Action\Context;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TransactionHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
-use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\Result\Redirect;
@@ -26,12 +25,14 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
+use Transbank\Webpay\Model\Service\OrderService;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
+use Transbank\Webpay\Exceptions\OrderNotFoundException;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Magento\Customer\Model\Session as CustomerSession;
 
@@ -47,6 +48,7 @@ class AuthorizeOneclick extends Action
     private $cart;
     private $checkoutSession;
     private $oneclickInscriptionService;
+    private $orderService;
     private $log;
     private $webpayOrderDataFactory;
     protected $webpayOrderDataRepository;
@@ -67,6 +69,7 @@ class AuthorizeOneclick extends Action
      * @param ConfigProvider $configProvider
      * @param EventManagerInterface $eventManager
      * @param OneclickInscriptionService $oneclickInscriptionService
+     * @param OrderService $orderService
      * @param WebpayOrderDataFactory $webpayOrderDataFactory
      * @param WebpayOrderDataRepository $webpayOrderDataRepository
      * @param ManagerInterface $messageManager
@@ -79,6 +82,7 @@ class AuthorizeOneclick extends Action
         ConfigProvider $configProvider,
         EventManagerInterface $eventManager,
         OneclickInscriptionService $oneclickInscriptionService,
+        OrderService $orderService,
         WebpayOrderDataFactory $webpayOrderDataFactory,
         WebpayOrderDataRepository $webpayOrderDataRepository,
         ManagerInterface $messageManager,
@@ -92,6 +96,7 @@ class AuthorizeOneclick extends Action
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionService = $oneclickInscriptionService;
+        $this->orderService = $orderService;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->webpayOrderDataRepository = $webpayOrderDataRepository;
         $this->resultPageFactory = $resultPageFactory;
@@ -126,7 +131,7 @@ class AuthorizeOneclick extends Action
             $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
-        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException | OneclickInscriptionNotFoundException $e) {
+        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException | OneclickInscriptionNotFoundException | OrderNotFoundException $e) {
             return $this->handleException($e);
         }
     }
@@ -148,7 +153,7 @@ class AuthorizeOneclick extends Action
         $quote->collectTotals();
         $quote->save();
 
-        $order = $this->getOrder($this->checkoutSession->getLastOrderId());
+        $order = $this->orderService->getById($this->checkoutSession->getLastOrderId());
         $orderId = $order->getId();
         $grandTotal = round($order->getGrandTotal());
 
@@ -237,9 +242,7 @@ class AuthorizeOneclick extends Action
         $payment->setAdditionalInformation([Transaction::RAW_DETAILS => (array) $authorizeResponse->details[0]]);
 
         $orderStatusSuccess = $this->configProvider->getOneclickOrderSuccessStatus();
-        $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
-        $order->addStatusToHistory($order->getStatus(), $orderLogs);
-        $order->save();
+        $this->orderService->setStateAndStatus($order, $orderStatusSuccess, $orderLogs);
 
         $this->eventManager->dispatch(
             'checkout_onepage_controller_success_action',
@@ -278,7 +281,8 @@ class AuthorizeOneclick extends Action
 
         $message = '<h3>Error en autorización con Oneclick Mall</h3><br>' . json_encode($authorizeResponse);
 
-        $this->cancelOrder($order, $message);
+        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
+        $this->orderService->cancel($order, $orderStatusCanceled, $message);
         $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
 
         $message = 'Tu transacción no pudo ser autorizada. Ningún cobro fue realizado.';
@@ -328,7 +332,8 @@ class AuthorizeOneclick extends Action
         $order = $this->checkoutSession->getLastRealOrder();
 
         if ($order->getId()) {
-            $this->cancelOrder($order, $message);
+            $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
+            $this->orderService->cancel($order, $orderStatusCanceled, $message);
             $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
         }
 
@@ -366,23 +371,6 @@ class AuthorizeOneclick extends Action
 
 
     /**
-     * This method cancels the order and updates its status.
-     *
-     * @param Order $order The Magento order.
-     * @param string $message The message to show in order resume.
-     *
-     * @return void
-     */
-    private function cancelOrder(Order $order, string $message): void
-    {
-        $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
-        $order->cancel();
-        $order->setStatus($orderStatusCanceled);
-        $order->addStatusToHistory($order->getStatus(), $message);
-        $order->save();
-    }
-
-    /**
      * This method check if the order already process.
      *
      * @param int $orderId The order id.
@@ -398,23 +386,6 @@ class AuthorizeOneclick extends Action
         return $status == WebpayOrderData::PAYMENT_STATUS_SUCCESS ||
             $status == WebpayOrderData::PAYMENT_STATUS_NULLIFIED ||
             $status == WebpayOrderData::PAYMENT_STATUS_REVERSED;
-    }
-
-    /**
-     * This method return the order object based on the id.
-     *
-     * @param int $orderId The order id.
-     *
-     * @return Order The Magento order.
-     */
-    private function getOrder(int $orderId): Order
-    {
-        /**
-         * @var Order
-         */
-        $order = ObjectManagerHelper::get(Order::class);
-
-        return $order->load($orderId);
     }
 
     /**

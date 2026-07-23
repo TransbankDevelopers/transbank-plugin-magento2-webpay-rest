@@ -2,11 +2,14 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Magento\Sales\Model\Order;
+use Transbank\Webpay\Exceptions\OrderNotFoundException;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
+use Transbank\Webpay\Model\Service\OrderService;
 use Transbank\Webpay\Helper\PluginLogger;
 
 /**
@@ -23,6 +26,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected $oneclickInscriptionDataFactory;
     protected $log;
     protected $oneclickInscriptionService;
+    protected $orderService;
     protected $oneClickConfig;
 
     /**
@@ -37,6 +41,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param \Transbank\Webpay\Model\Config\ConfigProvider    $configProvider
      * @param OneclickInscriptionDataFactory                   $oneclickInscriptionDataFactory
      * @param OneclickInscriptionService                       $oneclickInscriptionService
+     * @param OrderService                                     $orderService
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -47,7 +52,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
-        OneclickInscriptionService $oneclickInscriptionService
+        OneclickInscriptionService $oneclickInscriptionService,
+        OrderService $orderService
     ) {
         parent::__construct($context);
 
@@ -60,6 +66,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
         $this->log = new PluginLogger();
         $this->oneclickInscriptionService = $oneclickInscriptionService;
+        $this->orderService = $orderService;
     }
 
     /**
@@ -92,7 +99,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $quote->getPayment()->importData(['method' => Oneclick::CODE]);
             $quote->collectTotals();
             $order = $tmpOrder;
-            if ($tmpOrder != null && $tmpOrder->getStatus() == $orderStatusCanceled) {
+            if ($tmpOrder != null && $this->orderService->isCanceled($tmpOrder, $orderStatusCanceled)) {
                 $order = $this->quoteManagement->submit($quote);
             }
             $grandTotal = round($order->getGrandTotal());
@@ -128,7 +135,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                     $order->getCustomerId(),        // user_id
                     $this->getOrderId(),            // order_id
                 );
-                $order->setStatus($orderStatusPendingPayment);
+                $this->orderService->setStatus($order, $orderStatusPendingPayment, $message);
             } else {
                 $this->saveOneclickInscriptionData(
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
@@ -138,14 +145,9 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                     $order->getCustomerId(),        // user_id
                     $this->getOrderId(),            // order_id
                 );
-                $order->cancel();
-                $order->save();
-                $order->setStatus($orderStatusCanceled); // Debería de cancelar la orden?
                 $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>'.json_encode($response);
+                $this->orderService->cancel($order, $orderStatusCanceled, $message);
             }
-
-            $order->addStatusToHistory($order->getStatus(), $message);
-            $order->save();
 
             $this->checkoutSession->getQuote()->setIsActive(true)->save();
             $this->cart->getQuote()->setIsActive(true)->save();
@@ -154,11 +156,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $this->log->logError($message);
             $response = ['error' => $message];
             if ($order != null) {
-                $order->cancel();
-                $order->save();
-                $order->setStatus($orderStatusCanceled);
-                $order->addStatusToHistory($order->getStatus(), $message);
-                $order->save();
+                $this->orderService->cancel($order, $orderStatusCanceled, $message);
             }
         }
 
@@ -169,21 +167,19 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     }
 
     /**
-     * @return |null
+     * @throws OrderNotFoundException When the session's last order id does not match an existing order.
+     *
+     * @return Order|null
      */
     protected function getOrder()
     {
-        try {
-            $orderId = $this->checkoutSession->getLastOrderId();
-            if ($orderId == null) {
-                return null;
-            }
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $orderId = $this->checkoutSession->getLastOrderId();
 
-            return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
-        } catch (\Exception $e) {
+        if ($orderId == null) {
             return null;
         }
+
+        return $this->orderService->getById($orderId);
     }
 
     /**
