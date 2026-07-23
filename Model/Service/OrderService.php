@@ -40,7 +40,7 @@ class OrderService
         try {
             return $this->orderRepository->get($orderId);
         } catch (NoSuchEntityException $e) {
-            throw new OrderNotFoundException();
+            throw new OrderNotFoundException($e);
         }
     }
 

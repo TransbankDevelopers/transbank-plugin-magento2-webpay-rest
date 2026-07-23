@@ -39,7 +39,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected $configProvider;
     protected $checkoutSession;
-    protected $resultJsonFactory;
     protected $resultRawFactory;
     protected $oneclickInscriptionService;
     protected $orderService;
@@ -50,7 +49,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionService $oneclickInscriptionService,
@@ -60,7 +58,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         parent::__construct($context);
 
         $this->checkoutSession = $checkoutSession;
-        $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
