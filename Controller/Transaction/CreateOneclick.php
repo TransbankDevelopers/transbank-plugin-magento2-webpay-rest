@@ -19,7 +19,6 @@ use Transbank\Webpay\Helper\PluginLogger;
 class CreateOneclick extends \Magento\Framework\App\Action\Action
 {
     protected $configProvider;
-    protected $cart;
     protected $checkoutSession;
     protected $resultJsonFactory;
     protected $quoteManagement;
@@ -35,7 +34,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * CreateOneclick constructor.
      *
      * @param \Magento\Framework\App\Action\Context            $context
-     * @param \Magento\Checkout\Model\Cart                     $cart
      * @param \Magento\Checkout\Model\Session                  $checkoutSession
      * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
@@ -48,7 +46,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Cart $cart,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
@@ -61,7 +58,6 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     ) {
         parent::__construct($context);
 
-        $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->quoteManagement = $quoteManagement;
@@ -95,7 +91,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $tmpOrder = $this->getOrder();
             $this->checkoutSession->restoreQuote();
 
-            $quote = $this->cart->getQuote();
+            $quote = $this->quoteService->getCurrentQuote();
 
             if ($guestEmail != null) {
                 $this->setQuoteData($quote, $guestEmail);
@@ -151,7 +147,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                 $this->orderService->cancel($order, $orderStatusCanceled, $message);
             }
 
-            $this->quoteService->activate($this->cart->getQuote());
+            $this->quoteService->activate($this->quoteService->getCurrentQuote());
         } catch (\Exception $e) {
             $message = 'Error al crear transacción: '.$e->getMessage();
             $this->log->logError($message);

@@ -63,6 +63,16 @@ class QuoteService
     }
 
     /**
+     * Get the quote tied to the current cart.
+     *
+     * @return Quote
+     */
+    public function getCurrentQuote(): Quote
+    {
+        return $this->cart->getQuote();
+    }
+
+    /**
      * Persist a Quote.
      *
      * @param Quote $quote The quote to persist.

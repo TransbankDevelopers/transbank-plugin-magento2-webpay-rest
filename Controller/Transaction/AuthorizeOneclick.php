@@ -5,7 +5,6 @@ namespace Transbank\Webpay\Controller\Transaction;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Magento\Sales\Model\Order;
-use Magento\Checkout\Model\Cart;
 use Magento\Checkout\Model\Session;
 use Magento\Quote\Model\Quote;
 use Transbank\Webpay\Model\Oneclick;
@@ -46,7 +45,6 @@ class AuthorizeOneclick extends Action
     const AUTHORIZED_RESPONSE_CODE = 0;
     protected $configProvider;
 
-    private $cart;
     private $checkoutSession;
     private $oneclickInscriptionService;
     private $orderService;
@@ -64,7 +62,6 @@ class AuthorizeOneclick extends Action
      * AuthorizeOneclick constructor.
      *
      * @param Context $context
-     * @param Cart $cart
      * @param Session $checkoutSession
      * @param PageFactory $resultPageFactory
      * @param ConfigProvider $configProvider
@@ -78,7 +75,6 @@ class AuthorizeOneclick extends Action
      */
     public function __construct(
         Context $context,
-        Cart $cart,
         Session $checkoutSession,
         PageFactory $resultPageFactory,
         ConfigProvider $configProvider,
@@ -93,7 +89,6 @@ class AuthorizeOneclick extends Action
     ) {
         parent::__construct($context);
 
-        $this->cart = $cart;
         $this->checkoutSession = $checkoutSession;
         $this->configProvider = $configProvider;
         $this->messageManager = $messageManager;
@@ -150,7 +145,7 @@ class AuthorizeOneclick extends Action
     private function handleOneclickRequest(int $inscriptionId)
     {
         $this->checkoutSession->restoreQuote();
-        $quote = $this->cart->getQuote();
+        $quote = $this->quoteService->getCurrentQuote();
         $this->quoteService->setPaymentMethod($quote, Oneclick::CODE);
 
         $order = $this->orderService->getById($this->checkoutSession->getLastOrderId());
