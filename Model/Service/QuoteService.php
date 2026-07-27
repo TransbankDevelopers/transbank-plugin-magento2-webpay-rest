@@ -67,11 +67,11 @@ class QuoteService
      *
      * @param Quote $quote The quote to persist.
      *
-     * @return Quote
+     * @return void
      */
-    public function save(Quote $quote): Quote
+    public function save(Quote $quote): void
     {
-        return $this->quoteRepository->save($quote);
+        $this->quoteRepository->save($quote);
     }
 
     /**
@@ -80,14 +80,13 @@ class QuoteService
      * @param Quote  $quote  The quote to update.
      * @param string $method The payment method code to import.
      *
-     * @return Quote
+     * @return void
      */
-    public function setPaymentMethod(Quote $quote, string $method): Quote
+    public function setPaymentMethod(Quote $quote, string $method): void
     {
         $quote->getPayment()->importData(['method' => $method]);
         $quote->collectTotals();
-
-        return $this->quoteRepository->save($quote);
+        $this->quoteRepository->save($quote);
     }
 
     /**
@@ -95,13 +94,12 @@ class QuoteService
      *
      * @param Quote $quote The quote to activate.
      *
-     * @return Quote
+     * @return void
      */
-    public function activate(Quote $quote): Quote
+    public function activate(Quote $quote): void
     {
         $quote->setIsActive(true);
-
-        return $this->quoteRepository->save($quote);
+        $this->quoteRepository->save($quote);
     }
 
     /**
@@ -109,13 +107,12 @@ class QuoteService
      *
      * @param Quote $quote The quote to deactivate.
      *
-     * @return Quote
+     * @return void
      */
-    public function deactivate(Quote $quote): Quote
+    public function deactivate(Quote $quote): void
     {
         $quote->setIsActive(false);
-
-        return $this->quoteRepository->save($quote);
+        $this->quoteRepository->save($quote);
     }
 
     /**
