@@ -10,9 +10,9 @@ use Transbank\Webpay\Helper\ObjectManagerHelper;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Infrastructure\Lock\MySqlNamedLock;
+use Transbank\Webpay\Model\Service\QuoteService;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -41,7 +41,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $webpayOrderDataFactory;
     protected $log;
     protected $messageManager;
-    private $quoteHelper;
+    private $quoteService;
     private MySqlNamedLock $webpayReturnLock;
 
     public function __construct(
@@ -53,7 +53,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
-        QuoteHelper $quoteHelper,
+        QuoteService $quoteService,
         MySqlNamedLock $webpayReturnLock
     ) {
         parent::__construct($context);
@@ -67,7 +67,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->configProvider = $configProvider;
         $this->webpayOrderDataFactory = $webpayOrderDataFactory;
         $this->log = new PluginLogger();
-        $this->quoteHelper = $quoteHelper;
+        $this->quoteService = $quoteService;
         $this->webpayReturnLock = $webpayReturnLock;
     }
 
@@ -345,7 +345,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->cancelOrder($order, $commitHistoryComment);
         $this->log->logInfo('Orden cancelada => Token: ' . $token);
 
-        $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+        $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
 
         return $this->redirectWithErrorMessage($message);
     }
@@ -366,7 +366,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             $this->cancelOrder($order, $message);
             $this->log->logInfo('Orden cancelada => Token: ' . $token);
 
-            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+            $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
         }
 
         return $this->redirectWithErrorMessage($message);
@@ -382,7 +382,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $order = $this->checkoutSession->getLastRealOrder();
         if ($order->getId()) {
-            $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+            $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
         }
 
         return $this->redirectWithErrorMessage($message);
@@ -427,7 +427,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function redirectToSuccess(array $responseData)
     {
-        $this->checkoutSession->getQuote()->setIsActive(false)->save();
+        $this->quoteService->deactivate($this->checkoutSession->getQuote());
 
         $resultPage = $this->resultPageFactory->create();
         $resultPage->addHandle('transbank_checkout_success');

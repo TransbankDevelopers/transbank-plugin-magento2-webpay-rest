@@ -3,12 +3,12 @@
 namespace Transbank\Webpay\Controller\Transaction;
 
 use Magento\Sales\Model\Order;
-use Transbank\Webpay\Helper\QuoteHelper;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Service\OrderService;
+use Transbank\Webpay\Model\Service\QuoteService;
 use Transbank\Webpay\Oneclick\Responses\InscriptionFinishResponse;
 
 /**
@@ -44,7 +44,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     protected $orderService;
     protected $log;
     protected $messageManager;
-    private $quoteHelper;
+    private $quoteService;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -53,7 +53,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionService $oneclickInscriptionService,
         OrderService $orderService,
-        QuoteHelper $quoteHelper
+        QuoteService $quoteService
     ) {
         parent::__construct($context);
 
@@ -64,7 +64,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->orderService = $orderService;
         $this->log = new PluginLogger();
-        $this->quoteHelper = $quoteHelper;
+        $this->quoteService = $quoteService;
     }
 
     /**
@@ -109,7 +109,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                     );
 
                     $this->orderService->cancel($order, $orderStatusCanceled, $historyComment);
-                    $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+                    $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
@@ -124,7 +124,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                 } elseif ($status == OneclickInscriptionData::PAYMENT_STATUS_FAILED) {
                     $this->oneclickInscriptionService->setInscriptionAsFailed($oneclickInscriptionData);
 
-                    $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+                    $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
                     $message = $this->getRejectMessage($inscriptionResult, $oneclickTitle);
                     $this->messageManager->addError(__($message));
 
