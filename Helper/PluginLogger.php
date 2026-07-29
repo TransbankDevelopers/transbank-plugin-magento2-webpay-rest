@@ -90,6 +90,13 @@ class PluginLogger implements ILogger
         $this->logger->error($this->sanitizeMessage($msg), $this->sanitizeContext($context));
     }
 
+    /**
+     * Log a warning message.
+     *
+     * @param string $msg The message to log.
+     * @param array $context Structured data to log alongside the message.
+     * @return void
+     */
     public function logWarning(string $msg, array $context = []): void
     {
         $this->logger->warning($this->sanitizeMessage($msg), $this->sanitizeContext($context));
