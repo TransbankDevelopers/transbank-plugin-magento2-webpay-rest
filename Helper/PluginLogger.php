@@ -15,6 +15,11 @@ use Magento\Framework\App\Cache;
 class PluginLogger implements ILogger
 {
     /**
+     * Maximum nesting depth allowed when sanitizing a log context array.
+     */
+    private const MAX_CONTEXT_DEPTH = 10;
+
+    /**
      * The logger instance.
      *
      * @var Logger
@@ -58,38 +63,93 @@ class PluginLogger implements ILogger
      * Log a debug message.
      *
      * @param string $msg The message to log.
+     * @param array $context Structured data to log alongside the message.
      * @return void
      */
-    public function logDebug(string $msg): void
+    public function logDebug(string $msg, array $context = []): void
     {
-        $this->logger->debug($msg);
+        $this->logger->debug($this->sanitizeMessage($msg), $this->sanitizeContext($context));
     }
 
     /**
      * Log an info message.
      *
      * @param string $msg The message to log.
+     * @param array $context Structured data to log alongside the message.
      * @return void
      */
-    public function logInfo(string $msg): void
+    public function logInfo(string $msg, array $context = []): void
     {
-        $this->logger->info($msg);
+        $this->logger->info($this->sanitizeMessage($msg), $this->sanitizeContext($context));
     }
 
     /**
      * Log an error message.
      *
      * @param string $msg The message to log.
+     * @param array $context Structured data to log alongside the message.
      * @return void
      */
-    public function logError(string $msg): void
+    public function logError(string $msg, array $context = []): void
     {
-        $this->logger->error($msg);
+        $this->logger->error($this->sanitizeMessage($msg), $this->sanitizeContext($context));
     }
 
-    public function logWarning(string $msg): void
+    /**
+     * Log a warning message.
+     *
+     * @param string $msg The message to log.
+     * @param array $context Structured data to log alongside the message.
+     * @return void
+     */
+    public function logWarning(string $msg, array $context = []): void
     {
-        $this->logger->warning($msg);
+        $this->logger->warning($this->sanitizeMessage($msg), $this->sanitizeContext($context));
+    }
+
+    /**
+     * Strips markup and normalizes whitespace in log messages. Log content can come from
+     * unauthenticated request data (e.g. Webpay/Oneclick return callbacks) and is later rendered
+     * unescaped in the admin Diagnostics panel, so this prevents markup injection and forged log
+     * lines (via injected newlines) at the source, regardless of how the content is later displayed.
+     *
+     * @param string $message
+     * @return string
+     */
+    private function sanitizeMessage(string $message): string
+    {
+        $message = strip_tags($message);
+        $message = preg_replace('/[\r\n]+/', ' ', $message);
+
+        return trim($message);
+    }
+
+    /**
+     * Recursively applies sanitizeMessage() to every string value in a log context array.
+     *
+     * @param array $context
+     * @param int $depth
+     * @return array
+     */
+    private function sanitizeContext(array $context, int $depth = 0): array
+    {
+        if ($depth > self::MAX_CONTEXT_DEPTH) {
+            return ['error' => 'context too deep'];
+        }
+
+        $sanitized = [];
+
+        foreach ($context as $key => $value) {
+            if (is_array($value)) {
+                $sanitized[$key] = $this->sanitizeContext($value, $depth + 1);
+            } elseif (is_string($value)) {
+                $sanitized[$key] = $this->sanitizeMessage($value);
+            } else {
+                $sanitized[$key] = $value;
+            }
+        }
+
+        return $sanitized;
     }
 
     /**

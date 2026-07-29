@@ -117,9 +117,10 @@ class AuthorizeOneclick extends Action
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
 
-            $this->log->logInfo('Autorizando transacción Oneclick.');
-            $this->log->logInfo('Request: method -> ' . $requestMethod);
-            $this->log->logInfo('Request: payload -> ' . json_encode($request));
+            $this->log->logInfo('Autorizando transacción Oneclick.', [
+                'method' => $requestMethod,
+                'inscription' => $request['inscription'] ?? null,
+            ]);
 
             if (!isset($_POST['inscription'])) {
                 throw new InvalidRequestException('Falta el campo inscription');

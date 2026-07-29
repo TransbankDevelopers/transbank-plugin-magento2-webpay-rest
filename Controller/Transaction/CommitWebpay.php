@@ -79,9 +79,14 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         try {
             $requestMethod = $_SERVER['REQUEST_METHOD'];
             $request = $requestMethod === 'POST' ? $_POST : $_GET;
-            $this->log->logInfo('Procesando retorno desde formulario de Webpay.');
-            $this->log->logInfo('Request: method -> ' . $requestMethod);
-            $this->log->logInfo('Request: payload -> ' . json_encode($request));
+
+            $this->log->logInfo('Procesando retorno desde formulario de Webpay.', [
+                'method' => $requestMethod,
+                'token_ws' => $request['token_ws'] ?? null,
+                'TBK_TOKEN' => $request['TBK_TOKEN'] ?? null,
+                'TBK_ID_SESION' => $request['TBK_ID_SESION'] ?? null,
+                'TBK_ORDEN_COMPRA' => $request['TBK_ORDEN_COMPRA'] ?? null,
+            ]);
 
             return $this->handleRequest($request);
         } catch (Throwable $exception) {
@@ -157,7 +162,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function handleNormalFlow(string $token)
     {
         $lockAcquired = false;
-        $this->log->logInfo('Procesando transacción por flujo Normal => token: ' . $token);
+        $this->log->logInfo('Procesando transacción por flujo Normal', ['token' => $token]);
 
         try {
             $lockAcquired = $this->acquireWebpayReturnLockWithRetries($token);
@@ -250,7 +255,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleFlowTimeout(string $buyOrder)
     {
-        $this->log->logInfo('Procesando transacción por flujo timeout => Orden de compra: ' . $buyOrder);
+        $this->log->logInfo('Procesando transacción por flujo timeout', ['buyOrder' => $buyOrder]);
 
         $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
 
@@ -266,7 +271,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleFlowAborted(string $token)
     {
-        $this->log->logInfo('Procesando transacción por flujo de pago abortado => Token: ' . $token);
+        $this->log->logInfo('Procesando transacción por flujo de pago abortado', ['token' => $token]);
 
         if ($this->checkTransactionIsAlreadyProcessed($token)) {
             return $this->handleTransactionAlreadyProcessed($token);
@@ -279,7 +284,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function handleFlowError(string $token)
     {
-        $this->log->logInfo('Procesando transacción por flujo de error en formulario de pago => Token: ' . $token);
+        $this->log->logInfo('Procesando transacción por flujo de error en formulario de pago', ['token' => $token]);
 
         if ($this->checkTransactionIsAlreadyProcessed($token)) {
             return $this->handleTransactionAlreadyProcessed($token);
