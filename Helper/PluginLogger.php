@@ -15,6 +15,11 @@ use Magento\Framework\App\Cache;
 class PluginLogger implements ILogger
 {
     /**
+     * Maximum nesting depth allowed when sanitizing a log context array.
+     */
+    private const MAX_CONTEXT_DEPTH = 10;
+
+    /**
      * The logger instance.
      *
      * @var Logger
@@ -128,9 +133,7 @@ class PluginLogger implements ILogger
      */
     private function sanitizeContext(array $context, int $depth = 0): array
     {
-        $maxContextDepth = 10;
-
-        if ($depth > $maxContextDepth) {
+        if ($depth > self::MAX_CONTEXT_DEPTH) {
             return ['error' => 'context too deep'];
         }
 
