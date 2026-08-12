@@ -134,7 +134,7 @@ class OneclickInscriptionService
     public function setInscriptionAsDeleted(int $inscriptionId): OneclickInscriptionData
     {
         $inscription = $this->getById($inscriptionId);
-        $inscription->setStatus(OneclickInscriptionData::PAYMENT_STATUS_DELETED);
+        $inscription->setStatus(OneclickInscriptionData::INSCRIPTION_STATUS_DELETED);
 
         return $this->oneclickInscriptionDataRepository->save($inscription);
     }

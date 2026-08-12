@@ -7,8 +7,8 @@ use Magento\Framework\Model\AbstractModel;
 class OneclickInscriptionData extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
     const CACHE_TAG = 'oneclick_inscription_data';
+    const INSCRIPTION_STATUS_DELETED = 'DELETED';
     const PAYMENT_STATUS_WATING = 'WAITING';
-    const PAYMENT_STATUS_DELETED = 'DELETED';
     const PAYMENT_STATUS_SUCCESS = 'SUCCESS';
     const PAYMENT_STATUS_FAILED = 'FAILED';
     const PAYMENT_STATUS_CANCELED_BY_USER = 'FAILED';
@@ -25,6 +25,6 @@ class OneclickInscriptionData extends AbstractModel implements \Magento\Framewor
 
     public function getIdentities()
     {
-        return [self::CACHE_TAG.'_'.$this->getId()];
+        return [self::CACHE_TAG . '_' . $this->getId()];
     }
 }
