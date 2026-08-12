@@ -41,7 +41,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected $configProvider;
     protected $checkoutSession;
-    protected $resultRawFactory;
     protected $oneclickInscriptionService;
     protected $orderService;
     protected $log;
@@ -52,7 +51,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionService $oneclickInscriptionService,
         OrderService $orderService,
@@ -62,7 +60,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         parent::__construct($context);
 
         $this->checkoutSession = $checkoutSession;
-        $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->oneclickInscriptionService = $oneclickInscriptionService;
@@ -142,31 +139,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
             return $this->errorOnConfirmation($e, $order, $orderStatusCanceled);
         }
-    }
-
-    protected function toRedirect($url, $data)
-    {
-        $response = $this->resultRawFactory->create();
-        $content = "<form action='$url' method='POST' name='webpayForm'>";
-        foreach ($data as $name => $value) {
-            $content .= "<input type='hidden' name='".htmlentities($name)."' value='".htmlentities($value)."'>";
-        }
-        $content .= '</form>';
-        $content .= "<script language='JavaScript'>document.webpayForm.submit();</script>";
-        $response->setContents($content);
-
-        return $response;
-    }
-
-    protected function commitResponseToArray($response)
-    {
-        return [
-            'responseCode'          => $response->responseCode,
-            'tbkUser'               => $response->tbkUser,
-            'authorizationCode'     => $response->authorizationCode,
-            'cardType'              => $response->cardType,
-            'cardNumber'            => $response->cardNumber,
-        ];
     }
 
     /**
