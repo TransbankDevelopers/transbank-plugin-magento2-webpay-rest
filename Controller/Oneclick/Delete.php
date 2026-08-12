@@ -14,11 +14,11 @@ use Transbank\Webpay\Model\Config\ConfigProvider;
 
 class Delete extends Action implements HttpPostActionInterface
 {
-    private const INVALID_CARD_MESSAGE = "La tarjeta inscrita indicada es inválida.";
-    private const UNAUTHORIZED_MESSAGE = "No posee permisos suficientes para eliminar esta tarjeta inscrita.";
-    private const DELETE_SUCCESS_MESSAGE = "Tarjeta inscrita eliminada exitosamente.";
-    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta inscrita.";
-    private const DELETE_EXCEPTION_MESSAGE = "Error al eliminar tarjeta inscrita, contacta con soporte.";
+    private const INVALID_CARD_MESSAGE = "La tarjeta indicada es inválida.";
+    private const UNAUTHORIZED_MESSAGE = "No posee permisos suficientes para eliminar esta tarjeta.";
+    private const DELETE_SUCCESS_MESSAGE = "Tarjeta eliminada exitosamente.";
+    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta.";
+    private const DELETE_EXCEPTION_MESSAGE = "Error al eliminar tarjeta, contacta con soporte.";
 
     protected $configProvider;
     protected $oneclickInscriptionService;
