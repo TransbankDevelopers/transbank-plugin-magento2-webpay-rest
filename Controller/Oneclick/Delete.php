@@ -63,11 +63,11 @@ class Delete extends Action implements HttpPostActionInterface
     private function validateRequest($inscriptionId): void
     {
         if ($inscriptionId === false) {
-            throw new TransbankCreateException(self::INVALID_CARD_MESSAGE);
+            throw new TransbankException(self::INVALID_CARD_MESSAGE);
         }
 
         if (!$this->customerSession->isLoggedIn()) {
-            throw new TransbankCreateException(self::UNAUTHORIZED_MESSAGE);
+            throw new TransbankException(self::UNAUTHORIZED_MESSAGE);
         }
 
         $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
@@ -77,7 +77,7 @@ class Delete extends Action implements HttpPostActionInterface
         );
 
         if (!$isOwnedByCustomer) {
-            throw new TransbankCreateException(self::UNAUTHORIZED_MESSAGE);
+            throw new TransbankException(self::UNAUTHORIZED_MESSAGE);
         }
     }
 
