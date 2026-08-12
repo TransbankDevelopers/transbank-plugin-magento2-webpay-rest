@@ -383,7 +383,7 @@ class TransbankSdkWebpayRest
             $this->configureMallInscriptionCredentials();
             return $this->mallInscription->delete($tbkUser, $username);
         } catch (InscriptionFinishException $e) {
-            throw new TransbankException('Error al eliminar la inscripción: ' . $e->getMessage());
+            throw new TransbankException('Error al eliminar la inscripción: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 
