@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model;
 
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
+use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Transaction;
@@ -30,17 +31,17 @@ class TransbankSdkWebpayRest
     protected $log;
 
     /**
-     * @var WebpayPlus\Transaction
+     * @var Transaction
      */
     public ?Transaction $transaction = null;
 
     /**
-     * @var Oneclick\MallInscription
+     * @var MallInscription
      */
     public ?MallInscription $mallInscription = null;
 
     /**
-     * @var Oneclick\MallTransaction
+     * @var MallTransaction
      */
     public ?MallTransaction $mallTransaction = null;
 
@@ -120,10 +121,10 @@ class TransbankSdkWebpayRest
      */
     private function configureTransactionCredentials(): void
     {
-        if(!is_null($this->transaction)) {
+        if (!is_null($this->transaction)) {
             return;
         }
- 
+
         $config = $this->requireConfig();
 
         $options = $this->buildOptions(
@@ -147,10 +148,10 @@ class TransbankSdkWebpayRest
     private function configureMallInscriptionCredentials(): void
     {
 
-        if(!is_null($this->mallInscription)) {
+        if (!is_null($this->mallInscription)) {
             return;
         }
- 
+
         $config = $this->requireConfig();
 
         $options = $this->buildOptions(
@@ -174,10 +175,10 @@ class TransbankSdkWebpayRest
     private function configureMallTransactionCredentials(): void
     {
 
-        if(!is_null($this->mallTransaction)) {
+        if (!is_null($this->mallTransaction)) {
             return;
         }
- 
+
         $config = $this->requireConfig();
 
         $options = $this->buildOptions(
@@ -372,27 +373,18 @@ class TransbankSdkWebpayRest
      *
      * @return array
      */
-    public function deleteInscription($username, $tbkUser)
+    public function deleteInscription(string $username, string $tbkUser): bool
     {
         try {
-            if ($username == null || $tbkUser == null) {
+            if (empty($username) || empty($tbkUser)) {
                 throw new MissingArgumentException('El token tbkUser y el username son requerido');
             }
 
             $this->configureMallInscriptionCredentials();
-            $delInscription = $this->mallInscription->delete($tbkUser, $username);
-            $this->log->logInfo('deleteInscription: ' . json_encode($delInscription));
-
-            return $delInscription;
+            return $this->mallInscription->delete($tbkUser, $username);
         } catch (InscriptionFinishException $e) {
-            $result = [
-                'error'  => 'Error al eliminar una inscripción',
-                'detail' => $e->getMessage(),
-            ];
-            $this->log->logError(json_encode($result));
+            throw new TransbankException('Error al eliminar la inscripción: ' . $e->getMessage());
         }
-
-        return $result;
     }
 
     /**
