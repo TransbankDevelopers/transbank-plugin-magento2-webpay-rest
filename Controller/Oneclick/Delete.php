@@ -11,6 +11,7 @@ use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Config\ConfigProvider;
+use Transbank\Webpay\Exceptions\TransbankException;
 
 class Delete extends Action implements HttpPostActionInterface
 {
@@ -62,11 +63,11 @@ class Delete extends Action implements HttpPostActionInterface
     private function validateRequest($inscriptionId): void
     {
         if ($inscriptionId === false) {
-            throw new \InvalidArgumentException(self::INVALID_CARD_MESSAGE);
+            throw new TransbankCreateException(self::INVALID_CARD_MESSAGE);
         }
 
         if (!$this->customerSession->isLoggedIn()) {
-            throw new \LogicException(self::UNAUTHORIZED_MESSAGE);
+            throw new TransbankCreateException(self::UNAUTHORIZED_MESSAGE);
         }
 
         $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
@@ -76,7 +77,7 @@ class Delete extends Action implements HttpPostActionInterface
         );
 
         if (!$isOwnedByCustomer) {
-            throw new \LogicException(self::UNAUTHORIZED_MESSAGE);
+            throw new TransbankCreateException(self::UNAUTHORIZED_MESSAGE);
         }
     }
 
@@ -105,7 +106,7 @@ class Delete extends Action implements HttpPostActionInterface
         $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
 
         if (!$transbankSdkWebpay->deleteInscription($username, $tbkUser)) {
-            throw new \RuntimeException(self::DELETE_ERROR_MESSAGE);
+            throw new TransbankException(self::DELETE_ERROR_MESSAGE);
         }
     }
 
