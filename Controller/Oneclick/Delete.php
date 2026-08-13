@@ -50,6 +50,13 @@ class Delete extends Action implements HttpPostActionInterface
             $inscriptionId = filter_var($data['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
             $inscription = $this->validateRequest($inscriptionId);
             $this->deleteInscription($inscription);
+        } catch (InvalidRequestException $e) {
+            $this->logger->logInfo('Error al eliminar tarjeta inscrita.', [
+                'message' => $e->getMessage(),
+                'customer_id' => $this->customerSession->getCustomerId(),
+                'exception' => get_class($e),
+            ]);
+            $this->messageManager->addErrorMessage(__(self::INVALID_CARD_MESSAGE));
         } catch (\Throwable $e) {
             $this->logger->logError('Error al eliminar tarjeta inscrita.', [
                 'exception' => get_class($e),
