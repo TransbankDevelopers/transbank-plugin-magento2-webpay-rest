@@ -100,7 +100,7 @@ class Delete extends Action implements HttpPostActionInterface
         ]);
 
         $this->deleteTransbankInscription($inscription->getUsername(), $inscription->getTbkUser());
-        $this->oneclickInscriptionService->setInscriptionAsDeleted($inscription->getId());
+        $this->oneclickInscriptionService->setInscriptionAsDeleted($inscription);
 
         $this->logger->logInfo("Tarjeta inscrita eliminada exitosamente.", [
             'inscription_id' => $inscription->getId(),
