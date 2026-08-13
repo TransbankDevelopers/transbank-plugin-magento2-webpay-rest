@@ -11,6 +11,7 @@ use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Config\ConfigProvider;
+use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\OneclickDeletionException;
 
@@ -47,14 +48,8 @@ class Delete extends Action implements HttpPostActionInterface
         try {
             $data = (array) $this->getRequest()->getParams();
             $inscriptionId = filter_var($data['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-            $this->validateRequest($inscriptionId);
-            $this->deleteInscription($inscriptionId);
-        } catch (InvalidRequestException $e) {
-            $this->logger->logWarning('Solicitud inválida para eliminar tarjeta inscrita.', [
-                'message' => $e->getMessage(),
-                'customer_id' => $this->customerSession->getCustomerId(),
-            ]);
-            $this->messageManager->addErrorMessage(__($e->getMessage()));
+            $inscription = $this->validateRequest($inscriptionId);
+            $this->deleteInscription($inscription);
         } catch (\Throwable $e) {
             $this->logger->logError('Error al eliminar tarjeta inscrita.', [
                 'exception' => get_class($e),
@@ -67,7 +62,7 @@ class Delete extends Action implements HttpPostActionInterface
         return $this->redirectToReferer();
     }
 
-    private function validateRequest($inscriptionId): void
+    private function validateRequest($inscriptionId): OneclickInscriptionData
     {
         if ($inscriptionId === false) {
             throw new InvalidRequestException(self::INVALID_CARD_MESSAGE);
@@ -86,16 +81,17 @@ class Delete extends Action implements HttpPostActionInterface
         if (!$isOwnedByCustomer) {
             throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
         }
+
+        return $inscription;
     }
 
-    private function deleteInscription(int $inscriptionId): void
+    private function deleteInscription(OneclickInscriptionData $inscription): void
     {
         $this->logger->logInfo("Recibida petición para eliminar tarjeta inscrita.", [
-            'inscription_id' => $inscriptionId,
+            'inscription_id' => $inscription->getId(),
             'customer_id' => $this->customerSession->getCustomerId(),
         ]);
 
-        $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
         $this->deleteTransbankInscription($inscription->getUsername(), $inscription->getTbkUser());
         $this->oneclickInscriptionService->setInscriptionAsDeleted($inscription->getId());
 
