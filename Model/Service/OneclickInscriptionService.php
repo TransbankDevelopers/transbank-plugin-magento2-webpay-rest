@@ -125,16 +125,13 @@ class OneclickInscriptionService
     /**
      * Mark an inscription as deleted and persist it.
      *
-     * @param int $inscriptionId The inscription id
-     *
-     * @throws OneclickInscriptionNotFoundException When no inscription matches the given id
+     * @param OneclickInscriptionData $inscription The inscription to mark as deleted
      *
      * @return OneclickInscriptionData The updated inscription
      */
-    public function setInscriptionAsDeleted(int $inscriptionId): OneclickInscriptionData
+    public function setInscriptionAsDeleted(OneclickInscriptionData $inscription): OneclickInscriptionData
     {
-        $inscription = $this->getById($inscriptionId);
-        $inscription->setStatus(OneclickInscriptionData::PAYMENT_STATUS_DELETED);
+        $inscription->setStatus(OneclickInscriptionData::INSCRIPTION_STATUS_DELETED);
 
         return $this->oneclickInscriptionDataRepository->save($inscription);
     }
