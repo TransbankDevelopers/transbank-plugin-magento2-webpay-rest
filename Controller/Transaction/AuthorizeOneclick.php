@@ -318,7 +318,7 @@ class AuthorizeOneclick extends Action
         $exceptionName = get_class($exception);
 
         $this->log->logError('Error al procesar el pago: ');
-        $this->log->logError($exceptionName . ": " .$exception->getMessage());
+        $this->log->logError($exceptionName . ": " . $exception->getMessage());
         $this->log->logError($exception->getTraceAsString());
 
         $order = $this->checkoutSession->getLastRealOrder();
@@ -385,7 +385,8 @@ class AuthorizeOneclick extends Action
      *
      * @return bool True if customer is logged in, otherwise false.
      */
-    private function isCustomerLoggedIn(): bool {
+    private function isCustomerLoggedIn(): bool
+    {
         return $this->customerSession->isLoggedIn();
     }
 
