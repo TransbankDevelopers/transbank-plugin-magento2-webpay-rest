@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model;
 
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
+use Transbank\Webpay\Exceptions\InscriptionDeleteException;
 use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\WebpayPlus;
@@ -382,7 +383,7 @@ class TransbankSdkWebpayRest
 
             $this->configureMallInscriptionCredentials();
             return $this->mallInscription->delete($tbkUser, $username);
-        } catch (InscriptionFinishException $e) {
+        } catch (InscriptionDeleteException $e) {
             throw new TransbankException('Error al eliminar la inscripción: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
