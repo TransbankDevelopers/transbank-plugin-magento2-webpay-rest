@@ -13,6 +13,7 @@ use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Infrastructure\Lock\MySqlNamedLock;
 use Transbank\Webpay\Model\Service\QuoteService;
+use Transbank\Webpay\Model\Service\WebpayOrderDataService;
 use Transbank\Webpay\WebpayPlus\Responses\TransactionCommitResponse;
 
 /**
@@ -38,7 +39,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     protected $resultRawFactory;
     protected $resultPageFactory;
     protected $eventManager;
-    protected $webpayOrderDataFactory;
+    protected $webpayOrderDataService;
     protected $log;
     protected $messageManager;
     private $quoteService;
@@ -52,7 +53,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory,
+        WebpayOrderDataService $webpayOrderDataService,
         QuoteService $quoteService,
         MySqlNamedLock $webpayReturnLock
     ) {
@@ -65,7 +66,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->eventManager = $eventManager;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
-        $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->webpayOrderDataService = $webpayOrderDataService;
         $this->log = new PluginLogger();
         $this->quoteService = $quoteService;
         $this->webpayReturnLock = $webpayReturnLock;
@@ -184,7 +185,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function processTransaction(string $token)
     {
         $config = $this->configProvider->getPluginConfig();
-        $webpayOrderData = $this->getWebpayOrderData($token);
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
 
@@ -259,7 +260,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
 
-        $webpayOrderData = $this->getWebpayOrderDataByBuyOrder($buyOrder);
+        $webpayOrderData = $this->webpayOrderDataService->getByBuyOrder($buyOrder);
         $token = $webpayOrderData->getToken();
 
         if ($this->checkTransactionIsAlreadyProcessed($token)) {
@@ -304,8 +305,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $token = $webpayOrderData->getToken();
         $this->log->logInfo('Transacción autorizada por Transbank, procesando orden => Token: ' . $token);
 
-        $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_SUCCESS);
-        $webpayOrderData->save();
+        $this->webpayOrderDataService->updatePaymentStatus($webpayOrderData, WebpayOrderData::PAYMENT_STATUS_SUCCESS);
 
         $authorizationCode = $commitResponse->getAuthorizationCode();
         $payment = $order->getPayment();
@@ -343,8 +343,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $message = self::WEBPAY_FAILED_FLOW_MESSAGE;
 
-        $webpayOrderData->setPaymentStatus(WebpayOrderData::PAYMENT_STATUS_FAILED);
-        $webpayOrderData->save();
+        $this->webpayOrderDataService->updatePaymentStatus($webpayOrderData, WebpayOrderData::PAYMENT_STATUS_FAILED);
 
         $commitHistoryComment = $this->createCommitHistoryComment($commitResponse);
         $this->cancelOrder($order, $commitHistoryComment);
@@ -360,10 +359,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logInfo('Error al procesar transacción por Transbank => token: ' . $token);
         $this->log->logInfo('Detalle: ' . $message);
 
-        $webpayOrderData = $this->getWebpayOrderData($token);
-        $webpayOrderData->setPaymentStatus($webpayStatus);
-        $webpayOrderData->save();
-
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
+        $this->webpayOrderDataService->updatePaymentStatus($webpayOrderData, $webpayStatus);
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
 
@@ -397,7 +394,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Transacción ya se encontraba procesada.');
 
-        $webpayOrderData = $this->getWebpayOrderData($token);
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
         $status = $webpayOrderData->getPaymentStatus();
         $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
 
@@ -458,7 +455,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function checkTransactionIsAlreadyProcessed($token): bool
     {
-        $webpayOrderData = $this->getWebpayOrderData($token);
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
         $status = $webpayOrderData->getPaymentStatus();
 
         return $status != WebpayOrderData::PAYMENT_STATUS_WATING;
@@ -468,30 +465,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $order = ObjectManagerHelper::get(Order::class);
         return $order->load($orderId);
-    }
-
-    /**
-     * @param $tokenWs
-     *
-     * @return WebpayOrderData
-     */
-    private function getWebpayOrderData($tokenWs): WebpayOrderData
-    {
-        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        return $webpayOrderDataModel->load($tokenWs, 'token');
-    }
-
-    /**
-     * Get the Webpay order data by buy order.
-     *
-     * @param string $buyOrder The buy order.
-     *
-     * @return WebpayOrderData
-     */
-    private function getWebpayOrderDataByBuyOrder($buyOrder): WebpayOrderData
-    {
-        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        return $webpayOrderDataModel->load($buyOrder, 'buy_order');
     }
 
     private function createCommitHistoryComment($commitResponse): string

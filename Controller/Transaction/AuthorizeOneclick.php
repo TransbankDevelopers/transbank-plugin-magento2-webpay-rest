@@ -18,14 +18,13 @@ use Transbank\Webpay\Model\Config\ConfigProvider;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Controller\Result\Redirect;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
-use Transbank\Webpay\Model\WebpayOrderDataFactory;
-use Transbank\Webpay\Model\WebpayOrderDataRepository;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Magento\Framework\View\Result\PageFactory;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Service\OrderService;
 use Transbank\Webpay\Model\Service\QuoteService;
+use Transbank\Webpay\Model\Service\WebpayOrderDataService;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 use Transbank\Webpay\Oneclick\Exceptions\MallTransactionAuthorizeException;
@@ -49,8 +48,7 @@ class AuthorizeOneclick extends Action
     private $oneclickInscriptionService;
     private $orderService;
     private $log;
-    private $webpayOrderDataFactory;
-    protected $webpayOrderDataRepository;
+    private $webpayOrderDataService;
     private $resultPageFactory;
     protected $eventManager;
     protected $messageManager;
@@ -68,8 +66,7 @@ class AuthorizeOneclick extends Action
      * @param EventManagerInterface $eventManager
      * @param OneclickInscriptionService $oneclickInscriptionService
      * @param OrderService $orderService
-     * @param WebpayOrderDataFactory $webpayOrderDataFactory
-     * @param WebpayOrderDataRepository $webpayOrderDataRepository
+     * @param WebpayOrderDataService $webpayOrderDataService
      * @param ManagerInterface $messageManager
      * @param QuoteService $quoteService
      */
@@ -81,8 +78,7 @@ class AuthorizeOneclick extends Action
         EventManagerInterface $eventManager,
         OneclickInscriptionService $oneclickInscriptionService,
         OrderService $orderService,
-        WebpayOrderDataFactory $webpayOrderDataFactory,
-        WebpayOrderDataRepository $webpayOrderDataRepository,
+        WebpayOrderDataService $webpayOrderDataService,
         ManagerInterface $messageManager,
         QuoteService $quoteService,
         CustomerSession $customerSession
@@ -94,8 +90,7 @@ class AuthorizeOneclick extends Action
         $this->messageManager = $messageManager;
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->orderService = $orderService;
-        $this->webpayOrderDataFactory = $webpayOrderDataFactory;
-        $this->webpayOrderDataRepository = $webpayOrderDataRepository;
+        $this->webpayOrderDataService = $webpayOrderDataService;
         $this->resultPageFactory = $resultPageFactory;
         $this->eventManager = $eventManager;
         $this->log = new PluginLogger();
@@ -296,7 +291,7 @@ class AuthorizeOneclick extends Action
      */
     private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
     {
-        $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
+        $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
         $status = $webpayOrderData->getPaymentStatus();
 
         if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
@@ -377,25 +372,12 @@ class AuthorizeOneclick extends Action
      */
     private function checkTransactionIsAlreadyProcessed(int $orderId, int $quoteId): bool
     {
-        $webpayOrderData = $this->getWebpayOrderDataByOrderIdAndQuoteId($orderId, $quoteId);
+        $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
         $status = $webpayOrderData->getPaymentStatus();
 
         return $status == WebpayOrderData::PAYMENT_STATUS_SUCCESS ||
             $status == WebpayOrderData::PAYMENT_STATUS_NULLIFIED ||
             $status == WebpayOrderData::PAYMENT_STATUS_REVERSED;
-    }
-
-    /**
-     * This method return the WebpayOrderData base on the order id and quote id.
-     *
-     * @param int $orderId The order id.
-     * @param int $quoteId The quote id.
-     *
-     * @return WebpayOrderData The Webpay order data object.
-     */
-    private function getWebpayOrderDataByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
-    {
-        return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
 
     /**
@@ -425,8 +407,7 @@ class AuthorizeOneclick extends Action
         int $order_id,
         int $quote_id
     ): void {
-        $webpayOrderData = $this->webpayOrderDataFactory->create();
-        $webpayOrderData->setData([
+        $this->webpayOrderDataService->create([
             'buy_order'       => $authorizeResponse->getBuyOrder(),
             'child_buy_order' => $authorizeResponse->getDetails()[0]->getBuyOrder(),
             'commerce_code'   => $this->oneclickConfig['COMMERCE_CODE'],
@@ -439,6 +420,5 @@ class AuthorizeOneclick extends Action
             'environment'     => $this->oneclickConfig['ENVIRONMENT'],
             'product'         => Oneclick::PRODUCT_NAME
         ]);
-        $webpayOrderData->save();
     }
 }
