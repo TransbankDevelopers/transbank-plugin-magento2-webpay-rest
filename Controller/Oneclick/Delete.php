@@ -19,9 +19,9 @@ class Delete extends Action implements HttpPostActionInterface
 {
     private const INVALID_CARD_MESSAGE = "La tarjeta indicada es inválida.";
     private const UNAUTHORIZED_MESSAGE = "No posee permisos suficientes para eliminar esta tarjeta.";
+    private const TRANSBANK_DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta en Transbank.";
     private const DELETE_SUCCESS_MESSAGE = "Tarjeta eliminada exitosamente.";
-    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta.";
-    private const DELETE_EXCEPTION_MESSAGE = "Error al eliminar tarjeta, contacta con al comercio para recibir asistencia.";
+    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta, contacta con al comercio para recibir asistencia.";
 
     protected $configProvider;
     protected $oneclickInscriptionService;
@@ -63,7 +63,7 @@ class Delete extends Action implements HttpPostActionInterface
                 'message' => $e->getMessage(),
                 'customer_id' => $this->customerSession->getCustomerId(),
             ]);
-            $this->messageManager->addErrorMessage(__(self::DELETE_EXCEPTION_MESSAGE));
+            $this->messageManager->addErrorMessage(__(self::DELETE_ERROR_MESSAGE));
         }
 
         return $this->redirectToReferer();
@@ -116,7 +116,7 @@ class Delete extends Action implements HttpPostActionInterface
         $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
 
         if (!$transbankSdkWebpay->deleteInscription($username, $tbkUser)) {
-            throw new OneclickDeletionException(self::DELETE_ERROR_MESSAGE);
+            throw new OneclickDeletionException(self::TRANSBANK_DELETE_ERROR_MESSAGE);
         }
     }
 

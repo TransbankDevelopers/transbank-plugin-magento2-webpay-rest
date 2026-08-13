@@ -371,7 +371,7 @@ class TransbankSdkWebpayRest
      *
      * @throws MissingArgumentException
      *
-     * @return array
+     * @return bool
      */
     public function deleteInscription(string $username, string $tbkUser): bool
     {
