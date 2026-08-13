@@ -2,7 +2,9 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Sales\Model\Order;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
@@ -39,32 +41,32 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected $configProvider;
     protected $checkoutSession;
-    protected $resultRawFactory;
     protected $oneclickInscriptionService;
     protected $orderService;
     protected $log;
     protected $messageManager;
+    protected $customerSession;
     private $quoteService;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         OneclickInscriptionService $oneclickInscriptionService,
         OrderService $orderService,
-        QuoteService $quoteService
+        QuoteService $quoteService,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
         $this->checkoutSession = $checkoutSession;
-        $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->orderService = $orderService;
         $this->log = new PluginLogger();
         $this->quoteService = $quoteService;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -85,9 +87,10 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
                 throw new \Exception('Token no encontrado');
             }
 
-            list($oneclickInscriptionData, $order) = $this->getOrderByToken($tbkToken);
-
+            $oneclickInscriptionData = $this->getInscriptionByToken($tbkToken);
+            $order = $this->orderService->getById($oneclickInscriptionData->getOrderId());
             $status = $oneclickInscriptionData->getStatus();
+
             if ($status == OneclickInscriptionData::PAYMENT_STATUS_WATING) {
                 $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
                 $inscriptionResult = $transbankSdkWebpay->finishInscription($tbkToken);
@@ -138,43 +141,24 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         }
     }
 
-    protected function toRedirect($url, $data)
-    {
-        $response = $this->resultRawFactory->create();
-        $content = "<form action='$url' method='POST' name='webpayForm'>";
-        foreach ($data as $name => $value) {
-            $content .= "<input type='hidden' name='".htmlentities($name)."' value='".htmlentities($value)."'>";
-        }
-        $content .= '</form>';
-        $content .= "<script language='JavaScript'>document.webpayForm.submit();</script>";
-        $response->setContents($content);
-
-        return $response;
-    }
-
-    protected function commitResponseToArray($response)
-    {
-        return [
-            'responseCode'          => $response->responseCode,
-            'tbkUser'               => $response->tbkUser,
-            'authorizationCode'     => $response->authorizationCode,
-            'cardType'              => $response->cardType,
-            'cardNumber'            => $response->cardNumber,
-        ];
-    }
-
     /**
-     * @param $tokenWs
+     * @param string $tbkToken
      *
-     * @return array
+     * @return OneclickInscriptionData
+     *
+     * @throws InvalidRequestException When the token belongs to another customer
      */
-    private function getOrderByToken($tbkToken)
+    private function getInscriptionByToken($tbkToken)
     {
         $oneclickInscriptionData = $this->oneclickInscriptionService->getByToken($tbkToken);
-        $orderId = $oneclickInscriptionData->getOrderId();
-        $order = $this->orderService->getById($orderId);
+        $userId = $oneclickInscriptionData->getUserId();
+        $customerId = $this->customerSession->getCustomerId();
 
-        return [$oneclickInscriptionData, $order];
+        if (!$this->oneclickInscriptionService->isOwnedByCustomer($userId, $customerId)) {
+            throw new InvalidRequestException('La tarjeta inscrita indicada no existe.');
+        }
+
+        return $oneclickInscriptionData;
     }
 
     /**
@@ -263,5 +247,4 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         }
         return $inscriptionResponse;
     }
-
 }
