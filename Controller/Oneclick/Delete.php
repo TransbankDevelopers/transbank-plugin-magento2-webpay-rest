@@ -13,7 +13,6 @@ use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
-use Transbank\Webpay\Exceptions\OneclickDeletionException;
 
 class Delete extends Action implements HttpPostActionInterface
 {
