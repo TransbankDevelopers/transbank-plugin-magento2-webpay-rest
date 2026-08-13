@@ -19,7 +19,7 @@ class Delete extends Action implements HttpPostActionInterface
     private const INVALID_CARD_MESSAGE = "La tarjeta indicada es inválida.";
     private const UNAUTHORIZED_MESSAGE = "No posee permisos suficientes para eliminar esta tarjeta.";
     private const DELETE_SUCCESS_MESSAGE = "Tarjeta eliminada exitosamente.";
-    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta, contacta con al comercio para recibir asistencia.";
+    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta, contacta al comercio para recibir asistencia.";
 
     protected $configProvider;
     protected $oneclickInscriptionService;
