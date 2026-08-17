@@ -106,4 +106,22 @@ class WebpayOrderDataService
         $webpayOrderData->setPaymentStatus($paymentStatus);
         $this->webpayOrderDataRepository->save($webpayOrderData);
     }
+
+    /**
+     * Update the metadata and payment status of a WebpayOrderData record and persist it.
+     *
+     * @param WebpayOrderData $webpayOrderData The entity being updated
+     * @param string $metadata The new metadata
+     * @param string $paymentStatus The new payment status
+     *
+     * @return void
+     */
+    public function updateMetadataAndPaymentStatus(
+        WebpayOrderData $webpayOrderData,
+        string $metadata,
+        string $paymentStatus
+    ): void {
+        $webpayOrderData->setMetadata($metadata);
+        $this->updatePaymentStatus($webpayOrderData, $paymentStatus);
+    }
 }

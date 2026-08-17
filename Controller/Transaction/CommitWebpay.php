@@ -196,8 +196,6 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
             return $this->handleFlowError($token);
         }
 
-        $webpayOrderData->setMetadata(json_encode($commitResponse));
-
         if ($commitResponse->isApproved()) {
             return $this->handleAuthorizedTransaction($order, $webpayOrderData, $commitResponse);
         }
@@ -305,7 +303,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $token = $webpayOrderData->getToken();
         $this->log->logInfo('Transacción autorizada por Transbank, procesando orden => Token: ' . $token);
 
-        $this->webpayOrderDataService->updatePaymentStatus($webpayOrderData, WebpayOrderData::PAYMENT_STATUS_SUCCESS);
+        $this->webpayOrderDataService->updateMetadataAndPaymentStatus(
+            $webpayOrderData,
+            json_encode($commitResponse),
+            WebpayOrderData::PAYMENT_STATUS_SUCCESS
+        );
 
         $authorizationCode = $commitResponse->getAuthorizationCode();
         $payment = $order->getPayment();
@@ -343,7 +345,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $message = self::WEBPAY_FAILED_FLOW_MESSAGE;
 
-        $this->webpayOrderDataService->updatePaymentStatus($webpayOrderData, WebpayOrderData::PAYMENT_STATUS_FAILED);
+        $this->webpayOrderDataService->updateMetadataAndPaymentStatus(
+            $webpayOrderData,
+            json_encode($commitResponse),
+            WebpayOrderData::PAYMENT_STATUS_FAILED
+        );
 
         $commitHistoryComment = $this->createCommitHistoryComment($commitResponse);
         $this->cancelOrder($order, $commitHistoryComment);
