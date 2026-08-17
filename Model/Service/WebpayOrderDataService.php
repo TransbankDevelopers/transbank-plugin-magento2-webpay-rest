@@ -29,6 +29,8 @@ class WebpayOrderDataService
      *
      * @param string $token The Webpay token
      *
+     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given token
+     *
      * @return WebpayOrderData
      */
     public function getByToken(string $token): WebpayOrderData
@@ -41,6 +43,8 @@ class WebpayOrderDataService
      *
      * @param string $buyOrder The buy order
      *
+     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given buy order
+     *
      * @return WebpayOrderData
      */
     public function getByBuyOrder(string $buyOrder): WebpayOrderData
@@ -52,6 +56,8 @@ class WebpayOrderDataService
      * Get a WebpayOrderData by order ID
      *
      * @param string $orderId The order ID
+     *
+     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given order ID
      *
      * @return WebpayOrderData
      */

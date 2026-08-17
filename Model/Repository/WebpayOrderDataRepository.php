@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Model\Repository;
 
+use Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Model\ResourceModel\WebpayOrderData\CollectionFactory;
 
@@ -46,14 +47,21 @@ class WebpayOrderDataRepository
      *
      * @param string $token The Webpay token
      *
+     * @throws WebpayOrderDataNotFoundException When no record matches the given token
+     *
      * @return WebpayOrderData
      */
     public function getByToken(string $token): WebpayOrderData
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('token', $token);
+        $webpayOrderData = $collection->getFirstItem();
 
-        return $collection->getFirstItem();
+        if (!$webpayOrderData->getId()) {
+            throw new WebpayOrderDataNotFoundException();
+        }
+
+        return $webpayOrderData;
     }
 
     /**
@@ -61,14 +69,21 @@ class WebpayOrderDataRepository
      *
      * @param string $buyOrder The buy order
      *
+     * @throws WebpayOrderDataNotFoundException When no record matches the given buy order
+     *
      * @return WebpayOrderData
      */
     public function getByBuyOrder(string $buyOrder): WebpayOrderData
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('buy_order', $buyOrder);
+        $webpayOrderData = $collection->getFirstItem();
 
-        return $collection->getFirstItem();
+        if (!$webpayOrderData->getId()) {
+            throw new WebpayOrderDataNotFoundException();
+        }
+
+        return $webpayOrderData;
     }
 
     /**
@@ -76,14 +91,21 @@ class WebpayOrderDataRepository
      *
      * @param string $orderId The order ID
      *
+     * @throws WebpayOrderDataNotFoundException When no record matches the given order ID
+     *
      * @return WebpayOrderData
      */
     public function getByOrderId(string $orderId): WebpayOrderData
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('order_id', $orderId);
+        $webpayOrderData = $collection->getFirstItem();
 
-        return $collection->getFirstItem();
+        if (!$webpayOrderData->getId()) {
+            throw new WebpayOrderDataNotFoundException();
+        }
+
+        return $webpayOrderData;
     }
 
     /**

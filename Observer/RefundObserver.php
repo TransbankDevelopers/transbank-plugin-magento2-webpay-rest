@@ -12,6 +12,8 @@ use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Exceptions\EcommerceException;
+use Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException;
+use Transbank\Webpay\Model\WebpayOrderData;
 use Magento\Framework\Message\ManagerInterface;
 use Transbank\Webpay\Observer\Util\ObserverGuard;
 
@@ -147,19 +149,33 @@ class RefundObserver implements ObserverInterface
      */
     private function getTransaction(string $paymentMethod, \Magento\Sales\Model\Order $order)
     {
-        $webpayOrderData = $this->webpayOrderDataService->getByOrderId($order->getId());
+        $webpayOrderData = $this->tryGetByOrderId($order->getId());
 
-        if ($paymentMethod == Webpay::CODE && (!$webpayOrderData || !$webpayOrderData->getId())) {
-            $webpayOrderData = $this->webpayOrderDataService->getByOrderId($order->getIncrementId());
+        if ($paymentMethod == Webpay::CODE && !$webpayOrderData) {
+            $webpayOrderData = $this->tryGetByOrderId($order->getIncrementId());
         }
 
-        if (!$webpayOrderData || !is_object($webpayOrderData) || !$webpayOrderData->getId()) {
+        if (!$webpayOrderData) {
             throw new EcommerceException(
                 'No se encontró la transacción con el número de orden: ' . $order->getIncrementId()
             );
         }
 
         return $webpayOrderData;
+    }
+
+    /**
+     * @param string $orderId
+     *
+     * @return WebpayOrderData|null
+     */
+    private function tryGetByOrderId($orderId): ?WebpayOrderData
+    {
+        try {
+            return $this->webpayOrderDataService->getByOrderId($orderId);
+        } catch (WebpayOrderDataNotFoundException $e) {
+            return null;
+        }
     }
 
     /**
