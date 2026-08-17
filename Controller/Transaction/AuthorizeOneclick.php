@@ -32,6 +32,7 @@ use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Exceptions\OrderNotFoundException;
+use Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Magento\Customer\Model\Session as CustomerSession;
 
@@ -372,7 +373,12 @@ class AuthorizeOneclick extends Action
      */
     private function checkTransactionIsAlreadyProcessed(int $orderId, int $quoteId): bool
     {
-        $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
+        try {
+            $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
+        } catch (WebpayOrderDataNotFoundException $e) {
+            return false;
+        }
+
         $status = $webpayOrderData->getPaymentStatus();
 
         return $status == WebpayOrderData::PAYMENT_STATUS_SUCCESS ||

@@ -72,6 +72,8 @@ class WebpayOrderDataService
      * @param int $orderId The order ID
      * @param int $quoteId The quote ID
      *
+     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given order ID and quote ID
+     *
      * @return WebpayOrderData
      */
     public function getByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData

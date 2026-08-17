@@ -31,6 +31,8 @@ class WebpayOrderDataRepository
      * @param string $orderId The order ID
      * @param string $quoteId The quote ID
      *
+     * @throws WebpayOrderDataNotFoundException When no record matches the given order ID and quote ID
+     *
      * @return WebpayOrderData
      */
     public function getByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
@@ -38,8 +40,13 @@ class WebpayOrderDataRepository
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('order_id', $orderId)
             ->addFieldToFilter('quote_id', $quoteId);
+        $webpayOrderData = $collection->getFirstItem();
 
-        return $collection->getFirstItem();
+        if (!$webpayOrderData->getId()) {
+            throw new WebpayOrderDataNotFoundException();
+        }
+
+        return $webpayOrderData;
     }
 
     /**
