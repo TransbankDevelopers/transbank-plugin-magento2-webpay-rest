@@ -30,6 +30,11 @@ class Oneclick extends Template
 
     public function getDeleteAction()
     {
-        return $this->getUrl('checkout/oneclick/delete', ['_secure' => true]);
+        return $this->getUrl('customer/oneclick/delete', ['_secure' => true]);
+    }
+
+    public function getAddCardAction(): string
+    {
+        return $this->getUrl('customer/oneclick/add', ['_secure' => true]);
     }
 }

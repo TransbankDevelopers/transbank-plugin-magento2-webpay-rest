@@ -1,6 +1,16 @@
 <?php
 $collection = $block->getCards();
 ?>
+<div class="actions-toolbar">
+    <div class="primary">
+        <form action="<?= $block->escapeUrl($block->getAddCardAction()) ?>" method="post">
+            <?= $block->getBlockHtml('formkey') ?>
+            <button type="submit" class="action primary">
+                <span><?= $block->escapeHtml(__('Add card')) ?></span>
+            </button>
+        </form>
+    </div>
+</div>
 <div class="table-wrapper orders-history">
     <table class="data table table-order-items history" id="my-orders-table">
         <caption class="table-caption"><?= $block->escapeHtml(__('Grid Record')) ?></caption>
@@ -25,7 +35,7 @@ $collection = $block->getCards();
                         <form action="<?= $block->escapeUrl($block->getDeleteAction()) ?>" method="post">
                             <?= $block->getBlockHtml('formkey') ?>
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                            <button type="submit" class="action delete">
+                            <button type="submit" class="action delete danger">
                                 <span><?= $block->escapeHtml(__('Delete')) ?></span>
                             </button>
                         </form>

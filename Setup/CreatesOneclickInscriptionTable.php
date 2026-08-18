@@ -23,7 +23,7 @@ trait CreatesOneclickInscriptionTable
                 'nullable' => false,
             ], 'Token')
             ->addColumn('tbk_user', Table::TYPE_TEXT, 100, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'TBK User')
             ->addColumn('username', Table::TYPE_TEXT, 60, [
                 'nullable' => false,
@@ -35,31 +35,31 @@ trait CreatesOneclickInscriptionTable
                 'nullable' => false,
             ], 'User ID')
             ->addColumn('token_id', Table::TYPE_TEXT, 60, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Token ID')
             ->addColumn('order_id', Table::TYPE_TEXT, 60, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Order ID')
             ->addColumn('pay_after_inscription', Table::TYPE_BIGINT, 30, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Pay After Inscription')
             ->addColumn('finished', Table::TYPE_TEXT, 60, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Finished')
             ->addColumn('response_code', Table::TYPE_TEXT, 20, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Response Code')
             ->addColumn('authorization_code', Table::TYPE_TEXT, 20, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Authorization Code')
             ->addColumn('card_type', Table::TYPE_TEXT, 20, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Card Type')
             ->addColumn('card_number', Table::TYPE_TEXT, 20, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Card_number')
             ->addColumn('from', Table::TYPE_TEXT, 50, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'From')
             ->addColumn('status', Table::TYPE_TEXT, 50, [
                 'nullable' => false,
@@ -71,10 +71,10 @@ trait CreatesOneclickInscriptionTable
                 'nullable' => false,
             ], 'Commerce Code')
             ->addColumn('transbank_response', Table::TYPE_TEXT, null, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Transbank Response')
             ->addColumn('quote_id', Table::TYPE_TEXT, 20, [
-                'nullable' => false,
+                'nullable' => true,
             ], 'Quote ID')
             ->addColumn('metadata', Table::TYPE_TEXT, null, [
                 'nullable' => false,
