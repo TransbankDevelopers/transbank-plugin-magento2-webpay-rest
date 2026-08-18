@@ -13,6 +13,7 @@ use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
+use Transbank\Webpay\Exceptions\TransbankException;
 
 class Commit extends Action
 {
@@ -62,7 +63,7 @@ class Commit extends Action
 
             $lockKey = self::LOCK_PREFIX . substr(hash('sha256', $token), 0, 24);
             if (!$this->lock->acquire($lockKey)) {
-                throw new \RuntimeException('No se pudo serializar la finalización de inscripción.');
+                throw new TransbankException('No se pudo serializar la finalización de inscripción.');
             }
 
             try {
@@ -128,8 +129,10 @@ class Commit extends Action
 
     private function failWaitingInscription($inscription, bool $ownedInscription): void
     {
-        if (!$ownedInscription || !$inscription instanceof OneclickInscriptionData ||
-            $inscription->getStatus() !== OneclickInscriptionData::PAYMENT_STATUS_WATING) {
+        if (
+            !$ownedInscription || !$inscription instanceof OneclickInscriptionData ||
+            $inscription->getStatus() !== OneclickInscriptionData::PAYMENT_STATUS_WATING
+        ) {
             return;
         }
 

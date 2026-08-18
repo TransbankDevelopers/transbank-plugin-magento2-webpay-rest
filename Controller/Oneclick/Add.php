@@ -15,6 +15,7 @@ use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
+use Transbank\Webpay\Exceptions\TransbankException;
 
 class Add extends Action implements HttpPostActionInterface
 {
@@ -69,7 +70,7 @@ class Add extends Action implements HttpPostActionInterface
             );
             $lockKey = 'transbank_private_oneclick_add_' . $customerId;
             if (!$this->lock->acquire($lockKey)) {
-                throw new \RuntimeException('No se pudo serializar la inscripción.');
+                throw new TransbankException('No se pudo serializar la inscripción.');
             }
 
             try {
@@ -79,7 +80,7 @@ class Add extends Action implements HttpPostActionInterface
                 $webpayUrl = $response['urlWebpay'] ?? null;
 
                 if (!$this->isValidResponseValue($token) || !$this->isValidHttpsUrl($webpayUrl)) {
-                    throw new \RuntimeException('Respuesta inválida al iniciar inscripción.');
+                    throw new TransbankException('Respuesta inválida al iniciar inscripción.');
                 }
 
                 $inscription = $this->inscriptionFactory->create();
@@ -130,11 +131,11 @@ class Add extends Action implements HttpPostActionInterface
         $result->setHeader('Content-Type', 'text/html; charset=UTF-8', true);
         $result->setContents(
             '<!doctype html><html><head><meta charset="UTF-8"><title>Oneclick</title></head><body>' .
-            '<form method="post" name="webpayForm" action="' . $escape($webpayUrl) . '">' .
-            '<input type="hidden" name="TBK_TOKEN" value="' . $escape($token) . '">' .
-            '</form>' .
-            '<script>document.webpayForm.submit();</script>' .
-            '</body></html>'
+                '<form method="post" name="webpayForm" action="' . $escape($webpayUrl) . '">' .
+                '<input type="hidden" name="TBK_TOKEN" value="' . $escape($token) . '">' .
+                '</form>' .
+                '<script>document.webpayForm.submit();</script>' .
+                '</body></html>'
         );
 
         return $result;
