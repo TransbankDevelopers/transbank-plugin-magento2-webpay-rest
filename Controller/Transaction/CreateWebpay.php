@@ -7,6 +7,7 @@ use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Helper\TransactionHelper;
+use Transbank\Webpay\Model\Service\WebpayOrderDataService;
 
 /**
  * Controller for create transaction Webpay.
@@ -19,7 +20,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     protected $resultJsonFactory;
     protected $quoteManagement;
     protected $storeManager;
-    protected $webpayOrderDataFactory;
+    protected $webpayOrderDataService;
     protected $log;
     protected $quoteRepository;
     protected $webpayConfig;
@@ -34,7 +35,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider      $configProvider
-     * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
+     * @param WebpayOrderDataService                           $webpayOrderDataService
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -44,7 +45,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        WebpayOrderDataService $webpayOrderDataService
     ) {
         parent::__construct($context);
 
@@ -54,7 +55,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->quoteManagement = $quoteManagement;
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
-        $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->webpayOrderDataService = $webpayOrderDataService;
         $this->log = new PluginLogger();
         $this->webpayConfig = $configProvider->getPluginConfig();
     }
@@ -196,8 +197,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $buyOrder,
         $quote_id
     ): void {
-        $webpayOrderData = $this->webpayOrderDataFactory->create();
-        $webpayOrderData->setData([
+        $this->webpayOrderDataService->create([
             'token'          => $token_ws,
             'payment_status' => $payment_status,
             'order_id'       => $order_id,
@@ -208,7 +208,6 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
             'environment'    => $this->webpayConfig['ENVIRONMENT'],
             'product'        => Webpay::PRODUCT_NAME
         ]);
-        $webpayOrderData->save();
     }
 
     /**

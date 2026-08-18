@@ -7,7 +7,7 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
-use Transbank\Webpay\Model\WebpayOrderDataFactory;
+use Transbank\Webpay\Model\Service\WebpayOrderDataService;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Helper\TbkResponseHelper;
 use Transbank\Webpay\Helper\PluginLogger;
@@ -20,7 +20,7 @@ class RefundObserver implements ObserverInterface
 
     protected $logger;
     protected $configProvider;
-    protected $webpayOrderDataFactory;
+    protected $webpayOrderDataService;
     protected $orderRepository;
     protected $messageManager;
 
@@ -28,14 +28,14 @@ class RefundObserver implements ObserverInterface
 
     public function __construct(
         ConfigProvider $configProvider,
-        WebpayOrderDataFactory $webpayOrderDataFactory,
+        WebpayOrderDataService $webpayOrderDataService,
         OrderRepositoryInterface $orderRepository,
         ManagerInterface $messageManager,
         ObserverGuard $observerGuard
     ) {
         $this->logger = new PluginLogger();
         $this->configProvider = $configProvider;
-        $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->webpayOrderDataService = $webpayOrderDataService;
         $this->orderRepository = $orderRepository;
         $this->messageManager = $messageManager;
         $this->observerGuard = $observerGuard;
@@ -75,10 +75,10 @@ class RefundObserver implements ObserverInterface
                 ($refundType === 'NULLIFIED') && (int) $refundResponse->getResponseCode() === 0
             ) {
                 $this->logger->logInfo('Rembolso realizado correctamente en Transbank');
-                $transactionData['webpayOrderData']->setMetadata(json_encode($refundResponse) . ' ' .
-                    $transactionData['metadata']);
-                $transactionData['webpayOrderData']->setPaymentStatus($refundType);
-                $transactionData['webpayOrderData']->save();
+                $this->webpayOrderDataService->update($transactionData['webpayOrderData'], [
+                    'metadata' => json_encode($refundResponse) . ' ' . $transactionData['metadata'],
+                    'payment_status' => $refundType,
+                ]);
                 $refundComment = $this->createHistoryComment(
                     $refundType,
                     $refundResponse,
@@ -148,16 +148,18 @@ class RefundObserver implements ObserverInterface
      */
     private function getTransaction(string $paymentMethod, \Magento\Sales\Model\Order $order)
     {
-        $webpayOrderDataModel = $this->webpayOrderDataFactory->create();
-        $webpayOrderData = $webpayOrderDataModel->load($order->getId(), 'order_id');
-        if ($paymentMethod == Webpay::CODE && (!$webpayOrderData || !$webpayOrderData->getId())) {
-            $webpayOrderData = $webpayOrderDataModel->load($order->getIncrementId(), 'order_id');
+        $webpayOrderData = $this->webpayOrderDataService->getByOrderId($order->getId());
+
+        if ($paymentMethod == Webpay::CODE && !$webpayOrderData) {
+            $webpayOrderData = $this->webpayOrderDataService->getByOrderId($order->getIncrementId());
         }
-        if (!$webpayOrderData || !is_object($webpayOrderData) || !$webpayOrderData->getId()) {
+
+        if (!$webpayOrderData) {
             throw new EcommerceException(
                 'No se encontró la transacción con el número de orden: ' . $order->getIncrementId()
             );
         }
+
         return $webpayOrderData;
     }
 
