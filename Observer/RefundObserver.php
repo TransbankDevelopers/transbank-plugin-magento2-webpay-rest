@@ -77,11 +77,10 @@ class RefundObserver implements ObserverInterface
                 ($refundType === 'NULLIFIED') && (int) $refundResponse->getResponseCode() === 0
             ) {
                 $this->logger->logInfo('Rembolso realizado correctamente en Transbank');
-                $this->webpayOrderDataService->updateMetadataAndPaymentStatus(
-                    $transactionData['webpayOrderData'],
-                    json_encode($refundResponse) . ' ' . $transactionData['metadata'],
-                    $refundType
-                );
+                $this->webpayOrderDataService->update($transactionData['webpayOrderData'], [
+                    'metadata' => json_encode($refundResponse) . ' ' . $transactionData['metadata'],
+                    'payment_status' => $refundType,
+                ]);
                 $refundComment = $this->createHistoryComment(
                     $refundType,
                     $refundResponse,

@@ -94,35 +94,15 @@ class WebpayOrderDataService
     }
 
     /**
-     * Update the payment status of a WebpayOrderData record and persist it.
+     * Update a WebpayOrderData record with the given fields and persist it.
      *
      * @param WebpayOrderData $webpayOrderData The entity being updated
-     * @param string $paymentStatus The new payment status
+     * @param array $data The fields to update
      *
-     * @return void
+     * @return WebpayOrderData
      */
-    public function updatePaymentStatus(WebpayOrderData $webpayOrderData, string $paymentStatus): void
+    public function update(WebpayOrderData $webpayOrderData, array $data): WebpayOrderData
     {
-        $this->webpayOrderDataRepository->update($webpayOrderData, ['payment_status' => $paymentStatus]);
-    }
-
-    /**
-     * Update the metadata and payment status of a WebpayOrderData record and persist it.
-     *
-     * @param WebpayOrderData $webpayOrderData The entity being updated
-     * @param string $metadata The new metadata
-     * @param string $paymentStatus The new payment status
-     *
-     * @return void
-     */
-    public function updateMetadataAndPaymentStatus(
-        WebpayOrderData $webpayOrderData,
-        string $metadata,
-        string $paymentStatus
-    ): void {
-        $this->webpayOrderDataRepository->update($webpayOrderData, [
-            'metadata' => $metadata,
-            'payment_status' => $paymentStatus,
-        ]);
+        return $this->webpayOrderDataRepository->update($webpayOrderData, $data);
     }
 }
