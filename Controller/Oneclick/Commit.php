@@ -91,7 +91,7 @@ class Commit extends Action
         } catch (\Throwable $e) {
             $this->failWaitingInscription($inscription, $ownedInscription);
             $this->logger->logError('Error al completar inscripción privada.', [
-                'exception' => get_class($exception),
+                'exception' => get_class($e),
                 'message' => 'Private inscription commit failed.',
                 'customer_id' => $this->customerSession->getCustomerId(),
             ]);
