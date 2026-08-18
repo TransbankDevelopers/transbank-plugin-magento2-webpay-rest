@@ -4,5 +4,8 @@
         <route frontName="checkout" id="checkout">
             <module name="Transbank_Webpay"/>
         </route>
+        <route frontName="customer" id="customer">
+            <module name="Transbank_Webpay" before="Magento_Customer"/>
+        </route>
     </router>
 </config>
