@@ -235,7 +235,11 @@ class Commit extends Action
 
     private function handleException(\Throwable $exception)
     {
-        $this->logFailure($exception);
+        $this->logger->logError('Error al completar inscripción privada.', [
+            'exception' => get_class($exception),
+            'message' => 'Private inscription commit failed.',
+            'customer_id' => $this->customerSession->getCustomerId(),
+        ]);
 
         return $this->redirectWithError();
     }
@@ -277,14 +281,5 @@ class Commit extends Action
                 'customer_id' => $this->customerSession->getCustomerId(),
             ]);
         }
-    }
-
-    private function logFailure(\Throwable $exception): void
-    {
-        $this->logger->logError('Error al completar inscripción privada.', [
-            'exception' => get_class($exception),
-            'message' => 'Private inscription commit failed.',
-            'customer_id' => $this->customerSession->getCustomerId(),
-        ]);
     }
 }
