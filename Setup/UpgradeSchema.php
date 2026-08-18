@@ -69,7 +69,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'length' => $length,
                 'nullable' => true,
             ];
-            $connection->changeColumn($table, $column, $column, $definition, $columns[$column]['COLUMN_COMMENT'] ?? null);
+            $connection->changeColumn($table, $column, $column, $definition);
         }
     }
 }
