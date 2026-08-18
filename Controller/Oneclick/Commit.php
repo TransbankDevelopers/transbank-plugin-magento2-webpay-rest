@@ -88,13 +88,13 @@ class Commit extends Action
             } finally {
                 $this->lock->release($lockKey);
             }
-        } catch (OneclickInscriptionNotFoundException | InvalidRequestException $e) {
-            $this->failWaitingInscription($inscription, $ownedInscription);
-            $this->logFailure($e);
-            $this->messageManager->addErrorMessage(__(self::GENERIC_ERROR));
         } catch (\Throwable $e) {
             $this->failWaitingInscription($inscription, $ownedInscription);
-            $this->logFailure($e);
+            $this->logger->logError('Error al completar inscripción privada.', [
+                'exception' => get_class($exception),
+                'message' => 'Private inscription commit failed.',
+                'customer_id' => $this->customerSession->getCustomerId(),
+            ]);
             $this->messageManager->addErrorMessage(__(self::GENERIC_ERROR));
         }
 
@@ -116,15 +116,6 @@ class Commit extends Action
         }
 
         return $token;
-    }
-
-    private function logFailure(\Throwable $exception): void
-    {
-        $this->logger->logError('Error al completar inscripción privada.', [
-            'exception' => get_class($exception),
-            'message' => 'Private inscription commit failed.',
-            'customer_id' => $this->customerSession->getCustomerId(),
-        ]);
     }
 
     private function failWaitingInscription($inscription, bool $ownedInscription): void
