@@ -103,8 +103,7 @@ class WebpayOrderDataService
      */
     public function updatePaymentStatus(WebpayOrderData $webpayOrderData, string $paymentStatus): void
     {
-        $webpayOrderData->setPaymentStatus($paymentStatus);
-        $this->webpayOrderDataRepository->save($webpayOrderData);
+        $this->webpayOrderDataRepository->update($webpayOrderData, ['payment_status' => $paymentStatus]);
     }
 
     /**
@@ -121,7 +120,9 @@ class WebpayOrderDataService
         string $metadata,
         string $paymentStatus
     ): void {
-        $webpayOrderData->setMetadata($metadata);
-        $this->updatePaymentStatus($webpayOrderData, $paymentStatus);
+        $this->webpayOrderDataRepository->update($webpayOrderData, [
+            'metadata' => $metadata,
+            'payment_status' => $paymentStatus,
+        ]);
     }
 }

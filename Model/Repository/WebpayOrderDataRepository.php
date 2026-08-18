@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model\Repository;
 
 use Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException;
 use Transbank\Webpay\Model\WebpayOrderData;
+use Transbank\Webpay\Model\ResourceModel\WebpayOrderData as WebpayOrderDataResource;
 use Transbank\Webpay\Model\ResourceModel\WebpayOrderData\CollectionFactory;
 
 /**
@@ -12,17 +13,40 @@ use Transbank\Webpay\Model\ResourceModel\WebpayOrderData\CollectionFactory;
  */
 class WebpayOrderDataRepository
 {
+    /**
+     * Columns writable through create()/update(). Anything outside this list
+     * (e.g. id, created_at, updated_at) is managed by Magento.
+     */
+    private const WRITABLE_FIELDS = [
+        'token',
+        'payment_status',
+        'order_id',
+        'buy_order',
+        'child_buy_order',
+        'commerce_code',
+        'child_commerce_code',
+        'quote_id',
+        'amount',
+        'metadata',
+        'environment',
+        'product',
+    ];
+
     protected $collectionFactory;
+    private WebpayOrderDataResource $resource;
 
     /**
      * Constructor
      *
      * @param CollectionFactory $collectionFactory Factory for creating Collection instances
+     * @param WebpayOrderDataResource $resource Resource model responsible for persistence
      */
     public function __construct(
-        CollectionFactory $collectionFactory
+        CollectionFactory $collectionFactory,
+        WebpayOrderDataResource $resource
     ) {
         $this->collectionFactory = $collectionFactory;
+        $this->resource = $resource;
     }
 
     /**
@@ -118,30 +142,46 @@ class WebpayOrderDataRepository
     /**
      * Create and persist a new WebpayOrderData entity
      *
-     * @param array $data The data to initialize the entity with
+     * @param array $data The data to initialize the entity with. Keys outside
+     *              WRITABLE_FIELDS are silently discarded.
      *
      * @return WebpayOrderData
      */
     public function create(array $data): WebpayOrderData
     {
         $webpayOrderData = $this->collectionFactory->create()->getNewEmptyItem();
-        $webpayOrderData->setData($data);
-        $webpayOrderData->save();
+        $webpayOrderData->setData($this->filterWritableFields($data));
+        $this->resource->save($webpayOrderData);
 
         return $webpayOrderData;
     }
 
     /**
-     * Persist a WebpayOrderData entity
+     * Update a WebpayOrderData entity with the given fields and persist it.
      *
-     * @param WebpayOrderData $webpayOrderData The entity to persist
+     * @param WebpayOrderData $webpayOrderData The entity to update
+     * @param array $data The fields to update. Keys outside WRITABLE_FIELDS
+     *              are silently discarded.
      *
      * @return WebpayOrderData
      */
-    public function save(WebpayOrderData $webpayOrderData): WebpayOrderData
+    public function update(WebpayOrderData $webpayOrderData, array $data): WebpayOrderData
     {
-        $webpayOrderData->save();
+        $webpayOrderData->addData($this->filterWritableFields($data));
+        $this->resource->save($webpayOrderData);
 
         return $webpayOrderData;
+    }
+
+    /**
+     * Restrict a data array to the columns this repository allows writing to.
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    private function filterWritableFields(array $data): array
+    {
+        return array_intersect_key($data, array_flip(self::WRITABLE_FIELDS));
     }
 }
