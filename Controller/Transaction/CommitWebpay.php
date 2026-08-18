@@ -185,12 +185,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function processTransaction(string $token)
     {
         $config = $this->configProvider->getPluginConfig();
-        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
-
-        if ($webpayOrderData === null) {
-            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
-        }
-
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token, throwIfNotFound: true);
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
 
@@ -263,12 +258,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
         $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
 
-        $webpayOrderData = $this->webpayOrderDataService->getByBuyOrder($buyOrder);
-
-        if ($webpayOrderData === null) {
-            throw new EcommerceException('No se encontró la transacción de Webpay para la orden de compra: ' . $buyOrder);
-        }
-
+        $webpayOrderData = $this->webpayOrderDataService->getByBuyOrder($buyOrder, throwIfNotFound: true);
         $token = $webpayOrderData->getToken();
 
         if ($this->checkTransactionIsAlreadyProcessed($token)) {
@@ -373,12 +363,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logInfo('Error al procesar transacción por Transbank => token: ' . $token);
         $this->log->logInfo('Detalle: ' . $message);
 
-        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
-
-        if ($webpayOrderData === null) {
-            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
-        }
-
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token, throwIfNotFound: true);
         $this->webpayOrderDataService->update($webpayOrderData, ['payment_status' => $webpayStatus]);
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
@@ -413,12 +398,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $this->log->logInfo('Transacción ya se encontraba procesada.');
 
-        $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
-
-        if ($webpayOrderData === null) {
-            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
-        }
-
+        $webpayOrderData = $this->webpayOrderDataService->getByToken($token, throwIfNotFound: true);
         $status = $webpayOrderData->getPaymentStatus();
         $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
 

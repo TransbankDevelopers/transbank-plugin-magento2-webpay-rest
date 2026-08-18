@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model\Service;
 
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Model\Repository\WebpayOrderDataRepository;
+use Transbank\Webpay\Exceptions\EcommerceException;
 
 /**
  * Class WebpayOrderDataService
@@ -28,36 +29,63 @@ class WebpayOrderDataService
      * Get a WebpayOrderData by Webpay token
      *
      * @param string $token The Webpay token
+     * @param bool $throwIfNotFound When true, throws instead of returning null
+     *
+     * @throws EcommerceException When not found and $throwIfNotFound is true
      *
      * @return WebpayOrderData|null Null when no record matches the given token
      */
-    public function getByToken(string $token): ?WebpayOrderData
+    public function getByToken(string $token, bool $throwIfNotFound = false): ?WebpayOrderData
     {
-        return $this->webpayOrderDataRepository->getByToken($token);
+        $webpayOrderData = $this->webpayOrderDataRepository->getByToken($token);
+
+        if ($webpayOrderData === null && $throwIfNotFound) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
+        }
+
+        return $webpayOrderData;
     }
 
     /**
      * Get a WebpayOrderData by buy order
      *
      * @param string $buyOrder The buy order
+     * @param bool $throwIfNotFound When true, throws instead of returning null
+     *
+     * @throws EcommerceException When not found and $throwIfNotFound is true
      *
      * @return WebpayOrderData|null Null when no record matches the given buy order
      */
-    public function getByBuyOrder(string $buyOrder): ?WebpayOrderData
+    public function getByBuyOrder(string $buyOrder, bool $throwIfNotFound = false): ?WebpayOrderData
     {
-        return $this->webpayOrderDataRepository->getByBuyOrder($buyOrder);
+        $webpayOrderData = $this->webpayOrderDataRepository->getByBuyOrder($buyOrder);
+
+        if ($webpayOrderData === null && $throwIfNotFound) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para la orden de compra: ' . $buyOrder);
+        }
+
+        return $webpayOrderData;
     }
 
     /**
      * Get a WebpayOrderData by order ID
      *
      * @param string $orderId The order ID
+     * @param bool $throwIfNotFound When true, throws instead of returning null
+     *
+     * @throws EcommerceException When not found and $throwIfNotFound is true
      *
      * @return WebpayOrderData|null Null when no record matches the given order ID
      */
-    public function getByOrderId(string $orderId): ?WebpayOrderData
+    public function getByOrderId(string $orderId, bool $throwIfNotFound = false): ?WebpayOrderData
     {
-        return $this->webpayOrderDataRepository->getByOrderId($orderId);
+        $webpayOrderData = $this->webpayOrderDataRepository->getByOrderId($orderId);
+
+        if ($webpayOrderData === null && $throwIfNotFound) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para order_id: ' . $orderId);
+        }
+
+        return $webpayOrderData;
     }
 
     /**
@@ -65,12 +93,21 @@ class WebpayOrderDataService
      *
      * @param int $orderId The order ID
      * @param int $quoteId The quote ID
+     * @param bool $throwIfNotFound When true, throws instead of returning null
+     *
+     * @throws EcommerceException When not found and $throwIfNotFound is true
      *
      * @return WebpayOrderData|null Null when no record matches the given order ID and quote ID
      */
-    public function getByOrderIdAndQuoteId(int $orderId, int $quoteId): ?WebpayOrderData
+    public function getByOrderIdAndQuoteId(int $orderId, int $quoteId, bool $throwIfNotFound = false): ?WebpayOrderData
     {
-        return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
+        $webpayOrderData = $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
+
+        if ($webpayOrderData === null && $throwIfNotFound) {
+            throw new EcommerceException('No se encontró la transacción Oneclick para order_id: ' . $orderId);
+        }
+
+        return $webpayOrderData;
     }
 
     /**

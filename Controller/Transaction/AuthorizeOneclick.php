@@ -292,12 +292,7 @@ class AuthorizeOneclick extends Action
      */
     private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
     {
-        $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
-
-        if ($webpayOrderData === null) {
-            throw new EcommerceException('No se encontró la transacción Oneclick para order_id: ' . $orderId);
-        }
-
+        $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId, throwIfNotFound: true);
         $status = $webpayOrderData->getPaymentStatus();
 
         if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
