@@ -46,14 +46,23 @@ class Commit extends Action
 
     public function execute()
     {
+        $inscription = null;
+        $ownedInscription = false;
+
         try {
-            return $this->handleRequest((array) $this->getRequest()->getParams());
+            return $this->handleRequest(
+                (array) $this->getRequest()->getParams(),
+                $inscription,
+                $ownedInscription
+            );
         } catch (\Throwable $exception) {
+            $this->failWaitingInscription($inscription, $ownedInscription);
+
             return $this->handleException($exception);
         }
     }
 
-    private function handleRequest(array $request)
+    private function handleRequest(array $request, &$inscription, bool &$ownedInscription)
     {
         $flow = $this->getInscriptionFlow($request);
 
@@ -68,11 +77,13 @@ class Commit extends Action
             'has_session' => $this->hasValue($request['TBK_ID_SESION'] ?? null),
         ]);
 
+        $token = $this->getToken($request);
+
         if ($flow === self::FLOW_ABORTED) {
-            return $this->handleAbortedFlow($request);
+            return $this->handleAbortedFlow($token, $inscription, $ownedInscription);
         }
 
-        return $this->handleTokenOnlyFlow($request);
+        return $this->processInscription($token, $inscription, $ownedInscription);
     }
 
     /**
@@ -95,20 +106,8 @@ class Commit extends Action
         return self::FLOW_NORMAL;
     }
 
-    private function handleTokenOnlyFlow(array $request)
+    private function processInscription(string $token, &$inscription, bool &$ownedInscription)
     {
-        return $this->processInscription($this->getToken($request));
-    }
-
-    private function handleAbortedFlow(array $request)
-    {
-        return $this->processInscription($this->getToken($request));
-    }
-
-    private function processInscription(string $token)
-    {
-        $inscription = null;
-        $ownedInscription = false;
         $lockKey = $this->getLockKey($token);
         $lockAcquired = false;
 
@@ -125,14 +124,26 @@ class Commit extends Action
             $inscription = $this->inscriptionService->getByToken($token);
 
             return $this->resolveInscription($inscription, $token);
-        } catch (\Throwable $exception) {
-            $this->failWaitingInscription($inscription, $ownedInscription);
-            $this->logFailure($exception);
-
-            return $this->redirectWithError();
         } finally {
             $this->releaseLock($lockKey, $lockAcquired);
         }
+    }
+
+    private function handleAbortedFlow(string $token, &$inscription, bool &$ownedInscription)
+    {
+        $this->assertAuthenticated();
+        $inscription = $this->getOwnedInscription($token);
+        $ownedInscription = true;
+
+        if ($inscription->getStatus() === OneclickInscriptionData::PAYMENT_STATUS_WATING) {
+            $this->inscriptionService->setInscriptionAsFailed($inscription);
+        }
+
+        $this->logger->logInfo('Inscripción Oneclick abortada por el usuario.', [
+            'customer_id' => $this->customerSession->getCustomerId(),
+        ]);
+
+        return $this->redirectWithError();
     }
 
     private function resolveInscription(OneclickInscriptionData $inscription, string $token)
