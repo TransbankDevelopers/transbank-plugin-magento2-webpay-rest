@@ -24,7 +24,6 @@ class Delete extends Action implements HttpPostActionInterface
     protected $configProvider;
     protected $oneclickInscriptionService;
     protected $customerSession;
-
     private $logger;
 
     public function __construct(
@@ -72,18 +71,15 @@ class Delete extends Action implements HttpPostActionInterface
         if ($inscriptionId === false) {
             throw new InvalidRequestException(self::INVALID_CARD_MESSAGE);
         }
-
         if (!$this->customerSession->isLoggedIn()) {
             throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
         }
 
         $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
-        $isOwnedByCustomer = $this->oneclickInscriptionService->isOwnedByCustomer(
+        if (!$this->oneclickInscriptionService->isOwnedByCustomer(
             $inscription->getUserId(),
             $this->customerSession->getCustomerId()
-        );
-
-        if (!$isOwnedByCustomer) {
+        )) {
             throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
         }
 
