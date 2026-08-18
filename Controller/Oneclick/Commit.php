@@ -118,7 +118,7 @@ class Commit extends Action
             $lockAcquired = $this->lock->acquire($lockKey);
 
             if (!$lockAcquired) {
-                throw new \RuntimeException('No se pudo serializar la finalización de inscripción.');
+                throw new TransbankException('No se pudo serializar la finalización de inscripción.');
             }
 
             $inscription = $this->inscriptionService->getByToken($token);
