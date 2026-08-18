@@ -54,52 +54,8 @@ class Add extends Action implements HttpPostActionInterface
 
     public function execute()
     {
-        if (!$this->customerSession->isLoggedIn()) {
-            $this->customerSession->setBeforeAuthUrl($this->urlBuilder->getUrl('customer/oneclick/index'));
-            return $this->resultRedirectFactory->create()->setPath('customer/account/login');
-        }
-
         try {
-            $customer = $this->customerSession->getCustomer();
-            $customerId = (int) $customer->getId();
-            $email = (string) $customer->getEmail();
-            $config = $this->configProvider->getPluginConfigOneclick();
-            $returnUrl = $this->urlBuilder->getUrl(
-                'customer/oneclick/commit',
-                ['_secure' => true, '_scope_to_url' => true]
-            );
-            $lockKey = 'transbank_private_oneclick_add_' . $customerId;
-            if (!$this->lock->acquire($lockKey)) {
-                throw new TransbankException('No se pudo serializar la inscripción.');
-            }
-
-            try {
-                $username = $this->inscriptionService->generateInscriptionUsername($customerId);
-                $response = (new TransbankSdkWebpayRest($config))->createInscription($username, $email, $returnUrl);
-                $token = $response['token'] ?? null;
-                $webpayUrl = $response['urlWebpay'] ?? null;
-
-                if (!$this->isValidResponseValue($token) || !$this->isValidHttpsUrl($webpayUrl)) {
-                    throw new TransbankException('Respuesta inválida al iniciar inscripción.');
-                }
-
-                $inscription = $this->inscriptionFactory->create();
-                $inscription->setData([
-                    'status' => OneclickInscriptionData::PAYMENT_STATUS_WATING,
-                    'token' => $token,
-                    'username' => $username,
-                    'email' => $email,
-                    'user_id' => $customerId,
-                    'environment' => $config['ENVIRONMENT'] ?? null,
-                    'commerce_code' => $config['COMMERCE_CODE'] ?? null,
-                    'metadata' => json_encode(['source' => 'private'], JSON_THROW_ON_ERROR),
-                ]);
-                $this->inscriptionService->save($inscription);
-
-                return $this->createWebpayForm($webpayUrl, $token);
-            } finally {
-                $this->lock->release($lockKey);
-            }
+            return $this->handleRequest();
         } catch (\Throwable $e) {
             $this->logger->logError('Error al iniciar inscripción privada.', [
                 'exception' => get_class($e),
@@ -109,6 +65,57 @@ class Add extends Action implements HttpPostActionInterface
             $this->messageManager->addErrorMessage(__(self::GENERIC_ERROR));
 
             return $this->resultRedirectFactory->create()->setPath('customer/oneclick/index');
+        }
+    }
+
+    private function handleRequest()
+    {
+        if (!$this->customerSession->isLoggedIn()) {
+            $this->customerSession->setBeforeAuthUrl($this->urlBuilder->getUrl('customer/oneclick/index'));
+
+            return $this->resultRedirectFactory->create()->setPath('customer/account/login');
+        }
+
+        $customer = $this->customerSession->getCustomer();
+        $customerId = (int) $customer->getId();
+        $email = (string) $customer->getEmail();
+        $config = $this->configProvider->getPluginConfigOneclick();
+        $returnUrl = $this->urlBuilder->getUrl(
+            'customer/oneclick/commit',
+            ['_secure' => true, '_scope_to_url' => true]
+        );
+        $lockKey = 'transbank_private_oneclick_add_' . $customerId;
+
+        if (!$this->lock->acquire($lockKey)) {
+            throw new TransbankException('No se pudo serializar la inscripción.');
+        }
+
+        try {
+            $username = $this->inscriptionService->generateInscriptionUsername($customerId);
+            $response = (new TransbankSdkWebpayRest($config))->createInscription($username, $email, $returnUrl);
+            $token = $response['token'] ?? null;
+            $webpayUrl = $response['urlWebpay'] ?? null;
+
+            if (!$this->isValidResponseValue($token) || !$this->isValidHttpsUrl($webpayUrl)) {
+                throw new TransbankException('Respuesta inválida al iniciar inscripción.');
+            }
+
+            $inscription = $this->inscriptionFactory->create();
+            $inscription->setData([
+                'status' => OneclickInscriptionData::PAYMENT_STATUS_WATING,
+                'token' => $token,
+                'username' => $username,
+                'email' => $email,
+                'user_id' => $customerId,
+                'environment' => $config['ENVIRONMENT'] ?? null,
+                'commerce_code' => $config['COMMERCE_CODE'] ?? null,
+                'metadata' => json_encode(['source' => 'private'], JSON_THROW_ON_ERROR),
+            ]);
+            $this->inscriptionService->save($inscription);
+
+            return $this->createWebpayForm($webpayUrl, $token);
+        } finally {
+            $this->lock->release($lockKey);
         }
     }
 
