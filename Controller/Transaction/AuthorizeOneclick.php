@@ -32,7 +32,7 @@ use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Exceptions\OrderNotFoundException;
-use Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException;
+use Transbank\Webpay\Exceptions\EcommerceException;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Magento\Customer\Model\Session as CustomerSession;
 
@@ -125,7 +125,7 @@ class AuthorizeOneclick extends Action
             $inscriptionId = intval($request['inscription']);
 
             return $this->handleOneclickRequest($inscriptionId);
-        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException | OneclickInscriptionNotFoundException | OrderNotFoundException $e) {
+        } catch (InvalidRequestException | MissingArgumentException | MallTransactionAuthorizeException | GuzzleException | OneclickInscriptionNotFoundException | OrderNotFoundException | EcommerceException $e) {
             return $this->handleException($e);
         }
     }
@@ -293,6 +293,11 @@ class AuthorizeOneclick extends Action
     private function handleTransactionAlreadyProcessed(int $orderId, int $quoteId)
     {
         $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
+
+        if ($webpayOrderData === null) {
+            throw new EcommerceException('No se encontró la transacción Oneclick para order_id: ' . $orderId);
+        }
+
         $status = $webpayOrderData->getPaymentStatus();
 
         if ($status == WebpayOrderData::PAYMENT_STATUS_SUCCESS) {
@@ -373,9 +378,9 @@ class AuthorizeOneclick extends Action
      */
     private function checkTransactionIsAlreadyProcessed(int $orderId, int $quoteId): bool
     {
-        try {
-            $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
-        } catch (WebpayOrderDataNotFoundException $e) {
+        $webpayOrderData = $this->webpayOrderDataService->getByOrderIdAndQuoteId($orderId, $quoteId);
+
+        if ($webpayOrderData === null) {
             return false;
         }
 

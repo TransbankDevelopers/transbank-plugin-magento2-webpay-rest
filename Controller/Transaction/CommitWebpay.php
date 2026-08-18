@@ -186,6 +186,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     {
         $config = $this->configProvider->getPluginConfig();
         $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
+
+        if ($webpayOrderData === null) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
+        }
+
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
 
@@ -259,6 +264,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $message = self::WEBPAY_TIMEOUT_FLOW_MESSAGE;
 
         $webpayOrderData = $this->webpayOrderDataService->getByBuyOrder($buyOrder);
+
+        if ($webpayOrderData === null) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para la orden de compra: ' . $buyOrder);
+        }
+
         $token = $webpayOrderData->getToken();
 
         if ($this->checkTransactionIsAlreadyProcessed($token)) {
@@ -364,6 +374,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logInfo('Detalle: ' . $message);
 
         $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
+
+        if ($webpayOrderData === null) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
+        }
+
         $this->webpayOrderDataService->update($webpayOrderData, ['payment_status' => $webpayStatus]);
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
@@ -399,6 +414,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log->logInfo('Transacción ya se encontraba procesada.');
 
         $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
+
+        if ($webpayOrderData === null) {
+            throw new EcommerceException('No se encontró la transacción de Webpay para el token: ' . $token);
+        }
+
         $status = $webpayOrderData->getPaymentStatus();
         $message = self::WEBPAY_EXCEPTION_FLOW_MESSAGE;
 
@@ -460,6 +480,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private function checkTransactionIsAlreadyProcessed($token): bool
     {
         $webpayOrderData = $this->webpayOrderDataService->getByToken($token);
+
+        if ($webpayOrderData === null) {
+            return false;
+        }
+
         $status = $webpayOrderData->getPaymentStatus();
 
         return $status != WebpayOrderData::PAYMENT_STATUS_WATING;

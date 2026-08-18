@@ -29,11 +29,9 @@ class WebpayOrderDataService
      *
      * @param string $token The Webpay token
      *
-     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given token
-     *
-     * @return WebpayOrderData
+     * @return WebpayOrderData|null Null when no record matches the given token
      */
-    public function getByToken(string $token): WebpayOrderData
+    public function getByToken(string $token): ?WebpayOrderData
     {
         return $this->webpayOrderDataRepository->getByToken($token);
     }
@@ -43,11 +41,9 @@ class WebpayOrderDataService
      *
      * @param string $buyOrder The buy order
      *
-     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given buy order
-     *
-     * @return WebpayOrderData
+     * @return WebpayOrderData|null Null when no record matches the given buy order
      */
-    public function getByBuyOrder(string $buyOrder): WebpayOrderData
+    public function getByBuyOrder(string $buyOrder): ?WebpayOrderData
     {
         return $this->webpayOrderDataRepository->getByBuyOrder($buyOrder);
     }
@@ -57,11 +53,9 @@ class WebpayOrderDataService
      *
      * @param string $orderId The order ID
      *
-     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given order ID
-     *
-     * @return WebpayOrderData
+     * @return WebpayOrderData|null Null when no record matches the given order ID
      */
-    public function getByOrderId(string $orderId): WebpayOrderData
+    public function getByOrderId(string $orderId): ?WebpayOrderData
     {
         return $this->webpayOrderDataRepository->getByOrderId($orderId);
     }
@@ -72,11 +66,9 @@ class WebpayOrderDataService
      * @param int $orderId The order ID
      * @param int $quoteId The quote ID
      *
-     * @throws \Transbank\Webpay\Exceptions\WebpayOrderDataNotFoundException When no record matches the given order ID and quote ID
-     *
-     * @return WebpayOrderData
+     * @return WebpayOrderData|null Null when no record matches the given order ID and quote ID
      */
-    public function getByOrderIdAndQuoteId(int $orderId, int $quoteId): WebpayOrderData
+    public function getByOrderIdAndQuoteId(int $orderId, int $quoteId): ?WebpayOrderData
     {
         return $this->webpayOrderDataRepository->getByOrderIdAndQuoteId($orderId, $quoteId);
     }
