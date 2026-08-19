@@ -116,7 +116,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $returnUrl = $baseUrl.$this->oneClickConfig['URL_RETURN'];
             $orderId = $this->getOrderId();
 
-            $username = $this->oneclickInscriptionService->generateInscriptionUsername((int) $order->getCustomerId()); // Generate new Username
+            $username = $this->oneclickInscriptionService->generateInscriptionUsername((int) $order->getCustomerId());
             $this->log->logInfo('New username: '.json_encode($username));
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
@@ -126,22 +126,22 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
                 $this->saveOneclickInscriptionData(
-                    OneclickInscriptionData::PAYMENT_STATUS_WATING,     // status
-                    $response['token'],             // token
-                    $username,                    // username
-                    $order->getCustomerEmail(),     // email
-                    $order->getCustomerId(),        // user_id
-                    $this->getOrderId(),            // order_id
+                    OneclickInscriptionData::PAYMENT_STATUS_WATING,
+                    $response['token'],
+                    $username,
+                    $order->getCustomerEmail(),
+                    $order->getCustomerId(),
+                    $this->getOrderId(),
                 );
                 $this->orderService->setStatus($order, $orderStatusPendingPayment, $message);
             } else {
                 $this->saveOneclickInscriptionData(
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
-                    $response['token'],             // token
-                    $username,                      // username
-                    $order->getCustomerEmail(),     // email
-                    $order->getCustomerId(),        // user_id
-                    $this->getOrderId(),            // order_id
+                    $response['token'],
+                    $username,
+                    $order->getCustomerEmail(),
+                    $order->getCustomerId(),
+                    $this->getOrderId(),
                 );
                 $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>'.json_encode($response);
                 $this->orderService->cancel($order, $orderStatusCanceled, $message);
@@ -189,7 +189,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      *
      * @return OneclickInscriptionData
      */
-    protected function saveOneclickInscriptionData( // Copiar esta funcion para guardar los datos en CommitOneClick.php
+    protected function saveOneclickInscriptionData(
         $status,
         $token,
         $username,
