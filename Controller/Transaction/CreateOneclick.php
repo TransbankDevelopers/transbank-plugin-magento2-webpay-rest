@@ -126,7 +126,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $returnUrl = $baseUrl.$this->oneClickConfig['URL_RETURN'];
             $orderId = $this->getOrderId();
 
-            $username = $this->oneclickInscriptionService->generateInscriptionUsername((int) $order->getCustomerId());
+            $customerId = (int) $this->customerSession->getCustomerId();
+            $username = $this->oneclickInscriptionService->generateInscriptionUsername($customerId);
             $this->log->logInfo('New username: '.json_encode($username));
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
@@ -140,7 +141,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                     $response['token'],
                     $username,
                     $order->getCustomerEmail(),
-                    $order->getCustomerId(),
+                    $customerId,
                     $this->getOrderId(),
                 );
                 $this->orderService->setStatus($order, $orderStatusPendingPayment, $message);
@@ -150,7 +151,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                     $response['token'],
                     $username,
                     $order->getCustomerEmail(),
-                    $order->getCustomerId(),
+                    $customerId,
                     $this->getOrderId(),
                 );
                 $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>'.json_encode($response);
