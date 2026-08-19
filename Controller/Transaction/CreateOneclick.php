@@ -2,7 +2,9 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Sales\Model\Order;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\OrderNotFoundException;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
@@ -29,6 +31,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected $orderService;
     protected $quoteService;
     protected $oneClickConfig;
+    protected $customerSession;
 
     /**
      * CreateOneclick constructor.
@@ -43,6 +46,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param OneclickInscriptionService                       $oneclickInscriptionService
      * @param OrderService                                     $orderService
      * @param QuoteService                                     $quoteService
+     * @param CustomerSession                                  $customerSession
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -54,7 +58,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         OneclickInscriptionService $oneclickInscriptionService,
         OrderService $orderService,
-        QuoteService $quoteService
+        QuoteService $quoteService,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
@@ -68,6 +73,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->orderService = $orderService;
         $this->quoteService = $quoteService;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -83,6 +89,10 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $orderStatusPendingPayment = $this->configProvider->getOneclickOrderPendingStatus();
 
         try {
+            if (!$this->customerSession->isLoggedIn()) {
+                throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
+            }
+
             $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;
 
             $this->oneClickConfig = $this->configProvider->getPluginConfigOneclick();
