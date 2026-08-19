@@ -123,17 +123,17 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
 
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
-            $returnUrl = $baseUrl.$this->oneClickConfig['URL_RETURN'];
+            $returnUrl = $baseUrl . $this->oneClickConfig['URL_RETURN'];
             $orderId = $this->getOrderId();
 
             $customerId = (int) $this->customerSession->getCustomerId();
             $username = $this->oneclickInscriptionService->generateInscriptionUsername($customerId);
-            $this->log->logInfo('New username: '.json_encode($username));
+            $this->log->logInfo('New username: ' . json_encode($username));
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
             $response = $transbankSdkWebpay->createInscription($username, $order->getCustomerEmail(), $returnUrl);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
-            $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>".json_encode($dataLog);
+            $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>" . json_encode($dataLog);
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
                 $this->saveOneclickInscriptionData(
@@ -154,13 +154,13 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                     $customerId,
                     $this->getOrderId(),
                 );
-                $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>'.json_encode($response);
+                $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>' . json_encode($response);
                 $this->orderService->cancel($order, $orderStatusCanceled, $message);
             }
 
             $this->quoteService->activate($this->quoteService->getCurrentQuote());
         } catch (\Exception $e) {
-            $message = 'Error al crear transacción: '.$e->getMessage();
+            $message = 'Error al crear transacción: ' . $e->getMessage();
             $this->log->logError($message);
             $response = ['error' => $message];
             if ($order != null) {
@@ -207,8 +207,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $email,
         $user_id,
         $order_id
-    )
-    {
+    ) {
         $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
         $oneclickInscriptionData->setData([
             'status'          => $status,
