@@ -243,7 +243,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     private function validateOrderOwnership(Order $order, int $customerId): void
     {
         if ((int) $order->getCustomerId() !== $customerId) {
-            throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
+            throw new InvalidRequestException("La orden no pertenece al cliente autenticado.");
         }
     }
 
