@@ -2,7 +2,9 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Sales\Model\Order;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Exceptions\OrderNotFoundException;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Oneclick;
@@ -29,6 +31,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected $orderService;
     protected $quoteService;
     protected $oneClickConfig;
+    protected $customerSession;
 
     /**
      * CreateOneclick constructor.
@@ -43,6 +46,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      * @param OneclickInscriptionService                       $oneclickInscriptionService
      * @param OrderService                                     $orderService
      * @param QuoteService                                     $quoteService
+     * @param CustomerSession                                  $customerSession
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -54,7 +58,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
         OneclickInscriptionService $oneclickInscriptionService,
         OrderService $orderService,
-        QuoteService $quoteService
+        QuoteService $quoteService,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
@@ -68,6 +73,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->orderService = $orderService;
         $this->quoteService = $quoteService;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -83,6 +89,10 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
         $orderStatusPendingPayment = $this->configProvider->getOneclickOrderPendingStatus();
 
         try {
+            if (!$this->customerSession->isLoggedIn()) {
+                throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
+            }
+
             $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;
 
             $this->oneClickConfig = $this->configProvider->getPluginConfigOneclick();
@@ -113,43 +123,45 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
 
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
 
-            $returnUrl = $baseUrl.$this->oneClickConfig['URL_RETURN'];
+            $returnUrl = $baseUrl . $this->oneClickConfig['URL_RETURN'];
             $orderId = $this->getOrderId();
 
-            $username = $this->oneclickInscriptionService->generateInscriptionUsername($order->getCustomerId()); // Generate new Username
-            $this->log->logInfo('New username: '.json_encode($username));
+            $customerId = (int) $this->customerSession->getCustomerId();
+            $this->validateOrderOwnership($order, $customerId);
+            $username = $this->oneclickInscriptionService->generateInscriptionUsername($customerId);
+            $this->log->logInfo('New username: ' . json_encode($username));
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
             $response = $transbankSdkWebpay->createInscription($username, $order->getCustomerEmail(), $returnUrl);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
-            $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>".json_encode($dataLog);
+            $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>" . json_encode($dataLog);
 
             if (isset($response['token']) && isset($response['urlWebpay'])) {
                 $this->saveOneclickInscriptionData(
-                    OneclickInscriptionData::PAYMENT_STATUS_WATING,     // status
-                    $response['token'],             // token
-                    $username,                    // username
-                    $order->getCustomerEmail(),     // email
-                    $order->getCustomerId(),        // user_id
-                    $this->getOrderId(),            // order_id
+                    OneclickInscriptionData::PAYMENT_STATUS_WATING,
+                    $response['token'],
+                    $username,
+                    $order->getCustomerEmail(),
+                    $customerId,
+                    $this->getOrderId(),
                 );
                 $this->orderService->setStatus($order, $orderStatusPendingPayment, $message);
             } else {
                 $this->saveOneclickInscriptionData(
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
-                    $response['token'],             // token
-                    '',                             // username
-                    $order->getCustomerEmail(),     // email
-                    $order->getCustomerId(),        // user_id
-                    $this->getOrderId(),            // order_id
+                    $response['token'] ?? null,
+                    $username,
+                    $order->getCustomerEmail(),
+                    $customerId,
+                    $this->getOrderId(),
                 );
-                $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>'.json_encode($response);
+                $message = '<h3>Error en Inscripción con {$oneclickTitle}</h3><br>' . json_encode($response);
                 $this->orderService->cancel($order, $orderStatusCanceled, $message);
             }
 
             $this->quoteService->activate($this->quoteService->getCurrentQuote());
         } catch (\Exception $e) {
-            $message = 'Error al crear transacción: '.$e->getMessage();
+            $message = 'Error al crear transacción: ' . $e->getMessage();
             $this->log->logError($message);
             $response = ['error' => $message];
             if ($order != null) {
@@ -189,15 +201,14 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
      *
      * @return OneclickInscriptionData
      */
-    protected function saveOneclickInscriptionData( // Copiar esta funcion para guardar los datos en CommitOneClick.php
+    protected function saveOneclickInscriptionData(
         $status,
         $token,
         $username,
         $email,
         $user_id,
         $order_id
-    )
-    {
+    ) {
         $oneclickInscriptionData = $this->oneclickInscriptionDataFactory->create();
         $oneclickInscriptionData->setData([
             'status'          => $status,
@@ -219,6 +230,21 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected function getOrderId()
     {
         return $this->checkoutSession->getLastRealOrderId();
+    }
+
+    /**
+     * @param Order $order
+     * @param int   $customerId
+     *
+     * @throws InvalidRequestException When the order does not belong to the given customer.
+     *
+     * @return void
+     */
+    private function validateOrderOwnership(Order $order, int $customerId): void
+    {
+        if ((int) $order->getCustomerId() !== $customerId) {
+            throw new InvalidRequestException("La orden no pertenece al cliente autenticado.");
+        }
     }
 
     /**
