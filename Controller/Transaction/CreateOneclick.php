@@ -127,6 +127,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $orderId = $this->getOrderId();
 
             $customerId = (int) $this->customerSession->getCustomerId();
+            $this->validateOrderOwnership($order, $customerId);
             $username = $this->oneclickInscriptionService->generateInscriptionUsername($customerId);
             $this->log->logInfo('New username: ' . json_encode($username));
 
@@ -229,6 +230,21 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
     protected function getOrderId()
     {
         return $this->checkoutSession->getLastRealOrderId();
+    }
+
+    /**
+     * @param Order $order
+     * @param int   $customerId
+     *
+     * @throws InvalidRequestException When the order does not belong to the given customer.
+     *
+     * @return void
+     */
+    private function validateOrderOwnership(Order $order, int $customerId): void
+    {
+        if ((int) $order->getCustomerId() !== $customerId) {
+            throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
+        }
     }
 
     /**
