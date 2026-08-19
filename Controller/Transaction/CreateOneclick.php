@@ -116,7 +116,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $returnUrl = $baseUrl.$this->oneClickConfig['URL_RETURN'];
             $orderId = $this->getOrderId();
 
-            $username = $this->oneclickInscriptionService->generateInscriptionUsername($order->getCustomerId()); // Generate new Username
+            $username = $this->oneclickInscriptionService->generateInscriptionUsername((int) $order->getCustomerId()); // Generate new Username
             $this->log->logInfo('New username: '.json_encode($username));
 
             $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
@@ -138,7 +138,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                 $this->saveOneclickInscriptionData(
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
                     $response['token'],             // token
-                    '',                             // username
+                    $username,                      // username
                     $order->getCustomerEmail(),     // email
                     $order->getCustomerId(),        // user_id
                     $this->getOrderId(),            // order_id

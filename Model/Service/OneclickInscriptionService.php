@@ -12,6 +12,8 @@ use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
  */
 class OneclickInscriptionService
 {
+    private const INTEGRATOR_CODE = 'mg';
+
     protected $oneclickInscriptionDataRepository;
 
     /**
@@ -85,28 +87,21 @@ class OneclickInscriptionService
     }
 
     /**
-     * Generate the next incremental username for a customer, based on their previous inscriptions.
+     * Generate a unique Oneclick username for an authenticated customer.
      *
-     * @param $customerId The customer id, or null for guests
+     * @param int $customerId The authenticated customer id (must be > 0)
      *
      * @return string
      */
-    public function generateInscriptionUsername($customerId)
+    public function generateInscriptionUsername(int $customerId): string
     {
-        $inscriptions = $this->getActiveInscriptionsByCustomerId($customerId);
-
-        if (empty($inscriptions)) {
-            $username = 'U_' . $customerId . '_1';
-        } else {
-            $last_inscription = end($inscriptions);
-            $last_username = $last_inscription['username'];
-            $username_parts = explode('_', $last_username);
-            $last_correlative = intval(end($username_parts));
-            $new_correlative = $last_correlative + 1;
-            $username = 'U_' . $customerId . '_' . $new_correlative;
+        if ($customerId <= 0) {
+            throw new \InvalidArgumentException('El id de cliente es inválido.');
         }
 
-        return $username;
+        $uid = bin2hex(random_bytes(8));
+
+        return sprintf('%s:%d:%s', self::INTEGRATOR_CODE, $customerId, $uid);
     }
 
     /**
