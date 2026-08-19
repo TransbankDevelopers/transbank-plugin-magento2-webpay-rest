@@ -148,7 +148,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             } else {
                 $this->saveOneclickInscriptionData(
                     OneclickInscriptionData::PAYMENT_STATUS_FAILED,
-                    $response['token'],
+                    $response['token'] ?? null,
                     $username,
                     $order->getCustomerEmail(),
                     $customerId,
