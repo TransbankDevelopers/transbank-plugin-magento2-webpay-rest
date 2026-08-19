@@ -12,8 +12,6 @@ use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
  */
 class OneclickInscriptionService
 {
-    private const INTEGRATOR_CODE = 'mg';
-
     protected $oneclickInscriptionDataRepository;
 
     /**
@@ -95,13 +93,16 @@ class OneclickInscriptionService
      */
     public function generateInscriptionUsername(int $customerId): string
     {
+        $integratorCode = 'mg';
+        $uidByteLength = 8;
+
         if ($customerId <= 0) {
             throw new \InvalidArgumentException('El id de cliente es inválido.');
         }
 
-        $uid = bin2hex(random_bytes(8));
+        $uid = bin2hex(random_bytes($uidByteLength));
 
-        return sprintf('%s:%d:%s', self::INTEGRATOR_CODE, $customerId, $uid);
+        return sprintf('%s:%d:%s', $integratorCode, $customerId, $uid);
     }
 
     /**
