@@ -8,7 +8,6 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\App\Action\Action;
 use Magento\Customer\Model\Session as CustomerSession;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Model\OneclickInscriptionData;
@@ -71,11 +70,13 @@ class Delete extends Action implements HttpPostActionInterface
         if ($inscriptionId === false) {
             throw new InvalidRequestException(self::INVALID_CARD_MESSAGE);
         }
+
         if (!$this->customerSession->isLoggedIn()) {
             throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
         }
 
         $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
+
         if (!$this->oneclickInscriptionService->isOwnedByCustomer(
             $inscription->getUserId(),
             $this->customerSession->getCustomerId()
@@ -93,8 +94,7 @@ class Delete extends Action implements HttpPostActionInterface
             'customer_id' => $this->customerSession->getCustomerId(),
         ]);
 
-        $this->deleteTransbankInscription($inscription->getUsername(), $inscription->getTbkUser());
-        $this->oneclickInscriptionService->setInscriptionAsDeleted($inscription);
+        $this->oneclickInscriptionService->delete($inscription, $this->configProvider->getPluginConfigOneclick());
 
         $this->logger->logInfo("Tarjeta inscrita eliminada exitosamente.", [
             'inscription_id' => $inscription->getId(),
@@ -102,14 +102,6 @@ class Delete extends Action implements HttpPostActionInterface
         ]);
 
         $this->messageManager->addSuccessMessage(__(self::DELETE_SUCCESS_MESSAGE));
-    }
-
-    private function deleteTransbankInscription($username, $tbkUser): void
-    {
-        $config = $this->configProvider->getPluginConfigOneclick();
-        $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
-
-        $transbankSdkWebpay->deleteInscription($username, $tbkUser);
     }
 
     private function redirectToReferer()
