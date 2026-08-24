@@ -184,12 +184,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
 
     private function processTransaction(string $token)
     {
-        $config = $this->configProvider->getPluginConfig();
         $webpayOrderData = $this->webpayOrderDataService->getByToken($token, throwIfNotFound: true);
         $orderId = $webpayOrderData->getOrderId();
         $order = $this->getOrder($orderId);
 
-        $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
         $commitResponse = $transbankSdkWebpay->commitTransaction($token);
 
         if (is_array($commitResponse) && isset($commitResponse['error'])) {

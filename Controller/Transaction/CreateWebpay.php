@@ -110,7 +110,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $quote->save();
 
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->webpayConfig);
+            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
             $this->log->logInfo('B.2. Preparando datos antes de crear la transacción en Transbank');
             $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', orderId: ' . $orderId . ', buyOrder: ' . $buyOrder . ', returnUrl: ' . $returnUrl);
             $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $buyOrder, $returnUrl);

@@ -131,7 +131,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             $username = $this->oneclickInscriptionService->generateInscriptionUsername($customerId);
             $this->log->logInfo('New username: ' . json_encode($username));
 
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneClickConfig);
+            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
             $response = $transbankSdkWebpay->createInscription($username, $order->getCustomerEmail(), $returnUrl);
             $dataLog = ['customerId' => $username, 'orderId' => $orderId];
             $message = "<h3>Esperando Inscripción con {$oneclickTitle}</h3><br>" . json_encode($dataLog);

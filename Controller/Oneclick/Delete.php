@@ -106,8 +106,7 @@ class Delete extends Action implements HttpPostActionInterface
 
     private function deleteTransbankInscription($username, $tbkUser): void
     {
-        $config = $this->configProvider->getPluginConfigOneclick();
-        $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
 
         $transbankSdkWebpay->deleteInscription($username, $tbkUser);
     }

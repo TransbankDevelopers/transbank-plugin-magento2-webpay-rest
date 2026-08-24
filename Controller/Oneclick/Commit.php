@@ -163,9 +163,7 @@ class Commit extends Action
 
     private function finishWaitingInscription(OneclickInscriptionData $inscription, string $token)
     {
-        $result = (new TransbankSdkWebpayRest(
-            $this->configProvider->getPluginConfigOneclick()
-        ))->finishInscription($token);
+        $result = (new TransbankSdkWebpayRest($this->configProvider))->finishInscription($token);
 
         if ($this->inscriptionService->resolveInscriptionFinishResult($inscription, $result)) {
             return $this->redirectWithSuccess();

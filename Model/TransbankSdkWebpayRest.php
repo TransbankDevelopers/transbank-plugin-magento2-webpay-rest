@@ -7,6 +7,7 @@ use Transbank\Webpay\Exceptions\TransbankCreateException;
 use Transbank\Webpay\Exceptions\InscriptionDeleteException;
 use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Transaction;
 use Transbank\Webpay\Options;
@@ -47,22 +48,26 @@ class TransbankSdkWebpayRest
     public ?MallTransaction $mallTransaction = null;
 
     /**
-     * Raw configuration array used to build SDK clients.
+     * Configuration array used to build SDK clients, resolved lazily per operation.
      * @var array<string,mixed>
      * */
     private ?array $config = null;
 
     /**
+     * @var ConfigProvider
+     */
+    private ConfigProvider $configProvider;
+
+    /**
      * TransbankSdkWebpayRest constructor.
      *
-     * @param $config
-     * @param $product
+     * @param ConfigProvider $configProvider
      */
-    public function __construct($config)
+    public function __construct(ConfigProvider $configProvider)
     {
         $this->log = new PluginLogger();
 
-        $this->config = is_array($config) ? $config : null;
+        $this->configProvider = $configProvider;
     }
 
     private function requireConfig(): array
@@ -126,6 +131,10 @@ class TransbankSdkWebpayRest
             return;
         }
 
+        if ($this->config === null) {
+            $this->config = $this->configProvider->getPluginConfig();
+        }
+
         $config = $this->requireConfig();
 
         $options = $this->buildOptions(
@@ -153,6 +162,10 @@ class TransbankSdkWebpayRest
             return;
         }
 
+        if ($this->config === null) {
+            $this->config = $this->configProvider->getPluginConfigOneclick();
+        }
+
         $config = $this->requireConfig();
 
         $options = $this->buildOptions(
@@ -178,6 +191,10 @@ class TransbankSdkWebpayRest
 
         if (!is_null($this->mallTransaction)) {
             return;
+        }
+
+        if ($this->config === null) {
+            $this->config = $this->configProvider->getPluginConfigOneclick();
         }
 
         $config = $this->requireConfig();

@@ -60,8 +60,7 @@ class RefundObserver implements ObserverInterface
 
             $this->logger->logInfo('Realizando reembolso. Orden: ' . $order->getId() . ' Monto: ' . $grandTotal);
             $paymentMethod = $order->getPayment()->getMethod();
-            $productConfig = $this->getProductConfig($paymentMethod);
-            $transbankSdk = new TransbankSdkWebpayRest($productConfig);
+            $transbankSdk = new TransbankSdkWebpayRest($this->configProvider);
             $transactionData = $this->getTransactionData($paymentMethod, $order);
             $refundResponse = $this->refundTransaction(
                 $paymentMethod,
@@ -102,19 +101,6 @@ class RefundObserver implements ObserverInterface
             $this->orderRepository->save($order);
             $this->messageManager->addErrorMessage($errorMessageBase . $refundInstructions);
         }
-    }
-
-    /**
-     * @param string $paymentMethod
-     *
-     * @return array
-     */
-    private function getProductConfig($paymentMethod): array
-    {
-        if ($paymentMethod == Webpay::CODE) {
-            return $this->configProvider->getPluginConfig();
-        }
-        return $this->configProvider->getPluginConfigOneclick();
     }
 
     /**

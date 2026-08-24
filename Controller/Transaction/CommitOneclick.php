@@ -74,7 +74,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     public function execute()
     {
-        $config = $this->configProvider->getPluginConfigOneclick();
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $inscriptionResult = [];
         $oneclickTitle = $this->configProvider->getOneclickTitle();
@@ -92,7 +91,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
             $status = $oneclickInscriptionData->getStatus();
 
             if ($status == OneclickInscriptionData::PAYMENT_STATUS_WATING) {
-                $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+                $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
                 $inscriptionResult = $transbankSdkWebpay->finishInscription($tbkToken);
 
                 if ($this->oneclickInscriptionService->resolveInscriptionFinishResult($oneclickInscriptionData, $inscriptionResult)) {
