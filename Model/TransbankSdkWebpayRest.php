@@ -4,7 +4,6 @@ namespace Transbank\Webpay\Model;
 
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
-use Transbank\Webpay\Exceptions\InscriptionDeleteException;
 use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\WebpayPlus;
@@ -18,6 +17,7 @@ use Transbank\Webpay\Oneclick\MallInscription;
 use Transbank\Webpay\Oneclick\MallTransaction;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
+use Transbank\Webpay\Oneclick\Exceptions\InscriptionDeleteException;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 
 /**
