@@ -5,6 +5,7 @@ namespace Transbank\Webpay\Model\Service;
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
+use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 
 /**
  * Class OneclickInscriptionService
@@ -119,17 +120,21 @@ class OneclickInscriptionService
     }
 
     /**
-     * Mark an inscription as deleted and persist it.
+     * Delete an inscription at Transbank and mark it as deleted locally.
      *
-     * @param OneclickInscriptionData $inscription The inscription to mark as deleted
+     * @param OneclickInscriptionData $inscription The inscription to delete
+     * @param array $config The Oneclick SDK configuration
      *
      * @return OneclickInscriptionData The updated inscription
      */
-    public function setInscriptionAsDeleted(OneclickInscriptionData $inscription): OneclickInscriptionData
+    public function delete(OneclickInscriptionData $inscription, array $config): OneclickInscriptionData
     {
-        $inscription->setStatus(OneclickInscriptionData::INSCRIPTION_STATUS_DELETED);
+        $sdk = new TransbankSdkWebpayRest($config);
+        $sdk->deleteInscription($inscription->getUsername(), $inscription->getTbkUser());
 
-        return $this->oneclickInscriptionDataRepository->save($inscription);
+        return $this->oneclickInscriptionDataRepository->update($inscription, [
+            'status' => OneclickInscriptionData::INSCRIPTION_STATUS_DELETED,
+        ]);
     }
 
     /**

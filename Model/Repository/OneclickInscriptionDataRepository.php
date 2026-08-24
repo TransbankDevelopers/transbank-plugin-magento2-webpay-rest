@@ -12,6 +12,23 @@ use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData\CollectionFacto
  */
 class OneclickInscriptionDataRepository
 {
+    private const WRITABLE_FIELDS = [
+        'status',
+        'token',
+        'username',
+        'email',
+        'user_id',
+        'order_id',
+        'environment',
+        'commerce_code',
+        'metadata',
+        'tbk_user',
+        'response_code',
+        'authorization_code',
+        'card_type',
+        'card_number',
+    ];
+
     protected $collectionFactory;
 
     /**
@@ -105,5 +122,21 @@ class OneclickInscriptionDataRepository
         $oneclickInscriptionData->save();
 
         return $oneclickInscriptionData;
+    }
+
+    /**
+     * Update a OneclickInscriptionData entity with the given fields and persist it.
+     *
+     * @param OneclickInscriptionData $inscription The entity to update
+     * @param array $data The fields to update. Keys outside WRITABLE_FIELDS are silently discarded.
+     *
+     * @return OneclickInscriptionData
+     */
+    public function update(OneclickInscriptionData $inscription, array $data): OneclickInscriptionData
+    {
+        $inscription->addData(array_intersect_key($data, array_flip(self::WRITABLE_FIELDS)));
+        $inscription->save();
+
+        return $inscription;
     }
 }
