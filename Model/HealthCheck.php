@@ -62,12 +62,6 @@ class HealthCheck
     public $ecommerce;
 
     /**
-     * Configuration data.
-     * @var array
-     */
-    public $config;
-
-    /**
      * @var ConfigProvider
      */
     private ConfigProvider $configProvider;
@@ -87,7 +81,6 @@ class HealthCheck
     {
         $config = $configProvider->getPluginConfig();
 
-        $this->config = $config;
         $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];
         $this->apiKey = $config['API_KEY'];
