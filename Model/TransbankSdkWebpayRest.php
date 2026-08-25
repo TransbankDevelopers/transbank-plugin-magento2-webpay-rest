@@ -48,12 +48,6 @@ class TransbankSdkWebpayRest
     public ?MallTransaction $mallTransaction = null;
 
     /**
-     * Configuration array used to build SDK clients, resolved lazily per operation.
-     * @var array<string,mixed>
-     * */
-    private ?array $config = null;
-
-    /**
      * @var ConfigProvider
      */
     private ConfigProvider $configProvider;
@@ -68,15 +62,6 @@ class TransbankSdkWebpayRest
         $this->log = new PluginLogger();
 
         $this->configProvider = $configProvider;
-    }
-
-    private function requireConfig(): array
-    {
-        if ($this->config === null) {
-            throw new MissingArgumentException('La configuración es requerida.');
-        }
-
-        return $this->config;
     }
 
     /**
@@ -131,11 +116,7 @@ class TransbankSdkWebpayRest
             return;
         }
 
-        if ($this->config === null) {
-            $this->config = $this->configProvider->getPluginConfig();
-        }
-
-        $config = $this->requireConfig();
+        $config = $this->configProvider->getPluginConfig();
 
         $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
@@ -162,11 +143,7 @@ class TransbankSdkWebpayRest
             return;
         }
 
-        if ($this->config === null) {
-            $this->config = $this->configProvider->getPluginConfigOneclick();
-        }
-
-        $config = $this->requireConfig();
+        $config = $this->configProvider->getPluginConfigOneclick();
 
         $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
@@ -193,11 +170,7 @@ class TransbankSdkWebpayRest
             return;
         }
 
-        if ($this->config === null) {
-            $this->config = $this->configProvider->getPluginConfigOneclick();
-        }
-
-        $config = $this->requireConfig();
+        $config = $this->configProvider->getPluginConfigOneclick();
 
         $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
