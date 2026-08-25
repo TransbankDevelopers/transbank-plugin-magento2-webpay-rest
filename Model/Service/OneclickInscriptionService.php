@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Model\Service;
 
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
+use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
@@ -14,16 +15,20 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 class OneclickInscriptionService
 {
     protected $oneclickInscriptionDataRepository;
+    private ConfigProvider $configProvider;
 
     /**
      * Constructor
      *
-     * @param OneclickInscriptionDataRepository
+     * @param OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
+     * @param ConfigProvider $configProvider
      */
     public function __construct(
-        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
+        OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
+        ConfigProvider $configProvider
     ) {
         $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
+        $this->configProvider = $configProvider;
     }
 
     /**
@@ -123,13 +128,12 @@ class OneclickInscriptionService
      * Delete an inscription at Transbank and mark it as deleted locally.
      *
      * @param OneclickInscriptionData $inscription The inscription to delete
-     * @param array $config The Oneclick SDK configuration
      *
      * @return OneclickInscriptionData The updated inscription
      */
-    public function delete(OneclickInscriptionData $inscription, array $config): OneclickInscriptionData
+    public function delete(OneclickInscriptionData $inscription): OneclickInscriptionData
     {
-        $sdk = new TransbankSdkWebpayRest($config);
+        $sdk = new TransbankSdkWebpayRest($this->configProvider);
         $sdk->deleteInscription($inscription->getUsername(), $inscription->getTbkUser());
 
         return $this->oneclickInscriptionDataRepository->update($inscription, [

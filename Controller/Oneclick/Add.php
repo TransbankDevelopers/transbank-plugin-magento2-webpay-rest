@@ -92,7 +92,7 @@ class Add extends Action implements HttpPostActionInterface
 
         try {
             $username = $this->inscriptionService->generateInscriptionUsername($customerId);
-            $response = (new TransbankSdkWebpayRest($config))->createInscription($username, $email, $returnUrl);
+            $response = (new TransbankSdkWebpayRest($this->configProvider))->createInscription($username, $email, $returnUrl);
             $token = $response['token'] ?? null;
             $webpayUrl = $response['urlWebpay'] ?? null;
 

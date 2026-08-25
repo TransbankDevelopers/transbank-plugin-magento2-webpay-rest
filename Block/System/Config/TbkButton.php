@@ -19,9 +19,7 @@ class TbkButton extends \Magento\Config\Block\System\Config\Form\Field
     ) {
         parent::__construct($context);
 
-        $config = $configProvider->getPluginConfig();
-
-        $healthcheck = new HealthCheck($config);
+        $healthcheck = new HealthCheck($configProvider);
         $datos_hc = $healthcheck->getFullResume();
 
         $logger = new PluginLogger();

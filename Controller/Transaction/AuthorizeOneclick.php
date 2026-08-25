@@ -164,7 +164,7 @@ class AuthorizeOneclick extends Action
             throw new InvalidRequestException("Datos incorrectos para autorizar la transacción.");
         }
 
-        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->oneclickConfig);
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
 
         $username = $inscription->getUsername();
         $tbkUser = $inscription->getTbkUser();

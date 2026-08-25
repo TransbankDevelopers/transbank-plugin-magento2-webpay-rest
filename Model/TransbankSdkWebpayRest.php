@@ -6,6 +6,7 @@ use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
 use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\WebpayPlus;
 use Transbank\Webpay\WebpayPlus\Transaction;
 use Transbank\Webpay\Options;
@@ -47,31 +48,20 @@ class TransbankSdkWebpayRest
     public ?MallTransaction $mallTransaction = null;
 
     /**
-     * Raw configuration array used to build SDK clients.
-     * @var array<string,mixed>
-     * */
-    private ?array $config = null;
+     * @var ConfigProvider
+     */
+    private ConfigProvider $configProvider;
 
     /**
      * TransbankSdkWebpayRest constructor.
      *
-     * @param $config
-     * @param $product
+     * @param ConfigProvider $configProvider
      */
-    public function __construct($config)
+    public function __construct(ConfigProvider $configProvider)
     {
         $this->log = new PluginLogger();
 
-        $this->config = is_array($config) ? $config : null;
-    }
-
-    private function requireConfig(): array
-    {
-        if ($this->config === null) {
-            throw new MissingArgumentException('La configuración es requerida.');
-        }
-
-        return $this->config;
+        $this->configProvider = $configProvider;
     }
 
     /**
@@ -126,7 +116,7 @@ class TransbankSdkWebpayRest
             return;
         }
 
-        $config = $this->requireConfig();
+        $config = $this->configProvider->getPluginConfig();
 
         $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
@@ -153,7 +143,7 @@ class TransbankSdkWebpayRest
             return;
         }
 
-        $config = $this->requireConfig();
+        $config = $this->configProvider->getPluginConfigOneclick();
 
         $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',
@@ -180,7 +170,7 @@ class TransbankSdkWebpayRest
             return;
         }
 
-        $config = $this->requireConfig();
+        $config = $this->configProvider->getPluginConfigOneclick();
 
         $options = $this->buildOptions(
             $config['ENVIRONMENT'] ?? 'TEST',

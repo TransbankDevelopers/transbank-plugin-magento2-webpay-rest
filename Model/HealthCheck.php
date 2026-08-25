@@ -5,6 +5,7 @@ namespace Transbank\Webpay\Model;
 use Magento\Framework\Module\ModuleList;
 use Magento\Framework\App\ProductMetadataInterface;
 use Transbank\Webpay\Helper\ObjectManagerHelper;
+use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\WebpayPlus;
 
 class HealthCheck
@@ -61,10 +62,9 @@ class HealthCheck
     public $ecommerce;
 
     /**
-     * Configuration data.
-     * @var array
+     * @var ConfigProvider
      */
-    public $config;
+    private ConfigProvider $configProvider;
 
     /**
      * Results of extension validation.
@@ -73,17 +73,19 @@ class HealthCheck
     public $resExtensions;
 
     /**
-     * Initializes the HealthCheck instance with configuration data.
+     * Initializes the HealthCheck instance, resolving its configuration from $configProvider.
      *
-     * @param array $config The configuration data.
+     * @param ConfigProvider $configProvider
      */
-    public function __construct($config)
+    public function __construct(ConfigProvider $configProvider)
     {
-        $this->config = $config;
+        $config = $configProvider->getPluginConfig();
+
         $this->environment = $config['ENVIRONMENT'];
         $this->commerceCode = $config['COMMERCE_CODE'];
         $this->apiKey = $config['API_KEY'];
         $this->ecommerce = $config['ECOMMERCE'];
+        $this->configProvider = $configProvider;
         // extensiones necesarias
         $this->extensions = [
             'dom',
@@ -303,7 +305,7 @@ class HealthCheck
      */
     public function createTestTransaction()
     {
-        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->config);
+        $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
         $amount = 990;
         $buyOrder = '_Healthcheck_';
         $sessionId = uniqid();

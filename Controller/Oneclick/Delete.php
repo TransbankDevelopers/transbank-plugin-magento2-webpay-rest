@@ -9,7 +9,6 @@ use Magento\Framework\App\Action\Action;
 use Magento\Customer\Model\Session as CustomerSession;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
-use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
 
@@ -20,7 +19,6 @@ class Delete extends Action implements HttpPostActionInterface
     private const DELETE_SUCCESS_MESSAGE = "Tarjeta eliminada exitosamente.";
     private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta, contacta al comercio para recibir asistencia.";
 
-    protected $configProvider;
     protected $oneclickInscriptionService;
     protected $customerSession;
     private $logger;
@@ -28,12 +26,10 @@ class Delete extends Action implements HttpPostActionInterface
     public function __construct(
         Context $context,
         OneclickInscriptionService $oneclickInscriptionService,
-        ConfigProvider $configProvider,
         CustomerSession $customerSession,
         PluginLogger $logger
     ) {
         parent::__construct($context);
-        $this->configProvider = $configProvider;
         $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->customerSession = $customerSession;
         $this->logger = $logger;
@@ -94,7 +90,7 @@ class Delete extends Action implements HttpPostActionInterface
             'customer_id' => $this->customerSession->getCustomerId(),
         ]);
 
-        $this->oneclickInscriptionService->delete($inscription, $this->configProvider->getPluginConfigOneclick());
+        $this->oneclickInscriptionService->delete($inscription);
 
         $this->logger->logInfo("Tarjeta inscrita eliminada exitosamente.", [
             'inscription_id' => $inscription->getId(),
