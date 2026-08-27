@@ -9,25 +9,25 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         apache2 \
-        cron \
-        ssh \
-        libicu-dev \
-        libxml2-dev \
-        libzip-dev \
-        libonig-dev \
-        libxslt1-dev \
-        libjpeg62-turbo-dev \
-        libpng-dev \
-        libfreetype6-dev \
-        git \
-        curl \
-        netcat-openbsd \
-        unzip \
         bash \
         ca-certificates \
+        cron \
+        curl \
         default-mysql-client \
+        git \
+        libfreetype6-dev \
+        libicu-dev \
+        libjpeg62-turbo-dev \
+        libonig-dev \
+        libpng-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libzip-dev \
+        netcat-openbsd \
         ripgrep \
-        tzdata; \
+        ssh \
+        tzdata \
+        unzip; \
     \
     # ---------- PHP extensions ----------
     docker-php-ext-configure gd \
