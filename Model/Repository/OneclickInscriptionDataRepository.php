@@ -125,6 +125,22 @@ class OneclickInscriptionDataRepository
     }
 
     /**
+     * Build and persist a OneclickInscriptionData entity from a set of fields.
+     *
+     * @param array $data The fields to set. Keys outside WRITABLE_FIELDS are silently discarded.
+     *
+     * @return OneclickInscriptionData
+     */
+    public function create(array $data): OneclickInscriptionData
+    {
+        $inscription = $this->collectionFactory->create()->getNewEmptyItem();
+        $inscription->addData(array_intersect_key($data, array_flip(self::WRITABLE_FIELDS)));
+        $inscription->save();
+
+        return $inscription;
+    }
+
+    /**
      * Update a OneclickInscriptionData entity with the given fields and persist it.
      *
      * @param OneclickInscriptionData $inscription The entity to update

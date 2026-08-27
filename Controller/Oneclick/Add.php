@@ -9,46 +9,31 @@ use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\Result\RawFactory;
 use Magento\Framework\UrlInterface;
 use Transbank\Webpay\Helper\PluginLogger;
-use Transbank\Webpay\Infrastructure\Lock\MySqlNamedLock;
-use Transbank\Webpay\Model\Config\ConfigProvider;
-use Transbank\Webpay\Model\OneclickInscriptionData;
-use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\Service\OneclickInscriptionService;
-use Transbank\Webpay\Model\TransbankSdkWebpayRest;
-use Transbank\Webpay\Exceptions\TransbankException;
 
 class Add extends Action implements HttpPostActionInterface
 {
     private const GENERIC_ERROR = 'No fue posible iniciar la inscripción de la tarjeta.';
 
     private $customerSession;
-    private $configProvider;
     private $urlBuilder;
-    private $inscriptionFactory;
     private $inscriptionService;
     private $logger;
-    private $lock;
     private $rawResultFactory;
 
     public function __construct(
         Context $context,
         CustomerSession $customerSession,
-        ConfigProvider $configProvider,
         UrlInterface $urlBuilder,
-        OneclickInscriptionDataFactory $inscriptionFactory,
         OneclickInscriptionService $inscriptionService,
         PluginLogger $logger,
-        MySqlNamedLock $lock,
         RawFactory $rawResultFactory
     ) {
         parent::__construct($context);
         $this->customerSession = $customerSession;
-        $this->configProvider = $configProvider;
         $this->urlBuilder = $urlBuilder;
-        $this->inscriptionFactory = $inscriptionFactory;
         $this->inscriptionService = $inscriptionService;
         $this->logger = $logger;
-        $this->lock = $lock;
         $this->rawResultFactory = $rawResultFactory;
     }
 
@@ -77,56 +62,18 @@ class Add extends Action implements HttpPostActionInterface
         }
 
         $customer = $this->customerSession->getCustomer();
-        $customerId = (int) $customer->getId();
-        $email = (string) $customer->getEmail();
-        $config = $this->configProvider->getPluginConfigOneclick();
         $returnUrl = $this->urlBuilder->getUrl(
             'customer/oneclick/commit',
             ['_secure' => true, '_scope_to_url' => true]
         );
-        $lockKey = 'transbank_private_oneclick_add_' . $customerId;
 
-        if (!$this->lock->acquire($lockKey)) {
-            throw new TransbankException('No se pudo serializar la inscripción.');
-        }
+        $inscription = $this->inscriptionService->startPrivateInscription(
+            (int) $customer->getId(),
+            (string) $customer->getEmail(),
+            $returnUrl
+        );
 
-        try {
-            $username = $this->inscriptionService->generateInscriptionUsername($customerId);
-            $response = (new TransbankSdkWebpayRest($this->configProvider))->createInscription($username, $email, $returnUrl);
-            $token = $response['token'] ?? null;
-            $webpayUrl = $response['urlWebpay'] ?? null;
-
-            if (!$this->isValidResponseValue($token) || !$this->isValidHttpsUrl($webpayUrl)) {
-                throw new TransbankException('Respuesta inválida al iniciar inscripción.');
-            }
-
-            $inscription = $this->inscriptionFactory->create();
-            $inscription->setData([
-                'status' => OneclickInscriptionData::PAYMENT_STATUS_WATING,
-                'token' => $token,
-                'username' => $username,
-                'email' => $email,
-                'user_id' => $customerId,
-                'environment' => $config['ENVIRONMENT'] ?? null,
-                'commerce_code' => $config['COMMERCE_CODE'] ?? null,
-                'metadata' => json_encode(['source' => 'private'], JSON_THROW_ON_ERROR),
-            ]);
-            $this->inscriptionService->save($inscription);
-
-            return $this->createWebpayForm($webpayUrl, $token);
-        } finally {
-            $this->lock->release($lockKey);
-        }
-    }
-
-    private function isValidResponseValue($value): bool
-    {
-        return is_string($value) && trim($value) !== '';
-    }
-
-    private function isValidHttpsUrl($url): bool
-    {
-        return $this->isValidResponseValue($url) && strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https';
+        return $this->createWebpayForm($inscription['webpayUrl'], $inscription['token']);
     }
 
     private function createWebpayForm(string $webpayUrl, string $token)
