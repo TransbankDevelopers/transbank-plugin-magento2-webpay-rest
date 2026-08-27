@@ -10,9 +10,7 @@ class InvoiceObserver extends SuccessObserver implements ObserverInterface
     private ObserverGuard $observerGuard;
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Sales\Model\Order $order,
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
-        \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
@@ -20,9 +18,7 @@ class InvoiceObserver extends SuccessObserver implements ObserverInterface
     ) {
         parent::__construct(
             $logger,
-            $order,
             $orderSender,
-            $invoiceSender,
             $invoiceService,
             $transaction,
             $configProvider
