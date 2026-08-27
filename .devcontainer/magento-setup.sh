@@ -83,7 +83,7 @@ cd "$MAGENTO_DIR"
 # --- 1. Magento installation (Only if it doesn't exist)
 if [[ ! -f "bin/magento" ]]; then
     log "Descargando Magento ${MAGENTO_VERSION}..."
-    curl -fsSL "${MAGENTO_ZIP_URL}" -o /tmp/magento.zip
+    curl -fsSL --proto '=https' "${MAGENTO_ZIP_URL}" -o /tmp/magento.zip
     unzip -q /tmp/magento.zip -d /tmp/magento-src
     SRC_FOLDER=$(find /tmp/magento-src -maxdepth 1 -type d -name "magento2-*" | head -n 1)
     cp -a "${SRC_FOLDER}/." .
