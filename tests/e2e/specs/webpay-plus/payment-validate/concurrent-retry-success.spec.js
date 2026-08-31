@@ -10,7 +10,10 @@ import {
     isLockHeld,
     closePool,
 } from "../../../helpers/database.js";
-import { expectOrderConfirmation } from "../../../helpers/assertions.js";
+import {
+    expectOrderConfirmation,
+    isOrderConfirmation,
+} from "../../../helpers/assertions.js";
 import {
     runCheckoutFlow,
     holdReturnRequests,
@@ -96,7 +99,7 @@ test.describe("Webpay Plus — Retry when lock is busy", () => {
 
             await test.step("Verify the page shows order confirmation", async () => {
                 await expect
-                    .poll(async () => (await page.content()).includes("tbk_voucher"), {
+                    .poll(() => isOrderConfirmation(page), {
                         timeout: 30_000,
                         intervals: [1_000],
                         message: "Waiting for order confirmation content"

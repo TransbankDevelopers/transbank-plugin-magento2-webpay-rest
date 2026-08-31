@@ -8,7 +8,10 @@ import {
     fillCardAndAuthenticate,
     continueToCommerce,
 } from "../../../helpers/webpay-form.js";
-import { expectOrderConfirmation } from "../../../helpers/assertions.js";
+import {
+    expectOrderConfirmation,
+    isOrderConfirmation,
+} from "../../../helpers/assertions.js";
 
 test.describe("Webpay Plus — Normal payment flow", () => {
     test("Authorized payment shows order confirmation", async ({ page }) => {
@@ -36,7 +39,7 @@ test.describe("Webpay Plus — Normal payment flow", () => {
                 timeout: 45_000
             });
             await expect
-                .poll(async () => (await page.content()).includes("tbk_voucher"), {
+                .poll(() => isOrderConfirmation(page), {
                     timeout: 45_000,
                     intervals: [1_000],
                     message: "Waiting for order confirmation content"
