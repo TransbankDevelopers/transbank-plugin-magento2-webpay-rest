@@ -78,11 +78,11 @@ WORKDIR /var/www/html
 
 # ---------- Entrypoint ----------
 COPY .devcontainer/magento-setup.sh /usr/local/bin/magento-setup.sh
-RUN chmod +x /usr/local/bin/magento-setup.sh
 
 # ---------- Shared-group umask for root shells (remoteUser: root) ----------
 # Keeps files that root creates under var/generated/pub group-writable for www-data.
-RUN echo "umask 0002" > /etc/profile.d/umask.sh \
+RUN chmod +x /usr/local/bin/magento-setup.sh \
+    && echo "umask 0002" > /etc/profile.d/umask.sh \
     && echo "umask 0002" >> /etc/bash.bashrc
 
 USER www-data
