@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 import {
     login,
     addProductToCart,
@@ -10,7 +10,7 @@ import {
 } from "../../../helpers/webpay-form.js";
 import {
     expectOrderConfirmation,
-    isOrderConfirmation,
+    waitForOrderConfirmation,
 } from "../../../helpers/assertions.js";
 
 test.describe("Webpay Plus — Normal payment flow", () => {
@@ -38,13 +38,7 @@ test.describe("Webpay Plus — Normal payment flow", () => {
             await page.waitForURL(/checkout\/transaction\/commitwebpay/, {
                 timeout: 45_000
             });
-            await expect
-                .poll(() => isOrderConfirmation(page), {
-                    timeout: 45_000,
-                    intervals: [1_000],
-                    message: "Waiting for order confirmation content"
-                })
-                .toBe(true);
+            await waitForOrderConfirmation(page, 45_000);
             await expectOrderConfirmation(page);
             console.log(`[INTERCEPTOR] Confirmation: url=${page.url()}`);
         });

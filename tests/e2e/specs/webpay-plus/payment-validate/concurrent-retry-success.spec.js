@@ -12,7 +12,7 @@ import {
 } from "../../../helpers/database.js";
 import {
     expectOrderConfirmation,
-    isOrderConfirmation,
+    waitForOrderConfirmation,
 } from "../../../helpers/assertions.js";
 import {
     runCheckoutFlow,
@@ -98,13 +98,7 @@ test.describe("Webpay Plus — Retry when lock is busy", () => {
             });
 
             await test.step("Verify the page shows order confirmation", async () => {
-                await expect
-                    .poll(() => isOrderConfirmation(page), {
-                        timeout: 30_000,
-                        intervals: [1_000],
-                        message: "Waiting for order confirmation content"
-                    })
-                    .toBe(true);
+                await waitForOrderConfirmation(page, 30_000);
                 await expectOrderConfirmation(page);
                 console.log(`[INTERCEPTOR] Confirmation: url=${page.url()}`);
             });
