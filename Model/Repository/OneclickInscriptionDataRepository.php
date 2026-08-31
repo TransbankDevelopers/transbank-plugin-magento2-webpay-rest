@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Model\Repository;
 
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData\CollectionFactory;
 
 /**
@@ -30,16 +31,20 @@ class OneclickInscriptionDataRepository
     ];
 
     protected $collectionFactory;
+    private $oneclickInscriptionDataFactory;
 
     /**
      * Constructor
      *
-     * @param CollectionFactory
+     * @param CollectionFactory $collectionFactory
+     * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
      */
     public function __construct(
-        CollectionFactory $collectionFactory
+        CollectionFactory $collectionFactory,
+        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
     ) {
         $this->collectionFactory = $collectionFactory;
+        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
     }
 
     /**
@@ -133,11 +138,10 @@ class OneclickInscriptionDataRepository
      */
     public function create(array $data): OneclickInscriptionData
     {
-        $inscription = $this->collectionFactory->create()->getNewEmptyItem();
+        $inscription = $this->oneclickInscriptionDataFactory->create();
         $inscription->addData(array_intersect_key($data, array_flip(self::WRITABLE_FIELDS)));
-        $inscription->save();
 
-        return $inscription;
+        return $this->save($inscription);
     }
 
     /**
