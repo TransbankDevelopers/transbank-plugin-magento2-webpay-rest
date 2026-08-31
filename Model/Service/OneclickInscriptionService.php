@@ -19,6 +19,7 @@ class OneclickInscriptionService
     protected $oneclickInscriptionDataRepository;
     private ConfigProvider $configProvider;
     private MySqlNamedLock $lock;
+    private TransbankSdkWebpayRest $transbankSdkWebpayRest;
 
     /**
      * Constructor
@@ -26,14 +27,17 @@ class OneclickInscriptionService
      * @param OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
      * @param ConfigProvider $configProvider
      * @param MySqlNamedLock $lock
+     * @param TransbankSdkWebpayRest $transbankSdkWebpayRest
      */
     public function __construct(
         OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
         ConfigProvider $configProvider,
-        MySqlNamedLock $lock
+        MySqlNamedLock $lock,
+        TransbankSdkWebpayRest $transbankSdkWebpayRest
     ) {
         $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->configProvider = $configProvider;
+        $this->transbankSdkWebpayRest = $transbankSdkWebpayRest;
         $this->lock = $lock;
     }
 
@@ -59,7 +63,7 @@ class OneclickInscriptionService
 
         try {
             $username = $this->generateInscriptionUsername($customerId);
-            $response = (new TransbankSdkWebpayRest($this->configProvider))
+            $response = $this->transbankSdkWebpayRest
                 ->createInscription($username, $email, $returnUrl);
             $token = $response['token'] ?? null;
             $webpayUrl = $response['urlWebpay'] ?? null;
@@ -188,8 +192,7 @@ class OneclickInscriptionService
      */
     public function delete(OneclickInscriptionData $inscription): OneclickInscriptionData
     {
-        $sdk = new TransbankSdkWebpayRest($this->configProvider);
-        $sdk->deleteInscription($inscription->getUsername(), $inscription->getTbkUser());
+        $this->transbankSdkWebpayRest->deleteInscription($inscription->getUsername(), $inscription->getTbkUser());
 
         return $this->oneclickInscriptionDataRepository->update($inscription, [
             'status' => OneclickInscriptionData::INSCRIPTION_STATUS_DELETED,
