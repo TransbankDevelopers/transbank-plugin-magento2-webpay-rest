@@ -4,6 +4,7 @@ namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\Oneclick;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
@@ -91,7 +92,7 @@ class RefundObserver implements ObserverInterface
      * Persist a successful refund outcome: update the Webpay order data, log it on the order,
      * and save the order.
      *
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param object $refundResponse
      * @param array $transactionData
      * @param int $grandTotal
@@ -100,7 +101,7 @@ class RefundObserver implements ObserverInterface
      * @return void
      */
     private function handleSuccessfulRefund(
-        \Magento\Sales\Model\Order $order,
+        Order $order,
         object $refundResponse,
         array $transactionData,
         int $grandTotal,
@@ -123,7 +124,7 @@ class RefundObserver implements ObserverInterface
     /**
      * Log and report a logical refund failure (a Transbank response other than a valid REVERSED/NULLIFIED).
      *
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param object $refundResponse
      * @param string $errorMessageBase
      * @param string $refundInstructions
@@ -131,7 +132,7 @@ class RefundObserver implements ObserverInterface
      * @return void
      */
     private function handleFailedRefund(
-        \Magento\Sales\Model\Order $order,
+        Order $order,
         object $refundResponse,
         string $errorMessageBase,
         string $refundInstructions
@@ -146,11 +147,11 @@ class RefundObserver implements ObserverInterface
 
     /**
      * @param string $paymentMethod
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      *
      * @return array
      */
-    private function getTransactionData(string $paymentMethod, \Magento\Sales\Model\Order $order): array
+    private function getTransactionData(string $paymentMethod, Order $order): array
     {
         $transactionData = [];
         $webpayOrderData = $this->getTransaction($paymentMethod, $order);
@@ -170,12 +171,12 @@ class RefundObserver implements ObserverInterface
 
     /**
      * @param string $paymentMethod
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      *
      * @return \Transbank\Webpay\Model\WebpayOrderData
      * @throws EcommerceException
      */
-    private function getTransaction(string $paymentMethod, \Magento\Sales\Model\Order $order)
+    private function getTransaction(string $paymentMethod, Order $order)
     {
         $webpayOrderData = $this->webpayOrderDataService->getByOrderId($order->getId());
 
