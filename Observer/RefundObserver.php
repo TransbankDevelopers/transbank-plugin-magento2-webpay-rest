@@ -47,7 +47,7 @@ class RefundObserver implements ObserverInterface
             $errorMessageBase = 'Ocurrió un error al realizar la anulación en Webpay. ';
             $refundInstructions = 'Intente realizar la anulación mediante su portal privado de Transbank. Para mayor información del error revise los logs de la transacción.';
             $creditMemo = $observer->getEvent()->getCreditmemo();
-            $grandTotal = $creditMemo->getGrandTotal();
+            $grandTotal = (int) round($creditMemo->getGrandTotal());
             $order = $this->observerGuard->getOrderFromObserverOrSession($observer);
 
             if (!$order) {
