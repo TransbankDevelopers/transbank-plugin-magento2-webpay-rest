@@ -153,6 +153,12 @@ else
     php bin/magento setup:upgrade --keep-generated
 fi
 
+# Magento's cron runs as root (installed via cron:install as root); a plain cron job doesn't
+# source any shell profile, so it needs its own UMASK line to keep files group-writable.
+if ! crontab -l 2>/dev/null | grep -q "^UMASK=0002$"; then
+    (echo "UMASK=0002"; crontab -l 2>/dev/null || true) | crontab -
+fi
+
 configure_chile_store
 
 # --- 5. Modify capture button for invoice
@@ -189,8 +195,12 @@ php bin/magento indexer:reindex
 php bin/magento cache:flush
 
 # Directory Permissions
+# root (setup/cron) and www-data (php-fpm/apache) both write here. Instead of opening these
+# up to everyone, share the www-data group and set setgid so anything created afterwards,
+# by either user, inherits it and stays group-writable.
 mkdir -p var generated pub
-chmod -R 777 var generated pub
 chown -R www-data:www-data var generated pub
+find var generated pub -type d -exec chmod 2775 {} +
+find var generated pub -type f -exec chmod 664 {} +
 
 log "¡Listo! Accede en http://localhost:${MAGENTO_STORE_PORT}"
