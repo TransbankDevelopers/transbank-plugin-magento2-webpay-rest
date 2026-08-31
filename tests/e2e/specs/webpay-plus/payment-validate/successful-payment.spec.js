@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import {
     login,
     addProductToCart,
@@ -35,7 +35,13 @@ test.describe("Webpay Plus — Normal payment flow", () => {
             await page.waitForURL(/checkout\/transaction\/commitwebpay/, {
                 timeout: 45_000
             });
-            await page.waitForLoadState("networkidle", { timeout: 45_000 });
+            await expect
+                .poll(async () => (await page.content()).includes("tbk_voucher"), {
+                    timeout: 45_000,
+                    intervals: [1_000],
+                    message: "Waiting for order confirmation content"
+                })
+                .toBe(true);
             await expectOrderConfirmation(page);
             console.log(`[INTERCEPTOR] Confirmation: url=${page.url()}`);
         });
