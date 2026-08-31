@@ -95,7 +95,13 @@ test.describe("Webpay Plus — Retry when lock is busy", () => {
             });
 
             await test.step("Verify the page shows order confirmation", async () => {
-                await page.waitForLoadState("networkidle", { timeout: 30_000 });
+                await expect
+                    .poll(async () => (await page.content()).includes("tbk_voucher"), {
+                        timeout: 30_000,
+                        intervals: [1_000],
+                        message: "Waiting for order confirmation content"
+                    })
+                    .toBe(true);
                 await expectOrderConfirmation(page);
                 console.log(`[INTERCEPTOR] Confirmation: url=${page.url()}`);
             });
