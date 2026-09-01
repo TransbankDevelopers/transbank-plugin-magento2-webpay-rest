@@ -4,14 +4,21 @@ namespace Transbank\Webpay\Model;
 
 use Transbank\Webpay\Exceptions\MissingArgumentException;
 use Transbank\Webpay\Exceptions\TransbankCreateException;
+use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\WebpayPlus;
+use Transbank\Webpay\WebpayPlus\Transaction;
+use Transbank\Webpay\Options;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCommitException;
 use Transbank\Webpay\WebpayPlus\Exceptions\TransactionCreateException;
 
 use Transbank\Webpay\Oneclick;
+use Transbank\Webpay\Oneclick\MallInscription;
+use Transbank\Webpay\Oneclick\MallTransaction;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionStartException;
 use Transbank\Webpay\Oneclick\Exceptions\InscriptionFinishException;
+use Transbank\Webpay\Oneclick\Exceptions\InscriptionDeleteException;
 use Transbank\Webpay\Oneclick\Responses\MallTransactionAuthorizeResponse;
 
 /**
@@ -26,44 +33,154 @@ class TransbankSdkWebpayRest
     protected $log;
 
     /**
-     * @var WebpayPlus\Transaction
+     * @var Transaction
      */
-    public $transaction;
+    public ?Transaction $transaction = null;
 
     /**
-     * @var Oneclick\MallInscription
+     * @var MallInscription
      */
-    public $mallInscription;
+    public ?MallInscription $mallInscription = null;
 
     /**
-     * @var Oneclick\MallTransaction
+     * @var MallTransaction
      */
-    public $mallTransaction;
+    public ?MallTransaction $mallTransaction = null;
+
+    /**
+     * @var ConfigProvider
+     */
+    private ConfigProvider $configProvider;
 
     /**
      * TransbankSdkWebpayRest constructor.
      *
-     * @param $config
-     * @param $product
+     * @param ConfigProvider $configProvider
      */
-    public function __construct($config)
+    public function __construct(ConfigProvider $configProvider)
     {
         $this->log = new PluginLogger();
-        if (isset($config)) {
-            $environment = isset($config['ENVIRONMENT']) ? $config['ENVIRONMENT'] : 'TEST';
 
-            $this->transaction = new WebpayPlus\Transaction();
-            $this->mallInscription = new Oneclick\MallInscription();
-            $this->mallTransaction = new Oneclick\MallTransaction();
+        $this->configProvider = $configProvider;
+    }
 
-            $this->log->logInfo('Environment: ' . json_encode($environment));
+    /**
+     * Builds an SDK Options instance based on environment and credentials.
+     *
+     * If the environment is TEST, integration credentials are used.
+     * If the environment is PRODUCTION, API key and commerce code are required.
+     *
+     * @param string $environment Environment name ('TEST' or 'PRODUCTION')
+     * @param string $defaultApiKey Integration API key (used in TEST)
+     * @param string $defaultCommerceCode Integration commerce code (used in TEST)
+     * @param string|null $apiKey Production API key (required in PROD)
+     * @param string|null $commerceCode Production commerce code (required in PROD)
+     *
+     * @throws MissingArgumentException If required production credentials are missing
+     *
+     * @return Options Configured SDK options instance
+     */
+    private function buildOptions(
+        string $environment,
+        string $defaultApiKey,
+        string $defaultCommerceCode,
+        ?string $apiKey,
+        ?string $commerceCode,
+    ): Options {
+        $isProd = strtoupper(trim($environment)) !== 'TEST';
 
-            if ($environment != 'TEST') {
-                $this->transaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->mallInscription->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-                $this->mallTransaction->configureForProduction($config['COMMERCE_CODE'], $config['API_KEY']);
-            }
+        if (!$isProd) {
+            return new Options($defaultApiKey, $defaultCommerceCode, Options::ENVIRONMENT_INTEGRATION);
         }
+
+        $apiKey = $apiKey ?? '';
+        $commerceCode = $commerceCode ?? '';
+
+        if ($apiKey === '' || $commerceCode === '') {
+            throw new MissingArgumentException('Credenciales de configuración incompletas para el entorno actual.');
+        }
+
+        return new Options($apiKey, $commerceCode, Options::ENVIRONMENT_PRODUCTION);
+    }
+
+    /**
+     * Initializes the Webpay Plus Transaction client if not already created.
+     *
+     * Uses integration credentials in TEST and production credentials otherwise.
+     *
+     * @return void
+     */
+    private function configureTransactionCredentials(): void
+    {
+        if (!is_null($this->transaction)) {
+            return;
+        }
+
+        $config = $this->configProvider->getPluginConfig();
+
+        $options = $this->buildOptions(
+            $config['ENVIRONMENT'] ?? 'TEST',
+            WebpayPlus::INTEGRATION_API_KEY,
+            WebpayPlus::INTEGRATION_COMMERCE_CODE,
+            $config['API_KEY'] ?? null,
+            $config['COMMERCE_CODE'] ?? null,
+        );
+
+        $this->transaction = new Transaction($options);
+    }
+
+    /**
+     * Initializes the Oneclick MallInscription client if not already created.
+     *
+     * Uses integration credentials in TEST and production credentials otherwise.
+     *
+     * @return void
+     */
+    private function configureMallInscriptionCredentials(): void
+    {
+
+        if (!is_null($this->mallInscription)) {
+            return;
+        }
+
+        $config = $this->configProvider->getPluginConfigOneclick();
+
+        $options = $this->buildOptions(
+            $config['ENVIRONMENT'] ?? 'TEST',
+            Oneclick::INTEGRATION_API_KEY,
+            Oneclick::INTEGRATION_COMMERCE_CODE,
+            $config['API_KEY'] ?? null,
+            $config['COMMERCE_CODE'] ?? null,
+        );
+
+        $this->mallInscription = new MallInscription($options);
+    }
+
+    /**
+     * Initializes the Oneclick MallTransaction client if not already created.
+     *
+     * Uses integration credentials in TEST and production credentials otherwise.
+     *
+     * @return void
+     */
+    private function configureMallTransactionCredentials(): void
+    {
+
+        if (!is_null($this->mallTransaction)) {
+            return;
+        }
+
+        $config = $this->configProvider->getPluginConfigOneclick();
+
+        $options = $this->buildOptions(
+            $config['ENVIRONMENT'] ?? 'TEST',
+            Oneclick::INTEGRATION_API_KEY,
+            Oneclick::INTEGRATION_COMMERCE_CODE,
+            $config['API_KEY'] ?? null,
+            $config['COMMERCE_CODE'] ?? null,
+        );
+
+        $this->mallTransaction = new MallTransaction($options);
     }
 
     /**
@@ -86,6 +203,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('createTransaction - amount: ' . $amount . ', sessionId: ' . $sessionId .
                 ', buyOrder: ' . $buyOrder . ', txDate: ' . $txDate . ', txTime: ' . $txTime);
 
+            $this->configureTransactionCredentials();
             $createResult = $this->transaction->create($buyOrder, $sessionId, $amount, $returnUrl);
 
             $this->log->logInfo('createTransaction - createResult: ' . json_encode($createResult));
@@ -122,6 +240,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token webpay es requerido');
             }
 
+            $this->configureTransactionCredentials();
             $transaction = $this->transaction->commit($tokenWs);
 
             $this->log->logInfo('commitTransaction: ' . json_encode($transaction));
@@ -154,6 +273,7 @@ class TransbankSdkWebpayRest
             $this->log->logInfo('initInscription - Username: ' . $username . ', email: ' . $email .
                 ', responseUrl: ' . $responseUrl);
 
+            $this->configureMallInscriptionCredentials();
             $initResult = $this->mallInscription->start($username, $email, $responseUrl);
 
             $this->log->logInfo('createInscription - initResult: ' . json_encode($initResult));
@@ -191,6 +311,7 @@ class TransbankSdkWebpayRest
                 throw new MissingArgumentException('El token tokenWs es requerido');
             }
 
+            $this->configureMallInscriptionCredentials();
             $inscription = $this->mallInscription->finish($tbkToken);
             $this->log->logInfo('finishInscription: ' . json_encode($inscription));
 
@@ -228,6 +349,7 @@ class TransbankSdkWebpayRest
             throw new MissingArgumentException('El token tbkUser y el username son requeridos');
         }
 
+        $this->configureMallTransactionCredentials();
         $transaction = $this->mallTransaction->authorize($username, $tbkUser, $buyOrder, $details);
         $this->log->logInfo('authorizeTransaction: ' . json_encode($transaction));
 
@@ -240,28 +362,20 @@ class TransbankSdkWebpayRest
      *
      * @throws MissingArgumentException
      *
-     * @return array
+     * @return bool
      */
-    public function deleteInscription($username, $tbkUser)
+    public function deleteInscription(string $username, string $tbkUser): bool
     {
         try {
-            if ($username == null || $tbkUser == null) {
+            if (empty($username) || empty($tbkUser)) {
                 throw new MissingArgumentException('El token tbkUser y el username son requerido');
             }
 
-            $delInscription = $this->mallInscription->delete($tbkUser, $username);
-            $this->log->logInfo('deleteInscription: ' . json_encode($delInscription));
-
-            return $delInscription;
-        } catch (InscriptionFinishException $e) {
-            $result = [
-                'error'  => 'Error al eliminar una inscripción',
-                'detail' => $e->getMessage(),
-            ];
-            $this->log->logError(json_encode($result));
+            $this->configureMallInscriptionCredentials();
+            return $this->mallInscription->delete($tbkUser, $username);
+        } catch (InscriptionDeleteException $e) {
+            throw new TransbankException('Error al eliminar la inscripción: ' . $e->getMessage(), $e->getCode(), $e);
         }
-
-        return $result;
     }
 
     /**
@@ -280,6 +394,7 @@ class TransbankSdkWebpayRest
         string $childBuyOrder,
         int $amount
     ): \Transbank\Webpay\Oneclick\Responses\MallTransactionRefundResponse {
+        $this->configureMallTransactionCredentials();
         return $this->mallTransaction->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
     }
 
@@ -296,6 +411,7 @@ class TransbankSdkWebpayRest
         string $token,
         int $amount
     ): \Transbank\Webpay\WebpayPlus\Responses\TransactionRefundResponse {
+        $this->configureTransactionCredentials();
         return $this->transaction->refund($token, $amount);
     }
 }

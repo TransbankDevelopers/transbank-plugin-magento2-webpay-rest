@@ -6,7 +6,16 @@ docker-magento2.3/plugin/Transbank
 plugin-transbank-webpay-magento2*.zip
 
 /vendor
-/composer.lock
 
 development-docker/.built
 development-docker/plugin/*
+
+.vscode
+.devcontainer/logs
+
+# E2E tests (Playwright)
+tests/e2e/node_modules/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/blob-report/
+tests/e2e/.env

@@ -24,8 +24,7 @@ class Index extends \Magento\Backend\App\Action
     {
         if ($_POST['type'] == 'checkInit') {
             try {
-                $config = $this->configProvider->getPluginConfig();
-                $healthcheck = new HealthCheck($config);
+                $healthcheck = new HealthCheck($this->configProvider);
                 $response = $healthcheck->createTestTransaction();
 
                 echo json_encode(['success' => true, 'msg' => $response]);

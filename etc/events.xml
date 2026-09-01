@@ -16,4 +16,7 @@
         <event name="sales_order_creditmemo_save_before">
             <observer name="transbank_refund" instance="Transbank\Webpay\Observer\RefundObserver" />
         </event>
+        <event name="controller_action_predispatch_checkout_onepage_success">
+            <observer name="vendor_block_success_when_unpaid" instance="Transbank\Webpay\Observer\BlockSuccessWhenUnpaidObserver"/>
+        </event>
     </config>
