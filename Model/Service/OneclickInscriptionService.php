@@ -3,6 +3,8 @@
 namespace Transbank\Webpay\Model\Service;
 
 use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
+use Transbank\Webpay\Exceptions\TransbankException;
+use Transbank\Webpay\Infrastructure\Lock\MySqlNamedLock;
 use Transbank\Webpay\Model\Config\ConfigProvider;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\Repository\OneclickInscriptionDataRepository;
@@ -16,19 +18,76 @@ class OneclickInscriptionService
 {
     protected $oneclickInscriptionDataRepository;
     private ConfigProvider $configProvider;
+    private MySqlNamedLock $lock;
+    private TransbankSdkWebpayRest $transbankSdkWebpayRest;
 
     /**
      * Constructor
      *
      * @param OneclickInscriptionDataRepository $oneclickInscriptionDataRepository
      * @param ConfigProvider $configProvider
+     * @param MySqlNamedLock $lock
+     * @param TransbankSdkWebpayRest $transbankSdkWebpayRest
      */
     public function __construct(
         OneclickInscriptionDataRepository $oneclickInscriptionDataRepository,
-        ConfigProvider $configProvider
+        ConfigProvider $configProvider,
+        MySqlNamedLock $lock,
+        TransbankSdkWebpayRest $transbankSdkWebpayRest
     ) {
         $this->oneclickInscriptionDataRepository = $oneclickInscriptionDataRepository;
         $this->configProvider = $configProvider;
+        $this->transbankSdkWebpayRest = $transbankSdkWebpayRest;
+        $this->lock = $lock;
+    }
+
+    /**
+     * Start a private OneClick inscription: acquire the serialization lock, call the SDK,
+     * validate the response and persist the inscription.
+     *
+     * @param int $customerId The authenticated customer id
+     * @param string $email The customer email
+     * @param string $returnUrl The URL Transbank redirects to after the inscription form
+     *
+     * @throws TransbankException When the lock cannot be acquired or the SDK response is invalid
+     *
+     * @return array{token: string, webpayUrl: string}
+     */
+    public function startPrivateInscription(int $customerId, string $email, string $returnUrl): array
+    {
+        $lockKey = 'transbank_private_oneclick_add_' . $customerId;
+
+        if (!$this->lock->acquire($lockKey)) {
+            throw new TransbankException('No se pudo serializar la inscripción.');
+        }
+
+        try {
+            $username = $this->generateInscriptionUsername($customerId);
+            $response = $this->transbankSdkWebpayRest
+                ->createInscription($username, $email, $returnUrl);
+            $token = $response['token'] ?? null;
+            $webpayUrl = $response['urlWebpay'] ?? null;
+
+            if (!$this->isValidResponseValue($token) || !$this->isValidHttpsUrl($webpayUrl)) {
+                throw new TransbankException('Respuesta inválida al iniciar inscripción.');
+            }
+
+            $config = $this->configProvider->getPluginConfigOneclick();
+            $this->oneclickInscriptionDataRepository->create([
+                'status' => OneclickInscriptionData::PAYMENT_STATUS_WATING,
+                'token' => $token,
+                'username' => $username,
+                'email' => $email,
+                'user_id' => $customerId,
+                'environment' => $config['ENVIRONMENT'] ?? null,
+                'commerce_code' => $config['COMMERCE_CODE'] ?? null,
+                'metadata' => json_encode(['source' => 'private'], JSON_THROW_ON_ERROR),
+            ]);
+
+            return ['token' => $token, 'webpayUrl' => $webpayUrl];
+        } finally {
+            $this->lock->release($lockKey);
+        }
     }
 
     /**
@@ -133,8 +192,7 @@ class OneclickInscriptionService
      */
     public function delete(OneclickInscriptionData $inscription): OneclickInscriptionData
     {
-        $sdk = new TransbankSdkWebpayRest($this->configProvider);
-        $sdk->deleteInscription($inscription->getUsername(), $inscription->getTbkUser());
+        $this->transbankSdkWebpayRest->deleteInscription($inscription->getUsername(), $inscription->getTbkUser());
 
         return $this->oneclickInscriptionDataRepository->update($inscription, [
             'status' => OneclickInscriptionData::INSCRIPTION_STATUS_DELETED,
@@ -187,5 +245,25 @@ class OneclickInscriptionService
 
             return false;
         }
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    private function isValidResponseValue($value): bool
+    {
+        return is_string($value) && trim($value) !== '';
+    }
+
+    /**
+     * @param mixed $url
+     *
+     * @return bool
+     */
+    private function isValidHttpsUrl($url): bool
+    {
+        return $this->isValidResponseValue($url) && strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https';
     }
 }

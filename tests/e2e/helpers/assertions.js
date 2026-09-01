@@ -12,6 +12,16 @@ export async function isOrderConfirmation(page) {
     return content.includes("tbk_voucher");
 }
 
+export async function waitForOrderConfirmation(page, timeout) {
+    await expect
+        .poll(() => isOrderConfirmation(page), {
+            timeout,
+            intervals: [1_000],
+            message: "Waiting for order confirmation content"
+        })
+        .toBe(true);
+}
+
 export function isPaymentError(url) {
     return url.includes("checkout/cart");
 }

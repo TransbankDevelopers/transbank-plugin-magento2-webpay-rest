@@ -9,25 +9,25 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         apache2 \
-        cron \
-        ssh \
-        libicu-dev \
-        libxml2-dev \
-        libzip-dev \
-        libonig-dev \
-        libxslt1-dev \
-        libjpeg62-turbo-dev \
-        libpng-dev \
-        libfreetype6-dev \
-        git \
-        curl \
-        netcat-openbsd \
-        unzip \
         bash \
         ca-certificates \
+        cron \
+        curl \
         default-mysql-client \
+        git \
+        libfreetype6-dev \
+        libicu-dev \
+        libjpeg62-turbo-dev \
+        libonig-dev \
+        libpng-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libzip-dev \
+        netcat-openbsd \
         ripgrep \
-        tzdata; \
+        ssh \
+        tzdata \
+        unzip; \
     \
     # ---------- PHP extensions ----------
     docker-php-ext-configure gd \
@@ -69,7 +69,7 @@ COPY .devcontainer/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # ---------- composer install ----------
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
- && php composer-setup.php --version=${COMPOSER_VERSION} --install-dir=/usr/local/bin --filename=composer \
+ && php composer-setup.php --version="${COMPOSER_VERSION}" --install-dir=/usr/local/bin --filename=composer \
  && php -r "unlink('composer-setup.php');" \
  && composer --version
 
@@ -78,10 +78,15 @@ WORKDIR /var/www/html
 
 # ---------- Entrypoint ----------
 COPY .devcontainer/magento-setup.sh /usr/local/bin/magento-setup.sh
-RUN chmod +x /usr/local/bin/magento-setup.sh
+
+# ---------- Shared-group umask for root shells (remoteUser: root) ----------
+# Keeps files that root creates under var/generated/pub group-writable for www-data.
+RUN chmod +x /usr/local/bin/magento-setup.sh \
+    && echo "umask 0002" > /etc/profile.d/umask.sh \
+    && echo "umask 0002" >> /etc/bash.bashrc
 
 USER www-data
 
 EXPOSE 8080
 
-CMD ["bash", "-c", "php-fpm -D && . /etc/apache2/envvars && exec /usr/sbin/apache2 -DFOREGROUND"]
+CMD ["bash", "-c", "umask 0002 && php-fpm -D && . /etc/apache2/envvars && exec /usr/sbin/apache2 -DFOREGROUND"]

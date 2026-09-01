@@ -8,7 +8,10 @@ import {
     fillCardAndAuthenticate,
     continueToCommerce,
 } from "../../../helpers/webpay-form.js";
-import { expectOrderConfirmation } from "../../../helpers/assertions.js";
+import {
+    expectOrderConfirmation,
+    waitForOrderConfirmation,
+} from "../../../helpers/assertions.js";
 
 test.describe("Webpay Plus — Normal payment flow", () => {
     test("Authorized payment shows order confirmation", async ({ page }) => {
@@ -35,7 +38,7 @@ test.describe("Webpay Plus — Normal payment flow", () => {
             await page.waitForURL(/checkout\/transaction\/commitwebpay/, {
                 timeout: 45_000
             });
-            await page.waitForLoadState("networkidle", { timeout: 45_000 });
+            await waitForOrderConfirmation(page, 45_000);
             await expectOrderConfirmation(page);
             console.log(`[INTERCEPTOR] Confirmation: url=${page.url()}`);
         });

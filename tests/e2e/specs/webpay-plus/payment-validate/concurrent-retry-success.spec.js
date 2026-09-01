@@ -10,7 +10,10 @@ import {
     isLockHeld,
     closePool,
 } from "../../../helpers/database.js";
-import { expectOrderConfirmation } from "../../../helpers/assertions.js";
+import {
+    expectOrderConfirmation,
+    waitForOrderConfirmation,
+} from "../../../helpers/assertions.js";
 import {
     runCheckoutFlow,
     holdReturnRequests,
@@ -95,7 +98,7 @@ test.describe("Webpay Plus — Retry when lock is busy", () => {
             });
 
             await test.step("Verify the page shows order confirmation", async () => {
-                await page.waitForLoadState("networkidle", { timeout: 30_000 });
+                await waitForOrderConfirmation(page, 30_000);
                 await expectOrderConfirmation(page);
                 console.log(`[INTERCEPTOR] Confirmation: url=${page.url()}`);
             });

@@ -112,8 +112,6 @@ class SaveConfigObserver implements ObserverInterface
             $value = 'default';
             $this->configWriter->save(self::TRANSBANK_ONECLICK_INVOICE_SETTINGS, $value);
         }
-
-        return $this;
     }
 
     /**
