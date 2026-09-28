@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-bullseye
+FROM php:8.3-fpm-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_VERSION=2.9.2
