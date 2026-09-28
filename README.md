@@ -1,7 +1,7 @@
-[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/transbankdevelopers/transbank-plugin-magento2-webpay-rest)](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay/releases/tag/2.5.2)
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/transbankdevelopers/transbank-plugin-magento2-webpay-rest)](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay-rest/releases/tag/2.4.0)
 [![GitHub](https://img.shields.io/github/license/transbankdevelopers/transbank-plugin-magento2-webpay-rest)](LICENSE)
 [![GitHub contributors](https://img.shields.io/github/contributors/transbankdevelopers/transbank-plugin-magento2-webpay-rest)](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay-rest/graphs/contributors)
-[![Build Status](https://api.travis-ci.com/TransbankDevelopers/transbank-plugin-magento2-webpay-rest.svg?branch=master)](https://app.travis-ci.com/github/TransbankDevelopers/transbank-plugin-magento2-webpay-rest)
+[![Build Status](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay-rest/actions/workflows/build.yml/badge.svg)](https://github.com/TransbankDevelopers/transbank-plugin-magento2-webpay-rest/actions/workflows/build.yml)
 
 # Transbank Magento2 Webpay Plugin
 Plugin oficial de Webpay para Magento2
@@ -126,4 +126,4 @@ En ese PR deben incluirse los siguientes cambios:
 
 Luego de obtener aprobación del pull request, debes mezclar a master e inmediatamente generar un release en GitHub con el tag `vX.Y.Z`. En la descripción del release debes poner lo mismo que agregaste al changelog.
 
-Con eso Travis CI generará automáticamente una nueva versión del plugin y actualizará el Release de Github con el zip del plugin.
+Con eso GitHub Actions generará automáticamente una nueva versión del plugin y actualizará el Release de Github con el zip del plugin.
