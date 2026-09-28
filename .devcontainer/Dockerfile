@@ -27,7 +27,8 @@ RUN set -eux; \
         ripgrep \
         ssh \
         tzdata \
-        unzip; \
+        unzip \
+        zip; \
     \
     # ---------- PHP extensions ----------
     docker-php-ext-configure gd \
