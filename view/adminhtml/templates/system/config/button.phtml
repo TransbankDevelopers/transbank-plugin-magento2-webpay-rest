@@ -258,7 +258,7 @@
 
             <pre>
                 <span style="font-size: 10px; font-family:monospace; display: block; background: white;width: fit-content;" >
-                <?php echo $this->tbk_data['logs']; ?>
+                <?php echo $block->escapeHtml($this->tbk_data['logs']); ?>
                 </span>
             </pre>
         </div>
@@ -268,8 +268,8 @@
 
 <script type="text/javascript">
 
-	jQuery().ready(function($){
-
+    require(['jquery'], function($) {
+ 
         $(".check_conn").click(function() {
 
             $(".check_conn").prop('disabled', true);
@@ -337,7 +337,7 @@
             });
         });
 
-	});
+    });
 
 
     require(

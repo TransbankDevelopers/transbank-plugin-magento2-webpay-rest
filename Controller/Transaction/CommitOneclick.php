@@ -2,11 +2,15 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Sales\Model\Order;
-use Transbank\Webpay\Helper\QuoteHelper;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
+use Transbank\Webpay\Model\Service\OrderService;
+use Transbank\Webpay\Model\Service\QuoteService;
 use Transbank\Webpay\Oneclick\Responses\InscriptionFinishResponse;
 
 /**
@@ -37,32 +41,32 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected $configProvider;
     protected $checkoutSession;
-    protected $resultJsonFactory;
-    protected $resultRawFactory;
-    protected $oneclickInscriptionDataFactory;
+    protected $oneclickInscriptionService;
+    protected $orderService;
     protected $log;
     protected $messageManager;
-    private $quoteHelper;
+    protected $customerSession;
+    private $quoteService;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
-        QuoteHelper $quoteHelper
+        OneclickInscriptionService $oneclickInscriptionService,
+        OrderService $orderService,
+        QuoteService $quoteService,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
         $this->checkoutSession = $checkoutSession;
-        $this->resultJsonFactory = $resultJsonFactory;
-        $this->resultRawFactory = $resultRawFactory;
         $this->messageManager = $context->getMessageManager();
         $this->configProvider = $configProvider;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
+        $this->orderService = $orderService;
         $this->log = new PluginLogger();
-        $this->quoteHelper = $quoteHelper;
+        $this->quoteService = $quoteService;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -70,7 +74,6 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
      */
     public function execute()
     {
-        $config = $this->configProvider->getPluginConfigOneclick();
         $orderStatusCanceled = $this->configProvider->getOneclickOrderErrorStatus();
         $inscriptionResult = [];
         $oneclickTitle = $this->configProvider->getOneclickTitle();
@@ -79,63 +82,41 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
             $tbkToken = $_POST['TBK_TOKEN'] ?? $_GET['TBK_TOKEN'] ?? null;
 
-            if (is_null($tbkToken)) {
+            if (!is_string($tbkToken)) {
                 throw new \Exception('Token no encontrado');
             }
 
-            list($OneclickInscriptionData, $order) = $this->getOrderByToken($tbkToken);
+            $oneclickInscriptionData = $this->getInscriptionByToken($tbkToken);
+            $order = $this->orderService->getById($oneclickInscriptionData->getOrderId());
+            $status = $oneclickInscriptionData->getStatus();
 
-            $status = $OneclickInscriptionData->getStatus();
             if ($status == OneclickInscriptionData::PAYMENT_STATUS_WATING) {
-                $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
+                $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
                 $inscriptionResult = $transbankSdkWebpay->finishInscription($tbkToken);
-                $OneclickInscriptionData->setMetadata(json_encode($inscriptionResult));
 
-                if (isset($inscriptionResult->tbkUser) && isset($inscriptionResult->responseCode) && $inscriptionResult->responseCode == 0) {
-                    $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_SUCCESS);
-                    $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
-                    $OneclickInscriptionData->setTbkUser($inscriptionResult->tbkUser);
-                    $OneclickInscriptionData->setAuthorizationCode($inscriptionResult->authorizationCode);
-                    $OneclickInscriptionData->setCardType($inscriptionResult->cardType);
-                    $OneclickInscriptionData->setCardNumber($inscriptionResult->cardNumber);
-
-                    $OneclickInscriptionData->save();
-
+                if ($this->oneclickInscriptionService->resolveInscriptionFinishResult($oneclickInscriptionData, $inscriptionResult)) {
                     $message = "Tarjeta inscrita exitosamente";
                     $this->messageManager->addSuccess(__($message));
 
-
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } else {
-                    $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-                    if (isset($inscriptionResult->responseCode)) {
-                        $OneclickInscriptionData->setResponseCode($inscriptionResult->responseCode);
-                    }
-
-                    $this->messageManager->addError(__(self::REJECT_MESSAGE));
-
-                    $OneclickInscriptionData->save();
-
-                    $order->cancel();
-                    $order->save();
-                    $order->setStatus($orderStatusCanceled);
-
-                    $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
-
                     $statusFields = $this->getInscriptionResponseFields($inscriptionResult);
+                    $message = $this->getRejectMessage($statusFields, $oneclickTitle);
+                    $this->messageManager->addError(__($message));
+
                     $historyComment = $this->createHistoryComment(
                         'Inscripción rechazada',
                         $statusFields,
                         true
                     );
 
-                    $order->addStatusToHistory($order->getStatus(), $historyComment);
-                    $order->save();
+                    $this->orderService->cancel($order, $orderStatusCanceled, $historyComment);
+                    $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 }
             } else {
-                $inscriptionResult = json_decode($OneclickInscriptionData->getMetadata(), true);
+                $inscriptionResult = json_decode($oneclickInscriptionData->getMetadata(), true);
 
                 if ($status == OneclickInscriptionData::PAYMENT_STATUS_SUCCESS) {
                     $message = "¡Tarjeta inscrita exitosamente!";
@@ -143,10 +124,9 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
                     return $this->resultRedirectFactory->create()->setPath('checkout/cart');
                 } elseif ($status == OneclickInscriptionData::PAYMENT_STATUS_FAILED) {
-                    $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_FAILED);
-                    $OneclickInscriptionData->save();
+                    $this->oneclickInscriptionService->setInscriptionAsFailed($oneclickInscriptionData);
 
-                    $this->quoteHelper->processQuoteForCancelOrder($order->getQuoteId());
+                    $this->quoteService->reactivateAfterOrderCancelByQuoteId($order->getQuoteId());
                     $message = $this->getRejectMessage($inscriptionResult, $oneclickTitle);
                     $this->messageManager->addError(__($message));
 
@@ -160,51 +140,24 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         }
     }
 
-    protected function toRedirect($url, $data)
-    {
-        $response = $this->resultRawFactory->create();
-        $content = "<form action='$url' method='POST' name='webpayForm'>";
-        foreach ($data as $name => $value) {
-            $content .= "<input type='hidden' name='".htmlentities($name)."' value='".htmlentities($value)."'>";
-        }
-        $content .= '</form>';
-        $content .= "<script language='JavaScript'>document.webpayForm.submit();</script>";
-        $response->setContents($content);
-
-        return $response;
-    }
-
-    protected function commitResponseToArray($response)
-    {
-        return [
-            'responseCode'          => $response->responseCode,
-            'tbkUser'               => $response->tbkUser,
-            'authorizationCode'     => $response->authorizationCode,
-            'cardType'              => $response->cardType,
-            'cardNumber'            => $response->cardNumber,
-        ];
-    }
-
-    protected function getOrder($orderId)
-    {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
-        return $objectManager->create('\Magento\Sales\Model\Order')->load($orderId);
-    }
-
     /**
-     * @param $tokenWs
+     * @param string $tbkToken
      *
-     * @return array
+     * @return OneclickInscriptionData
+     *
+     * @throws InvalidRequestException When the token belongs to another customer
      */
-    private function getOrderByToken($tbkToken)
+    private function getInscriptionByToken($tbkToken)
     {
-        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($tbkToken, 'token');
-        $orderId = $oneclickInscriptionData->getOrderId();
-        $order = $this->getOrder($orderId);
+        $oneclickInscriptionData = $this->oneclickInscriptionService->getByToken($tbkToken);
+        $userId = $oneclickInscriptionData->getUserId();
+        $customerId = $this->customerSession->getCustomerId();
 
-        return [$oneclickInscriptionData, $order];
+        if (!$this->oneclickInscriptionService->isOwnedByCustomer($userId, $customerId)) {
+            throw new InvalidRequestException('La tarjeta inscrita indicada no existe.');
+        }
+
+        return $oneclickInscriptionData;
     }
 
     /**
@@ -221,11 +174,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         $this->checkoutSession->restoreQuote();
         $this->messageManager->addError(__($message));
         if ($order != null && $order->getState() != Order::STATE_PROCESSING) {
-            $order->cancel();
-            $order->save();
-            $order->setStatus($orderStatusCanceled);
-            $order->addStatusToHistory($order->getStatus(), $message);
-            $order->save();
+            $this->orderService->cancel($order, $orderStatusCanceled, $message);
         }
 
         return $this->resultRedirectFactory->create()->setPath('checkout/cart');
@@ -233,32 +182,31 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
     protected function getRejectMessage(array $transactionResult, $oneclickTitle)
     {
-        if (isset($transactionResult['responseCode'])) {
-            $message = "<h2>Transacci&oacute;n rechazada con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$this->responseCodeArray[$transactionResult['responseCode']]}<br>
-            </p>";
+        $hasResponseCode = isset($transactionResult['responseCode']);
+        $oneclickTitle = htmlspecialchars($oneclickTitle, ENT_QUOTES, 'UTF-8');
 
-            return $message;
+        if ($hasResponseCode && isset($this->responseCodeArray[$transactionResult['responseCode']])) {
+            $message = "<b>Transacci&oacute;n rechazada por {$oneclickTitle}</b>
+                <div>
+                    {$this->responseCodeArray[$transactionResult['responseCode']]}
+                </div>";
+        } elseif ($hasResponseCode) {
+            $message = self::REJECT_MESSAGE;
+        } elseif (isset($transactionResult['error'])) {
+            $error = htmlspecialchars($transactionResult['error'], ENT_QUOTES, 'UTF-8');
+            $detail = htmlspecialchars($transactionResult['detail'] ?? 'Sin detalles', ENT_QUOTES, 'UTF-8');
+            $message = "<b>Transacci&oacute;n fallida por {$oneclickTitle}</b>
+                <div>
+                    {$error}
+                </div>
+                <div>
+                    <b>Mensaje: </b>{$detail}
+                </div>";
         } else {
-            if (isset($transactionResult['error'])) {
-                $error = $transactionResult['error'];
-                $detail = isset($transactionResult['detail']) ? $transactionResult['detail'] : 'Sin detalles';
-                $message = "<h2>Transacci&oacute;n fallida con {$oneclickTitle}</h2>
-            <p>
-                <br>
-                <b>Respuesta de la Transacci&oacute;n: </b>{$error}<br>
-                <b>Mensaje: </b>{$detail}
-            </p>";
-
-                return $message;
-            } else {
-                $message = '<h2>Transacci&oacute;n Fallida</h2>';
-
-                return $message;
-            }
+            $message = '<b>Transacci&oacute;n Fallida</b>';
         }
+
+        return $message;
     }
 
     /**
@@ -298,5 +246,4 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
         }
         return $inscriptionResponse;
     }
-
 }

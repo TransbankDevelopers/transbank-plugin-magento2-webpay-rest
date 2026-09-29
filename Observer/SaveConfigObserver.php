@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Observer;
 
+use Transbank\Webpay\Observer\Util\ObserverGuard;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\App\RequestInterface;
@@ -26,23 +27,31 @@ class SaveConfigObserver implements ObserverInterface
     protected ScopeConfigInterface $scopeConfig;
     protected StoreManagerInterface $storeManager;
 
+    private ObserverGuard $observerGuard;
+
     public function __construct(
         LoggerInterface $logger,
         RequestInterface $request,
         WriterInterface $configWriter,
         ScopeConfigInterface $scopeConfig,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        ObserverGuard $observerGuard
     ) {
         $this->request = $request;
         $this->_logger = $logger;
         $this->configWriter = $configWriter;
         $this->scopeConfig = $scopeConfig;
+        $this->observerGuard = $observerGuard;
         $this->storeManager = $storeManager;
     }
 
 
     public function execute(EventObserver $observer)
     {
+        if (!$this->observerGuard->isConfigChangeForThisModule()) {
+            return;
+        }
+
         $websiteId = $this->getWebsiteId();
 
         $params = $this->request->getParam('groups');
@@ -52,11 +61,13 @@ class SaveConfigObserver implements ObserverInterface
 
         if (isset($webpayFields['payment_successful_status']['value'])) {
             $orderStatus = $webpayFields['payment_successful_status']['value'];
-        } elseif (empty($this->scopeConfig->getValue(
-            self::TRANSBANK_WEBPAY_PAYMENT_SUCCESSFUL_STATUS,
-            ScopeInterface::SCOPE_WEBSITE,
-            $websiteId
-        ))) {
+        } elseif (
+            empty($this->scopeConfig->getValue(
+                self::TRANSBANK_WEBPAY_PAYMENT_SUCCESSFUL_STATUS,
+                ScopeInterface::SCOPE_WEBSITE,
+                $websiteId
+            ))
+        ) {
             $orderStatus = $this->scopeConfig->getValue(
                 self::TRANSBANK_WEBPAY_PAYMENT_SUCCESSFUL_STATUS,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
@@ -77,11 +88,13 @@ class SaveConfigObserver implements ObserverInterface
 
         if (isset($oneclickFields['payment_successful_status']['value'])) {
             $oneclickOrderStatus = $oneclickFields['payment_successful_status']['value'];
-        } elseif (empty($this->scopeConfig->getValue(
-            self::TRANSBANK_ONECLICK_PAYMENT_SUCCESSFUL_STATUS,
-            ScopeInterface::SCOPE_WEBSITE,
-            $websiteId
-        ))) {
+        } elseif (
+            empty($this->scopeConfig->getValue(
+                self::TRANSBANK_ONECLICK_PAYMENT_SUCCESSFUL_STATUS,
+                ScopeInterface::SCOPE_WEBSITE,
+                $websiteId
+            ))
+        ) {
             $oneclickOrderStatus = $this->scopeConfig->getValue(
                 self::TRANSBANK_ONECLICK_PAYMENT_SUCCESSFUL_STATUS,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
@@ -99,8 +112,6 @@ class SaveConfigObserver implements ObserverInterface
             $value = 'default';
             $this->configWriter->save(self::TRANSBANK_ONECLICK_INVOICE_SETTINGS, $value);
         }
-
-        return $this;
     }
 
     /**
@@ -109,7 +120,7 @@ class SaveConfigObserver implements ObserverInterface
      */
     public function getWebsiteId(): int
     {
-        $storeId = (int)$this->request->getParam('store', 0);
+        $storeId = (int) $this->request->getParam('store', 0);
         $store = $this->storeManager->getStore($storeId);
         $websiteId = $store->getWebsiteId();
         return $websiteId;

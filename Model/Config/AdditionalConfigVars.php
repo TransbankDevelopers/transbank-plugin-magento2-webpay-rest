@@ -1,26 +1,30 @@
 <?php
 namespace Transbank\Webpay\Model\Config;
 use \Magento\Checkout\Model\ConfigProviderInterface;
-use Transbank\Webpay\Helper\Inscriptions;
+use Magento\Customer\Model\Session as CustomerSession;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 
 class AdditionalConfigVars implements ConfigProviderInterface
 {
-    protected $inscriptions;
+    protected $oneclickInscriptionService;
     protected $configProvider;
+    protected $customerSession;
 
     public function __construct(
-        Inscriptions $inscriptions,
-        \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
+        OneclickInscriptionService $oneclickInscriptionService,
+        \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
+        CustomerSession $customerSession
     ){
-        $this->inscriptions = $inscriptions;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
         $this->configProvider = $configProvider;
+        $this->customerSession = $customerSession;
     }
 
     public function getConfig()
     {
         $config = $this->configProvider->getPluginConfigOneclick();
         $additionalVariables['oneclick_max_amount'] = $config['TRANSACTION_MAX_AMOUNT'];
-        $additionalVariables['oneclick_inscriptions'] = $this->inscriptions->getInscriptions();
+        $additionalVariables['oneclick_inscriptions'] = $this->oneclickInscriptionService->getActiveInscriptionsByCustomerId($this->customerSession->getCustomer()->getId());
         return $additionalVariables;
     }
 }

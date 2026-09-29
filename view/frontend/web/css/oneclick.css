@@ -1,0 +1,12 @@
+.data.table button.action.danger {
+    background: #e02b27;
+    border-color: #e02b27;
+    color: #ffffff;
+}
+
+.data.table button.action.danger:hover,
+.data.table button.action.danger:focus {
+    background: #ba1b17;
+    border-color: #ba1b17;
+    color: #ffffff;
+}

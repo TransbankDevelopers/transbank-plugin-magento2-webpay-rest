@@ -6,6 +6,8 @@ use Transbank\Webpay\Model\TransbankSdkWebpayRest;
 use Transbank\Webpay\Model\Webpay;
 use Transbank\Webpay\Model\WebpayOrderData;
 use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Helper\TransactionHelper;
+use Transbank\Webpay\Model\Service\WebpayOrderDataService;
 
 /**
  * Controller for create transaction Webpay.
@@ -18,7 +20,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
     protected $resultJsonFactory;
     protected $quoteManagement;
     protected $storeManager;
-    protected $webpayOrderDataFactory;
+    protected $webpayOrderDataService;
     protected $log;
     protected $quoteRepository;
     protected $webpayConfig;
@@ -33,7 +35,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param \Magento\Quote\Model\QuoteManagement             $quoteManagement
      * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
      * @param \Transbank\Webpay\Model\Config\ConfigProvider      $configProvider
-     * @param \Transbank\Webpay\Model\WebpayOrderDataFactory   $webpayOrderDataFactory
+     * @param WebpayOrderDataService                           $webpayOrderDataService
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -43,7 +45,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\QuoteManagement $quoteManagement,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        \Transbank\Webpay\Model\WebpayOrderDataFactory $webpayOrderDataFactory
+        WebpayOrderDataService $webpayOrderDataService
     ) {
         parent::__construct($context);
 
@@ -53,7 +55,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
         $this->quoteManagement = $quoteManagement;
         $this->storeManager = $storeManager;
         $this->configProvider = $configProvider;
-        $this->webpayOrderDataFactory = $webpayOrderDataFactory;
+        $this->webpayOrderDataService = $webpayOrderDataService;
         $this->log = new PluginLogger();
         $this->webpayConfig = $configProvider->getPluginConfig();
     }
@@ -103,16 +105,17 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
             $returnUrl = $baseUrl . $this->webpayConfig['URL_RETURN'];
             $quoteId = $quote->getId();
-            $orderId = $this->getOrderId();
+            $orderId = $order->getId();
+            $buyOrder = TransactionHelper::generateBuyOrder($orderId);
 
             $quote->save();
 
-            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->webpayConfig);
+            $transbankSdkWebpay = new TransbankSdkWebpayRest($this->configProvider);
             $this->log->logInfo('B.2. Preparando datos antes de crear la transacción en Transbank');
-            $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', buyOrder: ' . $orderId . ', returnUrl: ' . $returnUrl);
-            $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $orderId, $returnUrl);
+            $this->log->logInfo('amount: ' . $grandTotal . ', sessionId: ' . $quoteId . ', orderId: ' . $orderId . ', buyOrder: ' . $buyOrder . ', returnUrl: ' . $returnUrl);
+            $response = $transbankSdkWebpay->createTransaction($grandTotal, $quoteId, $buyOrder, $returnUrl);
 
-            $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId];
+            $dataLog = ['grandTotal' => $grandTotal, 'quoteId' => $quoteId, 'orderId' => $orderId, 'buyOrder' => $buyOrder];
             $message = '<h3>Esperando pago con Webpay</h3><br>' . json_encode($dataLog);
 
             if (isset($response['token_ws'])) {
@@ -120,6 +123,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
                     $response['token_ws'],
                     WebpayOrderData::PAYMENT_STATUS_WATING,
                     $orderId,
+                    $buyOrder,
                     $quoteId
                 );
 
@@ -128,7 +132,7 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
 
                 $order->setStatus($orderStatusPendingPayment);
             } else {
-                $this->saveWebpayData('', WebpayOrderData::PAYMENT_STATUS_ERROR, $orderId, $quoteId);
+                $this->saveWebpayData('', WebpayOrderData::PAYMENT_STATUS_ERROR, $orderId, $buyOrder, $quoteId);
                 $order->cancel();
                 $order->save();
                 $order->setStatus($orderStatusCanceled);
@@ -180,33 +184,30 @@ class CreateWebpay extends \Magento\Framework\App\Action\Action
      * @param $token_ws
      * @param $payment_status
      * @param $order_id
+     * @param $buyOrder
      * @param $quote_id
      *
      * @throws \Exception
      *
      */
-    protected function saveWebpayData($token_ws, $payment_status, $order_id, $quote_id)
-    {
-        $webpayOrderData = $this->webpayOrderDataFactory->create();
-        $webpayOrderData->setData([
+    protected function saveWebpayData(
+        $token_ws,
+        $payment_status,
+        $order_id,
+        $buyOrder,
+        $quote_id
+    ): void {
+        $this->webpayOrderDataService->create([
             'token'          => $token_ws,
             'payment_status' => $payment_status,
             'order_id'       => $order_id,
+            'buy_order'      => $buyOrder,
             'quote_id'       => $quote_id,
             'metadata'       => json_encode($this->checkoutSession->getData()),
-            'commerce_code'   => $this->webpayConfig['COMMERCE_CODE'],
-            'environment'     => $this->webpayConfig['ENVIRONMENT'],
-            'product'         => Webpay::PRODUCT_NAME
+            'commerce_code'  => $this->webpayConfig['COMMERCE_CODE'],
+            'environment'    => $this->webpayConfig['ENVIRONMENT'],
+            'product'        => Webpay::PRODUCT_NAME
         ]);
-        $webpayOrderData->save();
-    }
-
-    /**
-     * @return string
-     */
-    protected function getOrderId()
-    {
-        return $this->checkoutSession->getLastRealOrderId();
     }
 
     /**

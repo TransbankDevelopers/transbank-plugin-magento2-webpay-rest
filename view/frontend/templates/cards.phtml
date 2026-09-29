@@ -1,31 +1,47 @@
-<?php 
+<?php
 $collection = $block->getCards();
 ?>
+<div class="actions-toolbar">
+    <div class="primary">
+        <form action="<?= $block->escapeUrl($block->getAddCardAction()) ?>" method="post">
+            <?= $block->getBlockHtml('formkey') ?>
+            <button type="submit" class="action primary">
+                <span><?= $block->escapeHtml(__('Add card')) ?></span>
+            </button>
+        </form>
+    </div>
+</div>
 <div class="table-wrapper orders-history">
     <table class="data table table-order-items history" id="my-orders-table">
-        <caption class="table-caption"><?php echo __('Grid Record') ?></caption>
+        <caption class="table-caption"><?= $block->escapeHtml(__('Grid Record')) ?></caption>
         <thead>
-        <tr>
-            <th scope="col" class="col email"><?php echo __('Card Number') ?></th>
-            <th scope="col" class="col name"><?php echo __('Card Type') ?></th>
-            <th scope="col" class="col action"><?php echo __('Action') ?></th>
-        </tr>
+            <tr>
+                <th scope="col" class="col email"><?= $block->escapeHtml(__('Card Number')) ?></th>
+                <th scope="col" class="col name"><?= $block->escapeHtml(__('Card Type')) ?></th>
+                <th scope="col" class="col action"><?= $block->escapeHtml(__('Action')) ?></th>
+            </tr>
         </thead>
         <tbody>
-        <?php
-        foreach ($collection as $item): ?>
-        <tr>
-            <td data-th="<?= $block->escapeHtml(__('Card Number')) ?>" class="col email">
-                <?php echo $item['card_number']; ?>
-            </td>
-            <td data-th="<?= $block->escapeHtml(__('Card Type')) ?>" class="col name">
-                <?php echo $item['card_type']; ?>
-            </td>
-            <td data-th="<?= $block->escapeHtml(__('Action')) ?>" class="col delete">
-                <a href="<?php echo $block->getDeleteAction() . 'id/' . $item['id']; ?>"><?php echo __('Delete') ?></a>
-            </td>
-        </tr>
-        <?php endforeach; ?>
+            <?php
+            foreach ($collection as $item): ?>
+                <tr>
+                    <td data-th="<?= $block->escapeHtml(__('Card Number')) ?>" class="col email">
+                        <?= $block->escapeHtml($item['card_number']) ?>
+                    </td>
+                    <td data-th="<?= $block->escapeHtml(__('Card Type')) ?>" class="col name">
+                        <?= $block->escapeHtml($item['card_type']) ?>
+                    </td>
+                    <td data-th="<?= $block->escapeHtml(__('Action')) ?>" class="col delete">
+                        <form action="<?= $block->escapeUrl($block->getDeleteAction()) ?>" method="post">
+                            <?= $block->getBlockHtml('formkey') ?>
+                            <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                            <button type="submit" class="action delete danger">
+                                <span><?= $block->escapeHtml(__('Delete')) ?></span>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
         </tbody>
     </table>
 </div>

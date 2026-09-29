@@ -1,28 +1,48 @@
-name: PHP CI
-
+name: Build
 on:
-  push:
-    tags:
-      - "*"
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      artifact_url: ${{ steps.artifact_upload.outputs.artifact-url }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: "7.1"
-      - name: Run script
-        run: echo "We don't have tests yet :("
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          php-version: "8.3"
+      - name: Package Plugin
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          chmod +x package.sh
+          ./package.sh
+      - name: Upload build artifact
+        id: artifact_upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
+          name: plugin-transbank-webpay-magento2.zip
+          path: plugin-transbank-webpay-magento2-*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  comment:
+    name: Comment artifact link on PR
+    needs: build
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    uses: transbankdevelopers/transbank-github-actions-templates/.github/workflows/plugin-pr-artifact.yml@80df7f0a80353edec0d6617a8881ce9c09076a6a
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
+      source_repo_full_name: ${{ github.event.pull_request.head.repo.full_name }}
+      artifact_url: ${{ needs.build.outputs.artifact_url }}
+      artifact_name: plugin-transbank-webpay-magento2.zip
+      comment_marker: "<!-- transbank-webpay-magento2-artifact -->"
+      comment_prefix: Plugin Zip

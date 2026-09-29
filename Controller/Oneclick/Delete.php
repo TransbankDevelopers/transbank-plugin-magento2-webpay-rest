@@ -3,78 +3,108 @@
 namespace Transbank\Webpay\Controller\Oneclick;
 
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\View\Result\PageFactory;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\App\Action\Action;
-use Transbank\Webpay\Model\TransbankSdkWebpayRest;
+use Magento\Customer\Model\Session as CustomerSession;
+use Transbank\Webpay\Helper\PluginLogger;
+use Transbank\Webpay\Model\Service\OneclickInscriptionService;
 use Transbank\Webpay\Model\OneclickInscriptionData;
+use Transbank\Webpay\Exceptions\InvalidRequestException;
 
-class Delete extends Action
+class Delete extends Action implements HttpPostActionInterface
 {
-    protected $configProvider;
-    protected $oneclickInscriptionDataFactory;
-    protected $resultPageFactory;
+    private const INVALID_CARD_MESSAGE = "La tarjeta indicada es inválida.";
+    private const UNAUTHORIZED_MESSAGE = "No posee permisos suficientes para eliminar esta tarjeta.";
+    private const DELETE_SUCCESS_MESSAGE = "Tarjeta eliminada exitosamente.";
+    private const DELETE_ERROR_MESSAGE = "Error al eliminar tarjeta, contacta al comercio para recibir asistencia.";
+
+    protected $oneclickInscriptionService;
+    protected $customerSession;
+    private $logger;
 
     public function __construct(
         Context $context,
-        PageFactory $resultPageFactory,
-        \Transbank\Webpay\Model\OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
-        \Transbank\Webpay\Model\Config\ConfigProvider $configProvider
-    )
-    {
+        OneclickInscriptionService $oneclickInscriptionService,
+        CustomerSession $customerSession,
+        PluginLogger $logger
+    ) {
         parent::__construct($context);
-        $this->configProvider = $configProvider;
-        $this->resultPageFactory = $resultPageFactory;
-        $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->oneclickInscriptionService = $oneclickInscriptionService;
+        $this->customerSession = $customerSession;
+        $this->logger = $logger;
     }
 
     public function execute()
     {
         try {
-            $data = (array)$this->getRequest()->getParams();
-            if ($data) {
-                $inscriptionId = $data['id'];
-                list($username, $tbkUser, $OneclickInscriptionData) = $this->getOneclickInscriptionData($inscriptionId);
-
-                $OneclickInscriptionData->setStatus(OneclickInscriptionData::PAYMENT_STATUS_DELETED);
-                $OneclickInscriptionData->save();
-
-                $config = $this->configProvider->getPluginConfigOneclick();
-
-                $transbankSdkWebpay = new TransbankSdkWebpayRest($config);
-
-                $response = $transbankSdkWebpay->deleteInscription($username, $tbkUser);
-
-                if ($response->success) {
-                    $this->messageManager->addSuccessMessage(__("Tarjeta inscrita eliminada exitosamente."));
-                } else {
-                    $this->messageManager->addErrorMessage(__("Error al eliminar tarjeta inscrita."));
-                }
-            } else {
-                $this->messageManager->addErrorMessage(__("Tarjeta inscrita no encontrada"));
-            }
-        } catch (\Exception $e) {
-            $this->messageManager->addErrorMessage($e, __("Error al eliminar tarjeta inscrita, contacta con soporte."));
+            $data = (array) $this->getRequest()->getParams();
+            $inscriptionId = filter_var($data['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $inscription = $this->validateRequest($inscriptionId);
+            $this->deleteInscription($inscription);
+        } catch (InvalidRequestException $e) {
+            $this->logger->logInfo('Error al eliminar tarjeta inscrita.', [
+                'message' => $e->getMessage(),
+                'customer_id' => $this->customerSession->getCustomerId(),
+                'exception' => get_class($e),
+            ]);
+            $this->messageManager->addErrorMessage(__(self::INVALID_CARD_MESSAGE));
+        } catch (\Throwable $e) {
+            $this->logger->logError('Error al eliminar tarjeta inscrita.', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'customer_id' => $this->customerSession->getCustomerId(),
+            ]);
+            $this->messageManager->addErrorMessage(__(self::DELETE_ERROR_MESSAGE));
         }
-        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
-        $resultRedirect->setUrl($this->_redirect->getRefererUrl());
-        return $resultRedirect;
+
+        return $this->redirectToReferer();
     }
 
-    /**
-     * @param $inscriptionId
-     *
-     * @throws \Exception
-     *
-     * @return OneclickInscriptionData
-     */
-    protected function getOneclickInscriptionData($inscriptionId)
+    private function validateRequest($inscriptionId): OneclickInscriptionData
     {
-        $oneclickInscriptionDataModel = $this->oneclickInscriptionDataFactory->create();
-        $oneclickInscriptionData = $oneclickInscriptionDataModel->load($inscriptionId, 'id');
-        $tbkUser = $oneclickInscriptionData->getTbkUser();
-        $username = $oneclickInscriptionData->getUsername();
+        if ($inscriptionId === false) {
+            throw new InvalidRequestException(self::INVALID_CARD_MESSAGE);
+        }
 
-        return [$username, $tbkUser, $oneclickInscriptionDataModel];
+        if (!$this->customerSession->isLoggedIn()) {
+            throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
+        }
+
+        $inscription = $this->oneclickInscriptionService->getById($inscriptionId);
+
+        if (!$this->oneclickInscriptionService->isOwnedByCustomer(
+            $inscription->getUserId(),
+            $this->customerSession->getCustomerId()
+        )) {
+            throw new InvalidRequestException(self::UNAUTHORIZED_MESSAGE);
+        }
+
+        return $inscription;
+    }
+
+    private function deleteInscription(OneclickInscriptionData $inscription): void
+    {
+        $this->logger->logInfo("Recibida petición para eliminar tarjeta inscrita.", [
+            'inscription_id' => $inscription->getId(),
+            'customer_id' => $this->customerSession->getCustomerId(),
+        ]);
+
+        $this->oneclickInscriptionService->delete($inscription);
+
+        $this->logger->logInfo("Tarjeta inscrita eliminada exitosamente.", [
+            'inscription_id' => $inscription->getId(),
+            'customer_id' => $this->customerSession->getCustomerId(),
+        ]);
+
+        $this->messageManager->addSuccessMessage(__(self::DELETE_SUCCESS_MESSAGE));
+    }
+
+    private function redirectToReferer()
+    {
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        $resultRedirect->setUrl($this->_redirect->getRefererUrl());
+
+        return $resultRedirect;
     }
 }
