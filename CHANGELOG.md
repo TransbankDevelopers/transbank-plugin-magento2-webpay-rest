@@ -4,6 +4,21 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [2.4.0] - 2026-09-29
+
+## Agrega:
+- Se fortalece el control de propiedad y sesión en las operaciones sobre inscripciones Oneclick y órdenes Webpay, asegurando que cada usuario solo pueda operar sobre sus propios registros.
+- Se agrega manejo de bloqueos en el procesamiento del retorno de transacciones Webpay para reforzar la concurrencia.
+- Se sincroniza la visualización de la página de éxito nativa de Magento con la confirmación de estado de pago de Transbank.
+- Se agrega la administración de inscripciones Oneclick (agregar, ver y eliminar tarjetas) desde la vista de cuenta del cliente.
+
+## Actualiza:
+- Se actualiza el SDK de Transbank de la versión 2.x a la 5.x.
+- Se optimiza el registro de logs del plugin.
+
+## Elimina:
+- Se elimina la generación en PDF del documento de diagnóstico y la dependencia de tecnickcom/tcpdf.
+
 # [2.3.0] - 2024-10-04
 
 Esta versión no tiene cambios en el comportamiento de las operaciones de la API.
