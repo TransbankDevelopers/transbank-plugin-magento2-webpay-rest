@@ -4,7 +4,7 @@ Todos los cambios notables a este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 y este proyecto adhiere a [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-# [2.4.0] - 2026-09-28
+# [2.4.0] - 2026-09-29
 
 ## Agrega:
 - Se fortalece el control de propiedad y sesión en las operaciones sobre inscripciones Oneclick y órdenes Webpay, asegurando que cada usuario solo pueda operar sobre sus propios registros.
