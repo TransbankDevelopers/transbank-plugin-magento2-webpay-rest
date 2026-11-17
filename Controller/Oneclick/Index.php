@@ -38,5 +38,7 @@ class Index extends Action
         $this->_view->loadLayout();
         $this->_view->renderLayout();
         $this->resultPageFactory->create();
+
+        return $this->getResponse();
     }
 }

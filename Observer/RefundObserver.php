@@ -44,6 +44,7 @@ class RefundObserver implements ObserverInterface
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
+        $order = null;
         try {
             $errorMessageBase = 'Ocurrió un error al realizar la anulación en Webpay. ';
             $refundInstructions = 'Intente realizar la anulación mediante su portal privado de Transbank. Para mayor información del error revise los logs de la transacción.';
@@ -82,8 +83,10 @@ class RefundObserver implements ObserverInterface
         } catch (\Exception $exception) {
             $errorMessage = $errorMessageBase . $exception->getMessage() . '. ' . $refundInstructions;
             $this->logger->logError($errorMessage);
-            $order->addStatusHistoryComment($errorMessage);
-            $this->orderRepository->save($order);
+            if ($order !== null) {
+                $order->addStatusHistoryComment($errorMessage);
+                $this->orderRepository->save($order);
+            }
             $this->messageManager->addErrorMessage($errorMessageBase . $refundInstructions);
         }
     }

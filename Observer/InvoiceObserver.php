@@ -3,18 +3,25 @@
 namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Transbank\Webpay\Observer\Util\ObserverGuard;
 
 class InvoiceObserver extends SuccessObserver implements ObserverInterface
 {
     private ObserverGuard $observerGuard;
+    /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
+
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $orderSender,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        ObserverGuard $observerGuard
+        ObserverGuard $observerGuard,
+        OrderRepositoryInterface $orderRepository
     ) {
         parent::__construct(
             $logger,
@@ -24,6 +31,7 @@ class InvoiceObserver extends SuccessObserver implements ObserverInterface
             $configProvider
         );
         $this->observerGuard = $observerGuard;
+        $this->orderRepository = $orderRepository;
     }
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
@@ -43,7 +51,7 @@ class InvoiceObserver extends SuccessObserver implements ObserverInterface
             $order->addStatusHistoryComment('Automatically Invoiced by Transbank', true);
             $this->logger->debug('Creating Invoice email.');
             $order->setCanSendNewEmailFlag(true);
-            $order->save();
+            $this->orderRepository->save($order);
 
             if ($order->canInvoice()) {
                 $invoice = $this->invoiceService->prepareInvoice($order);

@@ -93,7 +93,7 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
                 throw new InvalidRequestException("No se ha iniciado sesión de usuario.");
             }
 
-            $guestEmail = isset($_GET['guestEmail']) ? $_GET['guestEmail'] : null;
+            $guestEmail = $this->getRequest()->getQuery('guestEmail');
 
             $this->oneClickConfig = $this->configProvider->getPluginConfigOneclick();
             $oneclickTitle = $this->oneClickConfig['title'];
@@ -222,6 +222,8 @@ class CreateOneclick extends \Magento\Framework\App\Action\Action
             'metadata'       => json_encode($this->checkoutSession->getData()),
         ]);
         $this->oneclickInscriptionService->save($oneclickInscriptionData);
+
+        return $oneclickInscriptionData;
     }
 
     /**

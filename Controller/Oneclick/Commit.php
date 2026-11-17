@@ -6,6 +6,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Transbank\Webpay\Exceptions\InvalidRequestException;
+use Transbank\Webpay\Exceptions\TransbankException;
 use Transbank\Webpay\Helper\PluginLogger;
 use Transbank\Webpay\Infrastructure\Lock\MySqlNamedLock;
 use Transbank\Webpay\Model\Config\ConfigProvider;

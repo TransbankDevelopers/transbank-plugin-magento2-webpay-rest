@@ -80,7 +80,7 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
         try {
 
-            $tbkToken = $_POST['TBK_TOKEN'] ?? $_GET['TBK_TOKEN'] ?? null;
+            $tbkToken = $this->getRequest()->getPostValue('TBK_TOKEN') ?? $this->getRequest()->getQuery('TBK_TOKEN');
 
             if (!is_string($tbkToken)) {
                 throw new \Exception('Token no encontrado');
@@ -138,6 +138,8 @@ class CommitOneclick extends \Magento\Framework\App\Action\Action
 
             return $this->errorOnConfirmation($e, $order, $orderStatusCanceled);
         }
+
+        return $this->getResponse();
     }
 
     /**

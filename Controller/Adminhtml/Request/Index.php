@@ -22,15 +22,20 @@ class Index extends \Magento\Backend\App\Action
      */
     public function execute()
     {
-        if ($_POST['type'] == 'checkInit') {
+        if ($this->getRequest()->getPostValue('type') == 'checkInit') {
             try {
                 $healthcheck = new HealthCheck($this->configProvider);
                 $response = $healthcheck->createTestTransaction();
 
-                echo json_encode(['success' => true, 'msg' => $response]);
+                $this->getResponse()->setBody(json_encode(['success' => true, 'msg' => $response]));
             } catch (TransbankCreateException $e) {
-                echo json_encode(['success' => false, 'msg' => 'No se pudo crear la transacción de pruebas.']);
+                $this->getResponse()->setBody(json_encode([
+                    'success' => false,
+                    'msg' => 'No se pudo crear la transacción de pruebas.',
+                ]));
             }
         }
+
+        return $this->getResponse();
     }
 }

@@ -6,6 +6,7 @@ use Transbank\Webpay\Exceptions\OneclickInscriptionNotFoundException;
 use Transbank\Webpay\Model\OneclickInscriptionData;
 use Transbank\Webpay\Model\OneclickInscriptionDataFactory;
 use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData\CollectionFactory;
+use Transbank\Webpay\Model\ResourceModel\OneclickInscriptionData as OneclickInscriptionDataResource;
 
 /**
  * Class OneclickInscriptionDataRepository
@@ -32,19 +33,26 @@ class OneclickInscriptionDataRepository
 
     protected $collectionFactory;
     private $oneclickInscriptionDataFactory;
+    /**
+     * @var OneclickInscriptionDataResource
+     */
+    private $resource;
 
     /**
      * Constructor
      *
      * @param CollectionFactory $collectionFactory
      * @param OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
+     * @param OneclickInscriptionDataResource $resource
      */
     public function __construct(
         CollectionFactory $collectionFactory,
-        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory
+        OneclickInscriptionDataFactory $oneclickInscriptionDataFactory,
+        OneclickInscriptionDataResource $resource
     ) {
         $this->collectionFactory = $collectionFactory;
         $this->oneclickInscriptionDataFactory = $oneclickInscriptionDataFactory;
+        $this->resource = $resource;
     }
 
     /**
@@ -124,7 +132,7 @@ class OneclickInscriptionDataRepository
      */
     public function save(OneclickInscriptionData $oneclickInscriptionData): OneclickInscriptionData
     {
-        $oneclickInscriptionData->save();
+        $this->resource->save($oneclickInscriptionData);
 
         return $oneclickInscriptionData;
     }
@@ -155,7 +163,7 @@ class OneclickInscriptionDataRepository
     public function update(OneclickInscriptionData $inscription, array $data): OneclickInscriptionData
     {
         $inscription->addData(array_intersect_key($data, array_flip(self::WRITABLE_FIELDS)));
-        $inscription->save();
+        $this->resource->save($inscription);
 
         return $inscription;
     }
