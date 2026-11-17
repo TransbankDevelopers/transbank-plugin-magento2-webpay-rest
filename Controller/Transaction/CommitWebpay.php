@@ -2,6 +2,7 @@
 
 namespace Transbank\Webpay\Controller\Transaction;
 
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Throwable;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Transaction;
@@ -45,6 +46,11 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     private $quoteService;
     private MySqlNamedLock $webpayReturnLock;
 
+    /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
+
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Checkout\Model\Session $checkoutSession,
@@ -55,7 +61,8 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
         WebpayOrderDataService $webpayOrderDataService,
         QuoteService $quoteService,
-        MySqlNamedLock $webpayReturnLock
+        MySqlNamedLock $webpayReturnLock,
+        OrderRepositoryInterface $orderRepository
     ) {
         parent::__construct($context);
 
@@ -70,6 +77,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $this->log = new PluginLogger();
         $this->quoteService = $quoteService;
         $this->webpayReturnLock = $webpayReturnLock;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -78,8 +86,10 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         try {
-            $requestMethod = $_SERVER['REQUEST_METHOD'];
-            $request = $requestMethod === 'POST' ? $_POST : $_GET;
+            $requestMethod = $this->getRequest()->getMethod();
+            $request = $requestMethod === 'POST'
+                ? $this->getRequest()->getPostValue()
+                : $this->getRequest()->getQueryValue();
 
             $this->log->logInfo('Procesando retorno desde formulario de Webpay.', [
                 'method' => $requestMethod,
@@ -319,7 +329,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->setState($orderStatusSuccess)->setStatus($orderStatusSuccess);
         $commitHistoryComment = $this->createCommitHistoryComment($commitResponse);
         $order->addStatusToHistory($order->getStatus(), $commitHistoryComment);
-        $order->save();
+        $this->orderRepository->save($order);
 
         $this->log->logInfo('Orden aprobada => Token: ' . $token);
 
@@ -453,7 +463,7 @@ class CommitWebpay extends \Magento\Framework\App\Action\Action
         $order->cancel();
         $order->setStatus($orderStatusCanceled);
         $order->addStatusToHistory($order->getStatus(), $message);
-        $order->save();
+        $this->orderRepository->save($order);
     }
 
     private function checkTransactionIsAlreadyProcessed($token): bool

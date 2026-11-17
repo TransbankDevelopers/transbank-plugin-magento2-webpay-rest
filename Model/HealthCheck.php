@@ -311,6 +311,7 @@ class HealthCheck
         $sessionId = uniqid();
         $returnUrl = 'https://test_plugin_magento/return_url';
         $result = $transbankSdkWebpay->createTransaction($amount, $sessionId, $buyOrder, $returnUrl);
+        $status = 'Error';
         if ($result) {
             if (!empty($result['error']) && isset($result['error'])) {
                 $status = 'Error';

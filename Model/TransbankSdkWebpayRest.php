@@ -207,7 +207,7 @@ class TransbankSdkWebpayRest
             $createResult = $this->transaction->create($buyOrder, $sessionId, $amount, $returnUrl);
 
             $this->log->logInfo('createTransaction - createResult: ' . json_encode($createResult));
-            if (isset($createResult) && isset($createResult->url) && isset($createResult->token)) {
+            if (isset($createResult->url) && isset($createResult->token)) {
                 $result = [
                     'url'      => $createResult->url,
                     'token_ws' => $createResult->token,
@@ -277,7 +277,7 @@ class TransbankSdkWebpayRest
             $initResult = $this->mallInscription->start($username, $email, $responseUrl);
 
             $this->log->logInfo('createInscription - initResult: ' . json_encode($initResult));
-            if (isset($initResult) && isset($initResult->token) && isset($initResult->urlWebpay)) {
+            if (isset($initResult->token) && isset($initResult->urlWebpay)) {
                 $result = [
                     'token'      => $initResult->token,
                     'urlWebpay' => $initResult->urlWebpay,

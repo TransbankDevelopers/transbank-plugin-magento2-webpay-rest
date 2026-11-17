@@ -3,6 +3,7 @@
 namespace Transbank\Webpay\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Transbank\Webpay\Observer\Util\ObserverGuard;
 
 class SubmitObserver implements ObserverInterface
@@ -17,14 +18,21 @@ class SubmitObserver implements ObserverInterface
 
     private ObserverGuard $observerGuard;
 
+    /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
+
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         \Transbank\Webpay\Model\Config\ConfigProvider $configProvider,
-        ObserverGuard $observerGuard
+        ObserverGuard $observerGuard,
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->_logger = $logger;
         $this->configProvider = $configProvider;
         $this->observerGuard = $observerGuard;
+        $this->orderRepository = $orderRepository;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -48,7 +56,7 @@ class SubmitObserver implements ObserverInterface
                 $this->_current_order = $order;
 
                 $order->setCanSendNewEmailFlag(false);
-                $order->save();
+                $this->orderRepository->save($order);
             }
 
         } catch (\ErrorException $e) {

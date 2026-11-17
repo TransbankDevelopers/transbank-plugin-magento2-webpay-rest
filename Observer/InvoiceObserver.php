@@ -43,7 +43,7 @@ class InvoiceObserver extends SuccessObserver implements ObserverInterface
             $order->addStatusHistoryComment('Automatically Invoiced by Transbank', true);
             $this->logger->debug('Creating Invoice email.');
             $order->setCanSendNewEmailFlag(true);
-            $order->save();
+            $this->orderRepository->save($order);
 
             if ($order->canInvoice()) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
