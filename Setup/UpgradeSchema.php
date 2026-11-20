@@ -17,6 +17,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
     use CreatesWebpayOrdersTable;
     use CreatesOneclickInscriptionTable;
 
+    private const BUY_ORDER_LENGTH = 26;
+
     /**
      * {@inheritdoc}
      */
@@ -27,6 +29,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $webPayTable = $setup->getTable(WebpayOrderData::TABLE_NAME);
         if ($setup->getConnection()->isTableExists($webPayTable) === false) {
             $this->createWebpayOrdersTable($setup);
+        } elseif (version_compare((string) $context->getVersion(), '2.4.1', '<')) {
+            $this->widenBuyOrderFields($setup, $webPayTable);
         }
 
         $oneClickTable = $setup->getTable(OneclickInscriptionData::TABLE_NAME);
@@ -37,6 +41,31 @@ class UpgradeSchema implements UpgradeSchemaInterface
         }
 
         $setup->endSetup();
+    }
+
+    private function widenBuyOrderFields(SchemaSetupInterface $setup, string $table): void
+    {
+        $connection = $setup->getConnection();
+        $columns = $connection->describeTable($table);
+
+        $buyOrderColumns = [
+            'buy_order' => 'Buy order',
+            'child_buy_order' => 'Child buy order',
+        ];
+
+        foreach ($buyOrderColumns as $column => $comment) {
+            if (!isset($columns[$column]) || (int) $columns[$column]['LENGTH'] >= self::BUY_ORDER_LENGTH) {
+                continue;
+            }
+
+            $definition = [
+                'type' => Table::TYPE_TEXT,
+                'length' => self::BUY_ORDER_LENGTH,
+                'nullable' => false,
+                'comment' => $comment,
+            ];
+            $connection->changeColumn($table, $column, $column, $definition);
+        }
     }
 
     private function allowPrivateInscriptionFields(SchemaSetupInterface $setup, string $table): void
